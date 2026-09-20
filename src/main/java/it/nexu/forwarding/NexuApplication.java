@@ -85,7 +85,7 @@ public final class NexuApplication extends Application {
                 if (window.getStyle() != StageStyle.DECORATED || window.isFullScreen()
                     || Screen.getScreensForRectangle(window.getX(), window.getY(), Math.max(1, window.getWidth()), Math.max(1, window.getHeight())).isEmpty())
                     throw new IllegalStateException("Window smoke check failed: native decorated window is not visible.");
-                SafeFiles.writeBytes(home.resolve("ui-ready"), "UI_READY 0.2.1 DECORATED WINDOWED".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                SafeFiles.writeBytes(home.resolve("ui-ready"), "UI_READY 1.0.0 DECORATED WINDOWED".getBytes(java.nio.charset.StandardCharsets.UTF_8));
                 javafx.animation.PauseTransition exit = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(2));
                 exit.setOnFinished(e -> requestExit()); exit.play();
             }
@@ -93,13 +93,13 @@ public final class NexuApplication extends Application {
             if (Boolean.getBoolean("nexu.smokeTest")) { e.printStackTrace(); System.exit(1); }
             if (appLock != null) try { appLock.close(); } catch (Exception ignored) { }
             Alert alert = new Alert(Alert.AlertType.ERROR, "Avvio non riuscito. Nessun tunnel è stato aperto.\n\n" + e.getMessage());
-            alert.setHeaderText("NexU Port Forwarding"); alert.showAndWait();
+            alert.setHeaderText("Nexu Port Forwarding"); alert.showAndWait();
             Platform.exit();
         }
     }
 
     private void buildWindow() {
-        Label title = new Label("NexU Port Forwarding"); title.getStyleClass().add("app-title");
+        Label title = new Label("Nexu Port Forwarding"); title.getStyleClass().add("app-title");
         Label subtitle = new Label("Tunnel SSH dal tuo desktop · Windows / Linux"); subtitle.getStyleClass().add("muted");
         VBox branding = new VBox(5, title, subtitle);
         HBox counters = new HBox(10, counter("PROFILI", totals), counter("ATTIVI", active), counter("ERRORI", errors));
@@ -138,7 +138,7 @@ public final class NexuApplication extends Application {
         VBox bottom = new VBox(8, logTitle, selectedInfo, logs, meaning, footer); bottom.setPadding(new Insets(18,26,20,26));
         root = new BorderPane(table, top, null, bottom, null); BorderPane.setMargin(table, new Insets(0,26,0,26));
         Scene scene = new Scene(root, 1180, 760); scene.getStylesheets().add(getClass().getResource("/app.css").toExternalForm());
-        window.setScene(scene); window.setTitle("NexU Port Forwarding 0.2.1");
+        window.setScene(scene); window.setTitle("Nexu Port Forwarding 1.0.0");
         window.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/app-icon.png"))));
         window.xProperty().addListener((o,a,b) -> captureNormalBounds());
         window.yProperty().addListener((o,a,b) -> captureNormalBounds());
@@ -348,7 +348,7 @@ public final class NexuApplication extends Application {
     }
     private FileChooser fileChooser(String title) {
         FileChooser chooser = new FileChooser(); chooser.setTitle(title);
-        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Profili NexU (*.properties)","*.properties")); return chooser;
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Profili Nexu Port Forwarding (*.properties)","*.properties")); return chooser;
     }
     private void exportProfiles() {
         FileChooser chooser = fileChooser("Esporta i profili senza credenziali"); chooser.setInitialFileName("nexu-tunnels.properties");
@@ -438,7 +438,7 @@ public final class NexuApplication extends Application {
         ButtonType minimize = new ButtonType(trayReady ? "Riduci nell’area di notifica" : "Riduci a icona", ButtonBar.ButtonData.OTHER);
         ButtonType exit = new ButtonType("Esci dall’applicazione", ButtonBar.ButtonData.YES);
         Alert a = new Alert(Alert.AlertType.CONFIRMATION);
-        a.initOwner(window); a.setTitle("Chiudi NexU Port Forwarding"); a.setHeaderText("Cosa vuoi fare?");
+        a.initOwner(window); a.setTitle("Chiudi Nexu Port Forwarding"); a.setHeaderText("Cosa vuoi fare?");
         a.setContentText(running > 0
             ? "Sono attivi " + running + " tunnel. Se esci verranno arrestati; se riduci, continueranno a funzionare."
             : (trayReady ? "Puoi lasciare l’applicazione nell’area di notifica oppure chiuderla."
@@ -464,7 +464,7 @@ public final class NexuApplication extends Application {
     }
     private void requestExit() {
         if (quitting || UiWork.busy()) return;
-        if (engine.runningCount() > 0 && !confirm("Chiudi NexU", "Arrestare tutti i tunnel e uscire?")) return;
+        if (engine.runningCount() > 0 && !confirm("Chiudi Nexu Port Forwarding", "Arrestare tutti i tunnel e uscire?")) return;
         beginExit();
     }
     private void beginExit() {

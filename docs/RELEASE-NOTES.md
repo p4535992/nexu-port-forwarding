@@ -1,24 +1,27 @@
-# NexU Port Forwarding 0.2.1 release candidate
+# Nexu Port Forwarding 1.0.0
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
-Desktop SSH local (-L) and remote (-R) TCP forwarding manager for Windows and Linux.
+## English
 
-## Window behavior
-This release explicitly uses the native decorated desktop window. On startup the window is sized and centered inside the current screen work area instead of assuming a fixed large desktop. The normal size and position and the maximized/restored state are saved locally in `window.properties`; invalid or off-screen geometry is clamped back to a visible monitor.
+First stable release of Nexu Port Forwarding from the recreated public repository.
 
-The native **minimize** and **maximize/restore** controls remain managed by Windows or the Linux window manager. Pressing **X** now asks whether to keep the application running minimized (notification area when available, otherwise normal minimization) or exit. If tunnels are active the dialog states that exiting will stop them while minimizing keeps them running.
+### Included
 
-## Packages
-Windows x64: portable ZIP, EXE installer and MSI installer.
-Linux x64: portable TAR.GZ, DEB and RPM.
-Java 21 runtime is included in native packages. Java-only archives contain the platform-specific application JAR and its dependency directory.
+SSH local (`-L`) and remote (`-R`) TCP forwarding; independent tunnel profiles; searchable and sortable grid; start/stop controls; status indicators; password or private-key authentication; explicit host-key verification; keepalive and optional bounded reconnects.
 
-## Local data and passwords
-Version-independent local data directory, optional portable launcher, rotating diagnostic logs, encrypted local password/passphrase vault and encrypted backup import/export remain unchanged. Window state contains no credentials.
+Native decorated Windows/Linux window with minimize and maximize/restore controls. The close dialog offers minimization, exit or cancellation and warns that exit stops active tunnels. Without a tray, minimization remains a normal desktop operation. Normal window bounds and maximized state are saved locally.
 
-## Automated release gates
-Both OS builds must compile and pass Maven tests, SSH loopback integration tests, packaging and a packaged JavaFX smoke test. The smoke test now additionally requires a visible, native `DECORATED`, non-full-screen window. Artifacts are published only after both platforms pass, with SHA-256 checksums.
+Local AES-256-GCM credential vault protected by a master password, encrypted backup import/export, separate credential-free profile exports, rotating local logs and a version-independent data directory. There is no cloud synchronization and no automatic tunnel startup.
 
-## Limitations
-Unsigned release candidate. Linux notification-area behavior still depends on the desktop environment; when a tray is unavailable the close dialog falls back to normal minimization. Validate real desktop/window-manager behavior and real SSH servers before production use.
+### Downloads
+
+Windows x64: portable ZIP, EXE installer and MSI installer. Linux x64: portable TAR.GZ, DEB and RPM. Native packages include Java 21. Java-only archives include the application JAR and its `lib/` directory and require Java 21. Extract portable archives completely.
+
+Source ZIP, SHA-256 checksums, platform diagnostics and the resolved runtime JAR inventory are attached. MIT covers the application code; dependencies and Java retain their own licenses and notices.
+
+### Verification and limitations
+
+Publication requires both platform builds, all Maven tests, SSH loopback integration tests, packaged GUI startup/exit, local log checks, retired-endpoint checks and package completeness checks to pass. The documentation now uses the full name **Nexu Port Forwarding**, with English primary and Italian in parallel.
+
+Binaries are not code-signed. The UI currently uses Italian labels. Tray availability depends on the Linux desktop. Installer upgrade/uninstall, real server policies, sleep/resume and every interactive workflow are not exhaustively tested. Green indicates an established tunnel, not destination-service health. A lost vault/backup password cannot be recovered. This release is not a security audit.

@@ -1,31 +1,27 @@
-# NexU Port Forwarding 0.2.1 release candidate
+# Nexu Port Forwarding 1.0.0
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
-Gestore desktop di forwarding TCP SSH locale (-L) e remoto (-R) per Windows e Linux.
+## Italiano
 
-## Comportamento della finestra
+Prima release stabile di Nexu Port Forwarding dal repository pubblico ricreato.
 
-Questa release usa esplicitamente una finestra desktop con decorazioni native. All'avvio, dimensione e posizione vengono adattate all'area di lavoro dello schermo corrente invece di assumere un desktop grande e fisso. Dimensione/posizione normali e stato massimizzato/ripristinato vengono salvati localmente in `window.properties`; geometrie non valide o fuori schermo vengono riportate su un monitor visibile.
+### Funzioni incluse
 
-I controlli nativi **minimizza** e **massimizza/ripristina** restano gestiti da Windows o dal window manager Linux. Premendo **X** viene chiesto se lasciare l'applicazione in esecuzione ridotta (area di notifica quando disponibile, altrimenti normale minimizzazione) oppure uscire. Se ci sono tunnel attivi, il dialogo specifica che uscire li fermerà mentre ridurre l'app li mantiene in esecuzione.
+Forwarding TCP SSH locale (`-L`) e remoto (`-R`); profili indipendenti; griglia ricercabile e ordinabile; comandi avvia/ferma; indicatori di stato; autenticazione con password o chiave privata; verifica esplicita delle chiavi host; keepalive e riconnessione opzionale con tentativi limitati.
 
-## Pacchetti
+Finestra nativa Windows/Linux con minimizza e massimizza/ripristina. Il dialogo di chiusura offre riduzione, uscita o annullamento e avverte che l’uscita ferma i tunnel attivi. Senza tray viene usata la normale minimizzazione. Dimensioni e posizione normali e stato massimizzato sono salvati localmente.
 
-Windows x64: ZIP portabile, installer EXE e installer MSI.
+Vault locale AES-256-GCM protetto da password principale, import/export di backup cifrati, esportazione separata dei profili senza credenziali, log locali con rotazione e directory dati indipendente dalla versione. Non ci sono sincronizzazione cloud o avvio automatico dei tunnel.
 
-Linux x64: TAR.GZ portabile, DEB e RPM.
+### Download
 
-Il runtime Java 21 è incluso nei pacchetti nativi. Gli archivi solo Java contengono il JAR specifico per piattaforma e la directory delle dipendenze.
+Windows x64: ZIP portabile, installer EXE e MSI. Linux x64: TAR.GZ portabile, DEB e RPM. I pacchetti nativi includono Java 21. Gli archivi solo Java includono JAR e directory `lib/` e richiedono Java 21. Estrarre interamente gli archivi portabili.
 
-## Dati locali e password
+Sono allegati ZIP sorgenti, checksum SHA-256, diagnostica per piattaforma e inventario dei JAR runtime risolti. MIT copre il codice applicativo; dipendenze e Java mantengono licenze e avvisi propri.
 
-Restano invariati la directory dati indipendente dalla versione, il launcher portabile opzionale, i log diagnostici con rotazione, il vault locale cifrato per password/passphrase e l'import/export dei backup cifrati. Lo stato della finestra non contiene credenziali.
+### Verifica e limiti
 
-## Gate automatici della release
+La pubblicazione richiede il successo di entrambe le build, test Maven, integrazione SSH loopback, avvio/uscita GUI pacchettizzata, log locali, controlli degli endpoint ritirati e completezza dei pacchetti. La documentazione usa il nome completo **Nexu Port Forwarding**, con inglese primario e italiano in parallelo.
 
-Entrambe le build devono compilare e superare test Maven, integrazione SSH loopback, packaging e smoke test JavaFX pacchettizzata. La smoke test richiede inoltre una finestra visibile, nativa `DECORATED` e non full-screen. Gli artifact vengono pubblicati solo dopo il successo di entrambe le piattaforme, con checksum SHA-256.
-
-## Limiti
-
-Release candidate non firmata. Il comportamento dell'area di notifica Linux dipende ancora dall'ambiente desktop; se la tray non è disponibile il dialogo di chiusura ricade sulla normale minimizzazione. Il comportamento reale del desktop/window manager e i server SSH reali devono essere validati prima dell'uso in produzione.
+I binari non sono firmati digitalmente. L’interfaccia usa attualmente etichette italiane. La tray dipende dal desktop Linux. Upgrade/disinstallazione degli installer, policy dei server reali, sleep/resume e tutti i flussi interattivi non sono testati esaustivamente. Il verde indica un tunnel stabilito, non lo stato del servizio di destinazione. Le password perse di vault/backup non sono recuperabili. Questa release non costituisce un audit di sicurezza.

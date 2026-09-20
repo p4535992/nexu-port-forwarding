@@ -17,7 +17,7 @@ public final class AppLog implements AutoCloseable {
         handler.setEncoding("UTF-8"); handler.setFormatter(new Formatter() {
             @Override public String format(LogRecord r) { return r.getInstant()+" "+r.getLevel()+" "+r.getMessage()+System.lineSeparator(); }
         });
-        logger.addHandler(handler); mark("application-started version=0.2.1");
+        logger.addHandler(handler); mark("application-started version=1.0.0");
     }
     public Path directory() { return directory; }
     public void event(TunnelEngine.Event event) {

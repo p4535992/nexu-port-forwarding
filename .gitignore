@@ -17,3 +17,15 @@
 profiles.properties
 host-keys.properties
 app.lock
+
+# Local-only configuration and credentials
+window.properties
+.env
+.env.*
+!.env.example
+id_rsa
+id_ed25519
+*.jks
+*.keystore
+__pycache__/
+*.pyc

@@ -1,4 +1,4 @@
-param([ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version = '0.2.1')
+param([ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version = '1.0.0')
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
@@ -14,13 +14,15 @@ function Invoke-Jpackage([string[]]$Arguments) {
     if ($LASTEXITCODE -ne 0) { throw "jpackage failed ($LASTEXITCODE). Check Java 21 and WiX 3.x." }
 }
 Invoke-Jpackage @('--type','app-image','--name','NexuPortForwarding','--app-version',$Version,
-    '--vendor','NexU Port Forwarding','--description','Desktop SSH TCP tunnel manager',
+    '--vendor','Nexu Port Forwarding','--description','Desktop SSH TCP tunnel manager',
     '--input',$inputDir,'--dest',$out,'--main-jar','nexu-port-forwarding.jar',
     '--main-class','it.nexu.forwarding.Launcher','--icon',"$root\src\main\resources\app-icon.ico",
     '--java-options','-Dfile.encoding=UTF-8',
     '--add-modules','java.base,java.desktop,java.logging,java.naming,java.management,java.security.jgss,java.security.sasl,java.sql,java.xml,jdk.crypto.ec,jdk.unsupported,jdk.unsupported.desktop,jdk.charsets,jdk.zipfs')
 Copy-Item docs/DATA-AND-LOGS.txt "$image\LOGS.txt"
 Copy-Item THIRD_PARTY_NOTICES.md $image
+Copy-Item LICENSE $image
+Copy-Item docs "$image\docs" -Recurse
 foreach ($type in @('exe','msi')) {
     Invoke-Jpackage @('--type',$type,'--app-image',$image,'--app-version',$Version,'--dest',$out,
         '--win-menu','--win-shortcut','--win-dir-chooser','--win-per-user-install',

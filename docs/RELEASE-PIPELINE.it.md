@@ -1,15 +1,13 @@
-# Pipeline di release
+# Pipeline di release di Nexu Port Forwarding
 
 [English](RELEASE-PIPELINE.md) | [Italiano](RELEASE-PIPELINE.it.md)
 
-Ogni push dei sorgenti applicativi su `main`, oppure un avvio manuale del workflow, crea una release candidate con numero univoco. Le build vengono eseguite su Windows 2022 e Ubuntu 22.04 x64.
+I push dei sorgenti applicativi su `main` o l’avvio manuale del workflow preparano la versione dichiarata in `pom.xml` e `APP_VERSION`. La versione 1.0.0 viene pubblicata come **v1.0.0**, non come release candidate.
 
-Un job di preparazione crea una **draft release** legata al commit sorgente esatto. Ogni build esegue i test Maven, il packaging nativo e la smoke test dell'app JavaFX pacchettizzata con verifica dei log. La smoke test controlla anche che la finestra principale sia decorata nativamente, non full-screen e visibile su uno schermo rilevato. Solo i pacchetti nativi che superano i test vengono caricati nella draft. Report e log di build sono allegati come archivi diagnostici, anche quando una build fallisce.
+Una draft per run prepara il commit sorgente esatto. Windows 2022 x64 e Ubuntu 22.04 x64 compilano e testano indipendentemente, raccolgono l’inventario dei JAR runtime e gli avvisi legali inclusi, e generano i pacchetti nativi. I controlli verificano versione, link della documentazione, nome completo, endpoint ritirati nella cronologia raggiungibile e nel JAR applicativo, e inclusione MIT. L’applicazione JavaFX pacchettizzata viene avviata e arrestata con controlli su finestra e log locali.
 
-Il job di pubblicazione viene eseguito soltanto dopo il successo di **entrambi** i sistemi operativi. Verifica la presenza di tutte le otto distribuzioni previste, aggiunge `SHA256SUMS.txt` e converte la draft in prerelease con note curate. I tentativi falliti rimangono draft non validate e non sono release utilizzabili. Nessun processo elimina automaticamente vecchie release, artefatti o dati utente. Gli asset esistenti non vengono sovrascritti.
+Solo dopo il successo di entrambi i job la pubblicazione verifica tutti i pacchetti previsti, aggiunge uno ZIP sorgente senza cronologia Git, calcola `SHA256SUMS.txt`, unisce le note con **inglese prima e italiano dopo** e pubblica la draft con tag stabile come Latest. Le note riportano commit sorgente e run. Le versioni già pubblicate non vengono sovrascritte: incrementare la versione prima di una nuova pubblicazione.
 
-Gli asset vengono trasferiti direttamente tramite GitHub Releases invece di `actions/upload-artifact`, perché in precedenza l'account aveva segnalato l'esaurimento della quota di storage degli artifact di Actions. Questo evita che la consegna dipenda da quella quota e non richiede l'eliminazione di artifact di altri repository. Non vengono modificate impostazioni di fatturazione o quota.
+Pacchetti e diagnostica usano GitHub Releases, non lo storage degli artifact Actions. I tentativi falliti restano draft non pubblicate. Il workflow non elimina release precedenti, non riscrive la cronologia, non accede a risorse PR, non contatta server SSH reali e non cambia la visibilità del repository. I log diagnostici contengono dati sintetici dei test; vanno comunque controllati prima della pubblicazione.
 
-La versione nativa predefinita è **0.2.1**; il tag di distribuzione aggiunge `rc.<numero run workflow>`. L'UUID stabile di upgrade Windows è dichiarato in `scripts/package-windows.ps1`. Per la versione applicativa successiva vanno aggiornati insieme `APP_VERSION`, `RELEASE_TAG`, `pom.xml`, le etichette versione di launcher/UI e le note di release.
-
-Non vengono usati release notes generati automaticamente, trigger da pull request, merge automatici, sincronizzazione cloud delle password, self-updater o connessioni SSH esterne reali. La smoke test disabilita volutamente la tray in CI; le varianti reali della tray e il comportamento di upgrade degli installer devono essere verificati dall'operatore.
+Per la versione successiva aggiornare insieme `pom.xml`, `APP_VERSION`, `RELEASE_TAG`, stringhe versione di launcher/UI/log, valori predefiniti degli script e documentazione bilingue. Conservare UUID di upgrade Windows e directory dati indipendente dalla versione. Lo stato stabile non implica firma digitale: i binari non sono firmati.

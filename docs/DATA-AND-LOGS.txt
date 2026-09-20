@@ -1,4 +1,4 @@
-NexU Port Forwarding - local data and upgrades
+Nexu Port Forwarding - local data and upgrades
 
 Normal launch (recommended):
   Windows: %LOCALAPPDATA%\nexu-port-forwarding\
@@ -8,6 +8,7 @@ Files:
   profiles.properties     Profiles, WITHOUT passwords.
   credentials.npfvault    Encrypted local passwords and key passphrases.
   host-keys.properties    Explicitly accepted SSH host-key fingerprints.
+  window.properties       Normal window bounds and maximized state.
   logs/nexu-0.log          Current diagnostic log; up to 5 files of 2 MB each.
   app.lock                OS lock preventing two instances on the same data.
 

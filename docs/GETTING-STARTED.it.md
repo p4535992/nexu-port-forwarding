@@ -2,23 +2,25 @@
 
 [English](GETTING-STARTED.md) | [Italiano](GETTING-STARTED.it.md)
 
-La release verificata corrente è [v0.2.1-rc.9](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v0.2.1-rc.9). È una prerelease non firmata per Windows x64 e Linux x64; i pacchetti nativi includono Java.
+Scarica [v1.0.0](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.0.0). È una release stabile con binari non firmati per Windows x64 e Linux x64; i pacchetti nativi includono Java.
 
 ## Windows
 
-Scarica `nexu-port-forwarding-0.2.1-rc.9-windows-x64.zip`, estrai l'intera cartella e apri `NexuPortForwarding.exe`. Per un'installazione normale sono disponibili anche EXE e MSI nella stessa release. L'avvio normale usa `%LOCALAPPDATA%\nexu-port-forwarding` per dati e log, separatamente dall'installazione.
+Scarica `nexu-port-forwarding-1.0.0-windows-x64.zip`, estrai l'intera cartella e apri `NexuPortForwarding.exe`. Per un'installazione normale sono disponibili anche EXE e MSI nella stessa release. L'avvio normale usa `%LOCALAPPDATA%\nexu-port-forwarding` per dati e log, separatamente dall'installazione.
 
 La finestra parte in modalità desktop normale, entro l'area visibile dello schermo. I pulsanti nativi **—**, **massimizza/ripristina** e **X** sono gestiti da Windows. La X chiede se ridurre nell'area di notifica oppure uscire; se ci sono tunnel attivi avverte che l'uscita li fermerà.
 
 ## Linux
 
-Scarica `nexu-port-forwarding-0.2.1-rc.9-linux-x64.tar.gz`, estrailo e avvia `NexuPortForwarding/bin/NexuPortForwarding`. Sono disponibili anche DEB e RPM. L'avvio normale usa `${XDG_DATA_HOME:-$HOME/.local/share}/nexu-port-forwarding`.
+Scarica `nexu-port-forwarding-1.0.0-linux-x64.tar.gz`, estrailo e avvia `NexuPortForwarding/bin/NexuPortForwarding`. Sono disponibili anche DEB e RPM. L'avvio normale usa `${XDG_DATA_HOME:-$HOME/.local/share}/nexu-port-forwarding`.
 
 La finestra usa le decorazioni native del window manager. Quando la tray è disponibile, la X può ridurre l'applicazione nell'area di notifica; quando la tray non è disponibile, la stessa scelta esegue una normale minimizzazione.
 
 ## Finestra e monitor
 
 L'applicazione salva in `window.properties` dimensione e posizione della finestra normale e lo stato massimizzato. Al riavvio ripristina questi valori. Se nel frattempo cambia monitor, risoluzione o scaling e la posizione non è più valida, la finestra viene riportata automaticamente dentro un'area visibile.
+
+L’esempio integrato usa soltanto endpoint di documentazione: inserisci gli indirizzi del tuo ambiente prima di collegarti.
 
 ## Crea il primo profilo
 

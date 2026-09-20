@@ -1,71 +1,37 @@
-# Verification and release evidence
+# Nexu Port Forwarding verification
 
 [English](VERIFICATION.md) | [Italiano](VERIFICATION.it.md)
 
-## Published and verified release
+## Recreated repository baseline
 
-**Release:** [v0.2.1-rc.9](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v0.2.1-rc.9), published on 2026-09-20 at 07:56:25 UTC.
+The public repository was checked on 2026-09-20. Its initial `main` commit was `7dfd1e28368b534847f1673d5c1f89c39e3c3496`, with no parents. The only branch and the initial tag pointed to that same commit. Its complete source tree, `349a7bc1ab28174a914104aadae7a5511e0a16ab`, contained 62 files and matched the locally reconstructed snapshot byte for byte, including file modes.
 
-**Application source commit:** `0fae8a332f9f96f5b91a9c281a0b2ee8a330ad15`.
+Neither of the two retired infrastructure values was found in those files, including UTF-8 and UTF-16 encodings. No matches were found for the common private-key/access-token patterns checked. Synthetic test passwords are not production credentials. This is a targeted check, not a guarantee that no other sensitive data exists.
 
-**Successful workflow:** [run 35498023726](https://github.com/p4535992/nexu-port-forwarding/actions/runs/35498023726).
+The baseline passed the 62-case core and 30-case POSIX storage offline suites. These results are not a substitute for building the final release source on both target systems.
 
-Both platform jobs and the final publication job completed successfully. Release metadata was checked after publication: `draft=false`, `prerelease=true`, and the target commit matches the application source above. Later documentation-only commits do not change these binaries.
+## Release 1.0.0 gates
 
-| Automated gate | Windows 2022 x64 | Ubuntu 22.04 x64 |
-| --- | --- | --- |
-| Compile application and tests with Java 21 | Passed | Passed |
-| Core, storage, window-state, forwarding-policy and SSH integration tests | Passed | Passed |
-| Native packaging | ZIP, EXE, MSI generated | TAR.GZ, DEB, RPM generated |
-| Packaged JavaFX startup and clean exit | Passed | Passed under Xvfb |
-| Native decorated, non-full-screen visible window smoke check | Passed | Passed |
-| Persistent diagnostic log and readiness marker | Passed | Passed |
-| Upload distribution and diagnostic archives | Passed | Passed |
+The [release workflow](../.github/workflows/release.yml) publishes `v1.0.0` only when Windows 2022 x64 and Ubuntu 22.04 x64 both pass compilation, Maven tests, package creation, packaged JavaFX startup/exit and persistent log checks. It also checks version consistency, local documentation links, full project naming, MIT inclusion, the application JAR and reachable Git history for retired endpoints. The endpoint rules store hashes, not the retired values.
 
-The release contains eight application distributions: six native packages and two platform-specific Java archives containing the JAR plus `lib/`. Native packages include their runtime. Both diagnostic archives and `SHA256SUMS.txt` are attached. The final publication gate downloaded the staged assets and verified that every expected package existed before publishing.
+The published release notes record the exact source commit and workflow run. Platform diagnostic ZIPs include Maven reports and release-check results. No test result from the deleted repository is claimed as evidence for the new release.
 
-## Window behavior verified in 0.2.1
-
-The primary stage explicitly uses JavaFX `StageStyle.DECORATED`, is never started in full-screen mode and is placed inside a visible screen work area. Default dimensions adapt to the current monitor rather than assuming a fixed 1310×850 desktop.
-
-Normal bounds and the maximized flag are stored in the local `window.properties`. Invalid or off-screen saved geometry is ignored or clamped to a visible monitor. The packaged smoke test refuses the build if the window is not decorated, is full-screen or is outside all detected screens.
-
-The native minimize and maximize/restore controls are therefore supplied by Windows or the Linux window manager. The application intercepts only **X** to offer minimization versus application exit. With a tray, minimization hides to the notification area; without a tray it falls back to ordinary iconification.
-
-## Test coverage and counting
-
-Maven executes **12 JUnit methods**: two aggregate suites, six SSH integration methods, one forwarding-policy method and three window-state persistence methods. The core aggregate contains **62 named cases**. The storage aggregate contains **30 cases on POSIX**, or **28 when POSIX file permissions are unavailable**, as on the Windows runner.
-
-Core/storage coverage includes profile validation and roundtrips, command quoting, host pins, cancellation/retry/independent connection lifecycle, encryption/decryption, wrong passwords, tampered archives, identity binding, master-password rotation, backup append/import, persistence across reopening and secret-free disk logging.
-
-The window-state tests cover missing state, persistence roundtrip and rejection of corrupt/unsafe geometry.
-
-The six Apache MINA integration tests exercise local and remote TCP data transfer, wrong-password rejection, host-key rejection before password authentication, changed-pin rejection and conflicting remote binds. Forwarding listener shutdown is verified with a bounded eventual-close check to avoid depending on nondeterministic TCP teardown timing. SSH and echo fixtures bind exclusively to `127.0.0.1`; they do not contact the user's SSH host or Maven service.
-
-The forwarding-policy test checks that remote channels can reach only the configured host and port, denies arbitrary direct channels and extra listeners, and denies new connections after cancellation. The client combines this policy with disabled agent and X11 forwarding.
-
-The packaged smoke test starts the actual JavaFX application, writes `UI_READY 0.2.1 DECORATED WINDOWED` and the local diagnostic log, then exits without opening SSH tunnels. Tray initialization is deliberately disabled in smoke-test mode. This verifies packaged GUI/runtime startup and window mode, not every interactive workflow.
+Maven runs 12 JUnit methods: two aggregate suites (62 core cases and 30 POSIX storage cases, or 28 storage cases on Windows), six SSH integration methods, one forwarding-policy method and three window-state persistence methods. The six integration tests use loopback-only SSH/echo fixtures for local/remote transfer, password rejection, host-key rejection, changed host pins and bind conflicts. The packaged smoke test disables tray initialization and opens no SSH tunnel.
 
 ## Reproduction
 
-Full build, including integration tests:
-
-```text
-mvn --batch-mode --no-transfer-progress clean verify
-```
-
-Dependency-free core and storage verification:
-
 ```bash
-bash scripts/test-core-offline.sh
+mvn --batch-mode --no-transfer-progress clean verify
+python scripts/prepare-distribution.py
+python scripts/verify-release.py --history --app target/app
 ```
 
-## Still requires operator validation
+Offline core/storage tests: `bash scripts/test-core-offline.sh`. The release checker requires Python 3.10+ and Git; `--history` inspects HEAD, branch and tag history, not PR refs. It is not a general-purpose secret scanner.
 
-The packages are unsigned release candidates. Actual EXE/MSI installation, upgrade and uninstall, DEB/RPM installation/removal on target distributions, individual Linux tray/window-manager variants, interactive close-dialog behavior, supported private-key formats against real servers, sleep/resume and network transitions require validation in the target environment. The automated smoke test is not a complete desktop end-to-end test or a security audit.
+## Limits
 
-## Storage failure model and limits
+Binaries are unsigned. Actual installer upgrade/uninstall, Linux tray/window-manager variants, full interactive workflows, real SSH server policies, private-key formats, sleep/resume and network transitions still require validation in the target environment. These checks are not an exhaustive security or license audit.
 
-Each individual configuration/vault write uses a temporary owner-restricted file, flush and atomic replacement where supported. Backup import validates first and allocates new IDs. It saves encrypted credentials before profiles: if the second write fails, previous profiles stay unchanged but encrypted orphan credentials may remain. This is not a cross-file transaction. Preserve backups before upgrades and use an owner-controlled local filesystem.
+Individual configuration/vault writes use owner-restricted temporary files and atomic replacement where supported. Backup import is not a multi-file transaction: credentials are saved before profiles, so a second-write failure can leave orphan encrypted credentials without replacing previous profiles. Keep backups. Configuration files are capped at 2 MB and encrypted envelopes at 8 MB. Encryption does not protect an unlocked process from malware or administrators; immediate erasure of library-managed strings is not guaranteed.
 
-Profile input is bounded to 1,000 rows and a 2 MB configuration file. Encrypted envelopes are bounded to 8 MB. The vault does not protect a running, unlocked process from malware or an administrator. JavaFX/library-managed strings cannot be guaranteed to be immediately erased.
+Repository checks do not establish that other people's old clones, downloaded binaries or service-side caches have been erased. Do not copy the old `.git` directory or old binaries into this repository.

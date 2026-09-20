@@ -1,4 +1,4 @@
-NexU Port Forwarding - dati locali e aggiornamenti
+Nexu Port Forwarding - dati locali e aggiornamenti
 
 Documento inglese principale: DATA-AND-LOGS.txt
 Traduzione italiana: DATA-AND-LOGS.it.txt

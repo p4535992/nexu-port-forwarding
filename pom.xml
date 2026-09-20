@@ -4,9 +4,16 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>it.nexu</groupId>
   <artifactId>nexu-port-forwarding</artifactId>
-  <version>0.2.1</version>
-  <name>NexU Port Forwarding</name>
+  <version>1.0.0</version>
+  <name>Nexu Port Forwarding</name>
   <description>Desktop SSH TCP tunnel manager for Windows and Linux.</description>
+  <licenses>
+    <license>
+      <name>MIT License</name>
+      <url>https://opensource.org/license/mit</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
   <properties>
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -33,6 +40,10 @@
   </dependencies>
   <build>
     <finalName>nexu-port-forwarding</finalName>
+    <resources>
+      <resource><directory>src/main/resources</directory></resource>
+      <resource><directory>${project.basedir}</directory><targetPath>META-INF</targetPath><includes><include>LICENSE</include><include>THIRD_PARTY_NOTICES.md</include></includes></resource>
+    </resources>
     <plugins>
       <plugin><groupId>org.apache.maven.plugins</groupId><artifactId>maven-compiler-plugin</artifactId><version>3.14.0</version></plugin>
       <plugin>

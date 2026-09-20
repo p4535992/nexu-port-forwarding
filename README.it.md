@@ -1,8 +1,10 @@
-# NexU Port Forwarding
+# Nexu Port Forwarding
 
 [English](README.md) | [Italiano](README.it.md)
 
-Gestore desktop di tunnel SSH TCP per **Windows e Linux**, sviluppato con Java 21, JavaFX e integrazione Dorkbox SystemTray. NexU è usato come riferimento per l'integrazione desktop; questa applicazione non include servizi di firma digitale né un server web locale.
+Gestore desktop di tunnel SSH TCP per **Windows e Linux**, sviluppato con Java 21, JavaFX e integrazione Dorkbox SystemTray. Nexu Port Forwarding è un gestore di tunnel indipendente; non include servizi di firma digitale né un server web locale.
+
+L'inglese è la lingua primaria della documentazione; le traduzioni italiane vengono mantenute in parallelo. L'interfaccia grafica attuale usa etichette italiane.
 
 ## Funzioni
 
@@ -20,9 +22,9 @@ Il verde indica che connessione SSH e forwarding sono stati stabiliti; **non** c
 
 Ogni profilo possiede una connessione SSH indipendente. Nessun tunnel parte automaticamente all'apertura dell'applicazione. Gli errori di autenticazione, chiave host o bind non vengono ritentati automaticamente. Apache MINA SSHD viene usato direttamente, quindi le password non vengono passate tramite BAT, comandi PowerShell o argomenti di processi esterni.
 
-## Release verificata corrente
+## Release 1.0.0
 
-La release verificata corrente è **[v0.2.1-rc.9](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v0.2.1-rc.9)**.
+Scarica **[v1.0.0](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.0.0)**.
 
 | Piattaforma | Pacchetti |
 | --- | --- |
@@ -36,7 +38,7 @@ Avvio:
 - Windows: `NexuPortForwarding.exe`
 - Linux: `bin/NexuPortForwarding`
 
-La release non è firmata ed è pubblicata come prerelease. Windows SmartScreen o gli strumenti di gestione pacchetti Linux possono quindi mostrare un avviso di autore sconosciuto.
+La release è pubblicata come versione stabile, ma i binari non sono firmati digitalmente. Windows SmartScreen o gli strumenti di gestione pacchetti Linux possono quindi mostrare un avviso di autore sconosciuto.
 
 ## Comportamento della finestra
 
@@ -101,7 +103,7 @@ I backup escludono volutamente file delle chiavi private, fiducia nelle chiavi h
 
 ## Esempio di remote forwarding
 
-L'esempio integrato equivale a:
+L'esempio integrato usa indirizzi riservati alla documentazione. Sostituiscili con server e destinazione reali prima di collegarti:
 
 ```powershell
 ssh.exe -N -T -p 22 -o ExitOnForwardFailure=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -R 127.0.0.1:8989:maven.example.com:8081 utente@203.0.113.10
@@ -124,19 +126,27 @@ java -jar target/app/nexu-port-forwarding.jar
 
 Sono inclusi `build.bat`, `run.bat`, `build.sh` e `run.sh`.
 
-Packaging:
+Il packaging richiede anche Python 3.10+ per preparare documentazione offline e inventario:
+
+```bash
+python scripts/prepare-distribution.py
+```
+
+Poi crea i pacchetti sul sistema operativo di destinazione:
 
 ```powershell
-./scripts/package-windows.ps1 -Version 0.2.1
+./scripts/package-windows.ps1 -Version 1.0.0
 ```
 
 ```bash
-bash scripts/package-linux.sh 0.2.1
+bash scripts/package-linux.sh 1.0.0
 ```
 
 Il packaging Windows richiede WiX 3.x. Quello Linux richiede gli strumenti DEB/RPM e le librerie desktop installate dalla pipeline di release.
 
 ## Verifica e documentazione
+
+I controlli di release verificano anche cronologia Git raggiungibile e JAR applicativo per i due indirizzi ritirati, senza salvarne i valori nelle regole. È un controllo mirato, non un audit di sicurezza completo. L’inventario esatto dei JAR runtime è incluso come `dependency-inventory.json`.
 
 La pipeline di release compila e testa entrambi i sistemi operativi, genera i pacchetti nativi ed esegue una smoke test dell'applicazione JavaFX pacchettizzata. La release viene pubblicata solo dopo il successo di entrambi i job.
 
@@ -150,3 +160,7 @@ Documentazione:
 - [Indice della documentazione](docs/README.it.md)
 
 Non implementati: SSH agent, ProxyJump, MFA/autenticazione keyboard-interactive, avvio automatico dei tunnel, aggiornamento automatico dell'applicazione o sincronizzazione cloud.
+
+## Licenza
+
+Codice applicativo e documentazione di Nexu Port Forwarding sono distribuiti con [licenza MIT](LICENSE). Dipendenze e runtime Java incluso mantengono le proprie licenze; consulta [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). I pacchetti nativi includono la licenza MIT e gli avvisi di terze parti.

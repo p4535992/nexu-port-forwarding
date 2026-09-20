@@ -1,15 +1,13 @@
-# Release pipeline
+# Nexu Port Forwarding release pipeline
 
 [English](RELEASE-PIPELINE.md) | [Italiano](RELEASE-PIPELINE.it.md)
 
-Every application-source push to main or manual workflow dispatch creates a uniquely numbered release candidate. Builds run on Windows 2022 and Ubuntu 22.04 x64.
+Application-source pushes to `main` or a manual workflow dispatch prepare the version declared in `pom.xml` and `APP_VERSION`. Version 1.0.0 is published as **v1.0.0**, not as a release candidate.
 
-A prepare job creates a **draft**, tied to the exact source commit. Each build runs Maven tests, native packaging and the packaged JavaFX UI/log smoke test. The smoke test also verifies that the primary window is native-decorated, non-full-screen and visible on a detected screen. Only successfully tested native packages are uploaded to that draft. Test reports and build logs are attached as diagnostics archives, including when a build fails.
+A per-run draft stages the exact source commit. Windows 2022 x64 and Ubuntu 22.04 x64 compile and test independently, collect the runtime JAR inventory and embedded legal notices, and build their native packages. Checks validate the release version, documentation links, full project name, retired endpoints in reachable history and the application JAR, and MIT inclusion. The real packaged JavaFX application is started and stopped, with window-mode and local-log checks.
 
-The publish job runs only after BOTH OS builds succeed. It checks that all eight expected distributions exist, adds `SHA256SUMS.txt` and changes the draft to a prerelease with curated notes. Failed attempts remain drafts marked as not validated; they are not usable releases. Nothing automatically deletes old releases, artifacts or user data. Existing assets are not overwritten.
+Only when both platform jobs succeed does publication verify every expected package, add a source ZIP without Git history, compute `SHA256SUMS.txt`, combine release notes with **English first, then Italian**, and publish the draft under the stable version tag as Latest. The release notes record the source commit and workflow run. Existing published versions are never overwritten; bump the version before publishing another release.
 
-Release assets are transferred directly through GitHub Releases rather than actions/upload-artifact because the account previously reported exhausted Actions artifact storage. This avoids making delivery depend on that quota and does not require deleting another repository's artifacts. No account billing or quota settings are changed.
+Packages and diagnostics use GitHub Releases, not Actions artifact storage. Failed attempts remain unpublished drafts. This workflow does not delete old releases, rewrite Git history, access PR resources, run against real SSH servers or change repository visibility. Diagnostic logs contain synthetic test data; publication still requires checking their contents.
 
-The default native app version is **0.2.1**; the distribution tag adds `rc.<workflow run number>`. The stable Windows upgrade UUID is declared in `scripts/package-windows.ps1`. Update `APP_VERSION`, `RELEASE_TAG`, `pom.xml`, launcher/UI version labels and release notes together for the next application version.
-
-No generated release notes, pull-request triggers, automatic merging, cloud password sync, self-updater or real external SSH connections are involved. The GUI smoke test deliberately disables tray initialization in CI; real tray variants and installer upgrade behavior still require operator validation.
+For the next version update `pom.xml`, `APP_VERSION`, `RELEASE_TAG`, launcher/UI/log version strings, script defaults and bilingual documentation together. Preserve the Windows upgrade UUID and the version-independent data directory. Stable status does not mean code signing: the binaries are unsigned.

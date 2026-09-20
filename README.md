@@ -1,8 +1,10 @@
-# NexU Port Forwarding
+# Nexu Port Forwarding
 
 [English](README.md) | [Italiano](README.it.md)
 
-Desktop SSH TCP tunnel manager for **Windows and Linux**, built with Java 21, JavaFX and Dorkbox SystemTray integration. NexU is used as a desktop-integration reference; this application does not include digital-signature services or a local web server.
+Desktop SSH TCP tunnel manager for **Windows and Linux**, built with Java 21, JavaFX and Dorkbox SystemTray integration. Nexu Port Forwarding is an independent tunnel manager; it does not include digital-signature services or a local web server.
+
+English is the primary documentation language; Italian translations are maintained in parallel. The current graphical interface uses Italian labels; the [getting-started guide](docs/GETTING-STARTED.md) lists the exact menu names.
 
 ## Features
 
@@ -20,9 +22,9 @@ Green means the SSH connection and forwarding listener were established; it does
 
 Each profile owns its own SSH connection. No tunnel starts automatically when the application opens. Authentication, host-key and bind failures are not automatically retried. Apache MINA SSHD is used directly, so passwords are not passed through BAT files, PowerShell commands or external-process arguments.
 
-## Current verified release
+## Release 1.0.0
 
-The current verified release is **[v0.2.1-rc.9](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v0.2.1-rc.9)**.
+Download **[v1.0.0](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.0.0)**.
 
 | Platform | Packages |
 | --- | --- |
@@ -36,7 +38,7 @@ Start:
 - Windows: `NexuPortForwarding.exe`
 - Linux: `bin/NexuPortForwarding`
 
-The release is unsigned and published as a prerelease. Windows SmartScreen or Linux package tooling may therefore show an unknown-publisher warning.
+The release is published as a stable version, but the binaries are not code-signed. Windows SmartScreen or Linux package tooling may therefore show an unknown-publisher warning.
 
 ## Window behavior
 
@@ -101,7 +103,7 @@ Backups deliberately exclude private-key files, host-key trust and logs. When mo
 
 ## Remote-forward example
 
-The built-in example is equivalent to:
+The built-in example uses documentation-only endpoints. Replace them with your own server and destination before connecting:
 
 ```powershell
 ssh.exe -N -T -p 22 -o ExitOnForwardFailure=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -R 127.0.0.1:8989:maven.example.com:8081 utente@203.0.113.10
@@ -124,19 +126,27 @@ java -jar target/app/nexu-port-forwarding.jar
 
 Helpers are included as `build.bat`, `run.bat`, `build.sh` and `run.sh`.
 
-Packaging:
+Packaging also requires Python 3.10+ for the offline documentation and inventory step:
+
+```bash
+python scripts/prepare-distribution.py
+```
+
+Then package on the target operating system:
 
 ```powershell
-./scripts/package-windows.ps1 -Version 0.2.1
+./scripts/package-windows.ps1 -Version 1.0.0
 ```
 
 ```bash
-bash scripts/package-linux.sh 0.2.1
+bash scripts/package-linux.sh 1.0.0
 ```
 
 Windows packaging requires WiX 3.x. Linux packaging requires the DEB/RPM and desktop libraries installed by the release workflow.
 
 ## Verification and documentation
+
+Release checks also scan reachable Git history and the application JAR for the two retired endpoints, without storing those values in the rules. This is a targeted check, not a complete security audit. The exact runtime JAR inventory is included as `dependency-inventory.json`.
 
 The release workflow builds and tests both operating systems, creates native packages and smoke-tests the packaged JavaFX application. The release is published only after both platform jobs succeed.
 
@@ -150,3 +160,7 @@ Documentation:
 - [Documentation index](docs/README.md)
 
 Not implemented: SSH agent, ProxyJump, MFA/keyboard-interactive authentication, automatic tunnel startup, automatic application updates or cloud synchronization.
+
+## License
+
+Nexu Port Forwarding application code and documentation are licensed under the [MIT License](LICENSE). Dependencies and the bundled Java runtime retain their own licenses; see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Native packages include the MIT license and third-party notices.
