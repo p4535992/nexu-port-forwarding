@@ -1,0 +1,42 @@
+NexU Port Forwarding - dati locali e aggiornamenti
+
+Documento inglese principale: DATA-AND-LOGS.txt
+Traduzione italiana: DATA-AND-LOGS.it.txt
+
+Avvio normale (consigliato):
+  Windows: %LOCALAPPDATA%\nexu-port-forwarding\
+  Linux:   ${XDG_DATA_HOME:-$HOME/.local/share}/nexu-port-forwarding/
+
+File:
+  profiles.properties     Profili, SENZA password.
+  credentials.npfvault    Password locali e passphrase delle chiavi cifrate.
+  host-keys.properties    Impronte delle chiavi host SSH accettate esplicitamente.
+  window.properties       Ultima posizione/dimensione normale e stato massimizzato.
+  logs/nexu-0.log         Log diagnostico corrente; fino a 5 file da 2 MB.
+  app.lock                Blocco del sistema operativo per evitare due istanze sugli stessi dati.
+
+I dati non vengono memorizzati nella directory di installazione e non vengono inclusi nelle release.
+Mantieni la stessa directory dati quando sostituisci o aggiorni l'applicazione.
+L'applicazione non dispone di sincronizzazione cloud, telemetria o aggiornamento automatico.
+
+La modalità portabile è opzionale: avvia start-portable.bat o start-portable.sh dall'archivio portabile.
+Usa una directory data/ accanto al launcher. Conserva INTERAMENTE questa directory quando estrai una release
+portabile più recente. Non usare un archivio portabile dentro Program Files o un'altra directory non scrivibile.
+
+Opzioni avanzate: NEXU_PF_HOME o -Dnexu.home permettono di sostituire la directory dati.
+Usa soltanto una directory controllata dal proprietario su un filesystem locale fidato.
+
+Nel menu Password, crea una password principale di almeno 12 caratteri, sblocca o blocca il vault,
+cambia la password principale oppure esporta/importa un backup cifrato .npfbackup.
+La password principale NON viene mai salvata e non può essere recuperata. Conservala in modo sicuro.
+Un vault bloccato impedisce l'uso delle password salvate; ferma i tunnel prima di bloccarlo così che
+anche i worker di riconnessione possano eliminare le proprie copie delle credenziali.
+
+Le esportazioni normali dei profili non contengono password. I backup cifrati includono profili e
+password/passphrase SALVATE, ma non il contenuto dei file delle chiavi private, i log o le chiavi host fidate.
+Dopo l'import verifica di nuovo le impronte host e copia separatamente le chiavi private quando passi a
+un altro computer. L'import aggiunge nuovi profili; non sovrascrive quelli esistenti e non avvia tunnel.
+
+I log contengono il ciclo di vita dell'applicazione e UUID/stato dei tunnel, non password, contenuto del traffico,
+messaggi SSH arbitrari o chiavi private. I dettagli restano nel pannello in memoria del singolo tunnel.
+Anche log privi di segreti possono comunque rivelare orari e attività.

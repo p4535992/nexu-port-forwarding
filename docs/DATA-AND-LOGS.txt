@@ -1,0 +1,40 @@
+NexU Port Forwarding - local data and upgrades
+
+Normal launch (recommended):
+  Windows: %LOCALAPPDATA%\nexu-port-forwarding\
+  Linux:   ${XDG_DATA_HOME:-$HOME/.local/share}/nexu-port-forwarding/
+
+Files:
+  profiles.properties     Profiles, WITHOUT passwords.
+  credentials.npfvault    Encrypted local passwords and key passphrases.
+  host-keys.properties    Explicitly accepted SSH host-key fingerprints.
+  logs/nexu-0.log          Current diagnostic log; up to 5 files of 2 MB each.
+  app.lock                OS lock preventing two instances on the same data.
+
+Data is not stored in the installation directory and is not bundled in releases.
+Keep the same data directory when replacing/upgrading the application.
+The application has no cloud sync, telemetry or automatic update service.
+
+Portable mode is optional: run start-portable.bat or start-portable.sh from the
+portable archive. It uses a data/ directory next to that launcher. Preserve this
+ENTIRE directory when extracting a newer portable release. Do not run a portable
+archive inside Program Files or another non-writable directory.
+
+Advanced: NEXU_PF_HOME or -Dnexu.home overrides the data directory.
+Only use an owner-controlled directory on a trusted local filesystem.
+
+In the Password menu, create a master password of at least 12 characters, unlock,
+lock, change the master password, export/import a .npfbackup encrypted backup.
+The master password is NEVER saved and cannot be recovered. Keep it safely.
+A locked vault prevents use of saved passwords; stop tunnels before locking so
+reconnection workers can also discard their copies of credentials.
+
+Plain profile exports do not contain passwords. Encrypted backups include
+profiles and SAVED passwords/passphrases, but no private-key file contents, logs
+or trusted host keys. After import, verify host fingerprints again, and copy
+private keys separately when moving to a different computer. An import adds new
+profiles; it does not overwrite existing ones or start tunnels.
+
+Logs contain application lifecycle and tunnel UUID/state, not passwords, traffic
+contents, arbitrary SSH exception messages, or private keys. Details remain in
+the in-memory per-tunnel panel. Log files still reveal timing and activity.

@@ -1,0 +1,174 @@
+name: Build and publish desktop release candidate
+
+on:
+  push:
+    branches: [main]
+    paths: ['pom.xml', 'src/**', 'scripts/**', '.github/workflows/release.yml', 'docs/DATA-AND-LOGS.txt', 'THIRD_PARTY_NOTICES.md']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: nexu-port-forwarding-release
+  cancel-in-progress: false
+
+env:
+  APP_VERSION: '0.2.1'
+  RELEASE_TAG: v0.2.1-rc.${{ github.run_number }}
+
+jobs:
+  prepare:
+    name: Prepare private draft release
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Create a draft for this source commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$RELEASE_TAG" --json isDraft,targetCommitish > existing.json 2>/dev/null; then
+            test "$(jq -r '.isDraft' existing.json)" = true
+            test "$(jq -r '.targetCommitish' existing.json)" = "$GITHUB_SHA"
+          else
+            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --draft --prerelease \
+              --title "NexU Port Forwarding $RELEASE_TAG" \
+              --notes "Build in progress. Not validated or published. Source: $GITHUB_SHA"
+          fi
+
+  build:
+    needs: prepare
+    permissions:
+      contents: write
+    name: Build and test ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            platform: linux
+          - os: windows-2022
+            platform: windows
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Install Linux prerequisites
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends fakeroot rpm xvfb libgtk-3-0 libx11-6 libxtst6 libxi6
+      - name: Ensure Windows WiX 3
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          if (-not (Get-Command candle.exe -ErrorAction SilentlyContinue)) {
+            choco install wixtoolset --version=3.14.1 --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'WiX installation failed' }
+            $bin = Get-Item "${env:ProgramFiles(x86)}\WiX Toolset v3*\bin" | Select-Object -First 1
+            if (-not $bin) { throw 'WiX 3 bin directory not found' }
+            $bin.FullName | Out-File $env:GITHUB_PATH -Encoding utf8 -Append
+          }
+      - name: Compile and run unit, security and SSH loopback integration tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          mvn --batch-mode --no-transfer-progress clean verify 2>&1 | tee build.log
+      - name: Package Linux
+        if: runner.os == 'Linux'
+        run: bash scripts/package-linux.sh "$APP_VERSION"
+      - name: Package Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: ./scripts/package-windows.ps1 -Version $env:APP_VERSION
+      - name: Smoke-test packaged Linux GUI and persistent logs
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          export NEXU_PF_HOME="$RUNNER_TEMP/nexu-smoke-$GITHUB_RUN_ID"
+          timeout 45s xvfb-run -a target/package/NexuPortForwarding/bin/NexuPortForwarding --smoke-test
+          grep -q 'UI_READY 0.2.1 DECORATED WINDOWED' "$NEXU_PF_HOME/ui-ready"
+          grep -q 'ui-ready' "$NEXU_PF_HOME/logs/nexu-0.log"
+      - name: Smoke-test packaged Windows GUI and persistent logs
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $env:NEXU_PF_HOME = Join-Path $env:RUNNER_TEMP "nexu-smoke-$env:GITHUB_RUN_ID"
+          $process = Start-Process target/package/NexuPortForwarding/NexuPortForwarding.exe -ArgumentList '--smoke-test' -PassThru
+          if (-not $process.WaitForExit(45000)) { $process.Kill(); throw 'GUI smoke test timed out' }
+          if ($process.ExitCode -ne 0) { throw "GUI exited with $($process.ExitCode)" }
+          if (-not (Select-String -Path "$env:NEXU_PF_HOME/ui-ready" -Pattern 'UI_READY 0.2.1 DECORATED WINDOWED' -Quiet)) { throw 'UI readiness marker missing' }
+          if (-not (Select-String -Path "$env:NEXU_PF_HOME/logs/nexu-0.log" -Pattern 'ui-ready' -Quiet)) { throw 'Persistent log missing' }
+      - name: Upload tested packages to the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd target/release-assets
+          for file in *; do mv "$file" "${file/$APP_VERSION/${RELEASE_TAG#v}}"; done
+          gh release upload "$RELEASE_TAG" * --repo "$GITHUB_REPOSITORY"
+      - name: Keep test reports without Actions artifact storage
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PLATFORM: ${{ matrix.platform }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PYCODE'
+          import os, pathlib, zipfile
+          files = [pathlib.Path('build.log')] + list(pathlib.Path('target/surefire-reports').glob('*'))
+          name = 'diagnostics-' + os.environ['PLATFORM'] + '-attempt-' + os.environ['GITHUB_RUN_ATTEMPT'] + '.zip'
+          with zipfile.ZipFile(name, 'w', zipfile.ZIP_DEFLATED) as archive:
+              for file in files:
+                  if file.is_file(): archive.write(file, str(file))
+          PYCODE
+          gh release upload "$RELEASE_TAG" "diagnostics-$PLATFORM-attempt-$GITHUB_RUN_ATTEMPT.zip" --repo "$GITHUB_REPOSITORY"
+
+  publish:
+    name: Publish tested Windows and Linux packages
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify both platforms and publish the draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release view "$RELEASE_TAG" --json isDraft,targetCommitish > release.json
+          test "$(jq -r '.isDraft' release.json)" = true
+          test "$(jq -r '.targetCommitish' release.json)" = "$GITHUB_SHA"
+          mkdir release-assets
+          gh release download "$RELEASE_TAG" --dir release-assets
+          VERSION="${RELEASE_TAG#v}"
+          for ext in windows-x64.zip windows-x64.exe windows-x64.msi linux-x64.tar.gz linux-x64.deb linux-x64.rpm windows-java.zip linux-java.tar.gz; do
+            test -s "release-assets/nexu-port-forwarding-$VERSION-$ext"
+          done
+          (cd release-assets && sha256sum * > SHA256SUMS.txt)
+          gh release upload "$RELEASE_TAG" release-assets/SHA256SUMS.txt
+          cp docs/RELEASE-NOTES.md release-notes.md
+          printf '\nSource commit: `%s`\nWorkflow run: `%s`\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" >> release-notes.md
+          gh release edit "$RELEASE_TAG" --draft=false --prerelease --latest=false --notes-file release-notes.md
+          printf 'Published [%s](https://github.com/%s/releases/tag/%s)\n' "$RELEASE_TAG" "$GITHUB_REPOSITORY" "$RELEASE_TAG" >> "$GITHUB_STEP_SUMMARY"
