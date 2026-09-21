@@ -1,4 +1,4 @@
-# Nexu Port Forwarding 1.1.0-rc.1
+# Nexu Port Forwarding 1.1.0-rc.3
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
@@ -7,6 +7,10 @@
 Prerelease che aggiunge importazione da applicazioni esterne e nuovi filtri operativi, lasciando invariata la release stabile 1.0.0.
 
 ### Novità
+
+- I campi password/passphrase includono il pulsante occhio per mostrare/nascondere il valore.
+- La colonna **AZIONI** è ora la prima colonna della tabella.
+- Gli errori SSH distinguono DNS, timeout TCP, connessione rifiutata, assenza di route, handshake interrotto e autenticazione. Nei timeout viene indicato esplicitamente che la connessione è diretta e che il proxy HTTP/SOCKS del sistema operativo non viene usato automaticamente.
 
 - Tab nell'ordine **Attivi → Custom → Tabby → MobaXterm**. Attivi contiene soltanto i tunnel nello stato SSH/forwarding ACTIVE.
 - Importazione **Tabby** in sola lettura da `config.yaml`, con anteprima e conversione Local/Remote/Dynamic.

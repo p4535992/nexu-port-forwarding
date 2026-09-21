@@ -30,9 +30,9 @@ Il verde indica che connessione SSH e forwarding sono stati stabiliti; **non** c
 
 Ogni profilo possiede una connessione SSH indipendente. Nessun tunnel parte automaticamente all'apertura dell'applicazione. Gli errori di autenticazione, chiave host o bind non vengono ritentati automaticamente. Apache MINA SSHD viene usato direttamente, quindi le password non vengono passate tramite BAT, comandi PowerShell o argomenti di processi esterni.
 
-## Release 1.1.0-rc.1
+## Release 1.1.0-rc.3
 
-Scarica **[v1.1.0-rc.1](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.1)**.
+Scarica **[v1.1.0-rc.3](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.3)**.
 
 | Piattaforma | Pacchetti |
 | --- | --- |
@@ -47,6 +47,13 @@ Avvio:
 - Linux: `bin/NexuPortForwarding`
 
 Il tag è pubblicato come prerelease, ma i binari non sono firmati digitalmente. Windows SmartScreen o gli strumenti di gestione pacchetti Linux possono quindi mostrare un avviso di autore sconosciuto.
+
+## Diagnostica della connessione SSH
+
+Gli errori distinguono risoluzione DNS, timeout TCP, connessione rifiutata, assenza di route, handshake SSH interrotto, verifica della chiave host e autenticazione. Nei timeout Nexu Port Forwarding specifica che apre una **connessione TCP SSH diretta** e non riutilizza automaticamente il proxy HTTP/SOCKS del sistema operativo. Se la rete aziendale richiede HTTP CONNECT/SOCKS o una VPN serve quindi un percorso compatibile esplicito.
+
+I campi password/passphrase includono un pulsante a forma di occhio per mostrare o nascondere temporaneamente il valore digitato. La colonna **AZIONI** è la prima a sinistra.
+
 
 ## Comportamento della finestra
 

@@ -30,9 +30,9 @@ Green means the SSH connection and forwarding listener were established; it does
 
 Each profile owns its own SSH connection. No tunnel starts automatically when the application opens. Authentication, host-key and bind failures are not automatically retried. Apache MINA SSHD is used directly, so passwords are not passed through BAT files, PowerShell commands or external-process arguments.
 
-## Release 1.1.0-rc.1
+## Release 1.1.0-rc.3
 
-Download **[v1.1.0-rc.1](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.1)**.
+Download **[v1.1.0-rc.3](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.3)**.
 
 | Platform | Packages |
 | --- | --- |
@@ -47,6 +47,13 @@ Start:
 - Linux: `bin/NexuPortForwarding`
 
 This tag is published as a prerelease, but the binaries are not code-signed. Windows SmartScreen or Linux package tooling may therefore show an unknown-publisher warning.
+
+## SSH connection diagnostics
+
+Connection errors distinguish DNS resolution, TCP timeout, connection refusal, missing network route, interrupted SSH handshake, host-key verification and authentication failures. Timeout messages explicitly state that Nexu Port Forwarding opens a **direct TCP SSH connection** and does not automatically reuse the operating-system HTTP/SOCKS proxy. Corporate networks that require HTTP CONNECT/SOCKS or a VPN therefore need an explicit compatible route.
+
+Password and passphrase inputs include an eye button to temporarily show/hide the value being typed. The **AZIONI** column is the first column on the left.
+
 
 ## Window behavior
 

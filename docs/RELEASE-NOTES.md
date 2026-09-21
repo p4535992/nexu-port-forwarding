@@ -1,4 +1,4 @@
-# Nexu Port Forwarding 1.1.0-rc.1
+# Nexu Port Forwarding 1.1.0-rc.3
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
@@ -7,6 +7,10 @@
 Prerelease adding external-profile import and operational filtering while keeping the 1.0.0 stable release unchanged.
 
 ### New in this prerelease
+
+- Password/passphrase fields include a show/hide eye control.
+- The **AZIONI** column is now the first table column.
+- SSH connection failures now distinguish DNS, TCP timeout, connection refused, no route, interrupted handshake and authentication failures. Timeout diagnostics explicitly state that the connection is direct and the operating-system HTTP/SOCKS proxy is not automatically used.
 
 - Main views ordered **Active → Custom → Tabby → MobaXterm**. Active contains only tunnels whose SSH forwarding state is ACTIVE.
 - Read-only **Tabby** import from `config.yaml`, with preview and Local/Remote/Dynamic forwarding conversion.
