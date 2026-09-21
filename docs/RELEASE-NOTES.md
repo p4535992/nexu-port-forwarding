@@ -1,12 +1,12 @@
-# Nexu Port Forwarding 1.2.0-rc.4
+# Nexu Port Forwarding 1.2.0
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## English
 
-Fourth 1.2.0 release candidate adding persistent English/Italian UI language selection, with English as the default, while retaining the proxy, OpenSSH diagnostics and adaptive table improvements from earlier release candidates.
+Stable 1.2.0 release with configurable SOCKS5/HTTP CONNECT proxy transport, OpenSSH comparison diagnostics, adaptive table layout, clearer tunnel-state coloring, and persistent English/Italian UI language selection with English as the default.
 
-### New in this prerelease
+### Highlights in 1.2.0
 
 - Added **Settings → Language → English / Italiano** with **English as the default** when no preference exists.
 - The selected language is persisted in the local data directory and is applied on the next application start.
@@ -29,10 +29,10 @@ Fourth 1.2.0 release candidate adding persistent English/Italian UI language sel
 - Existing v1/v2 profile files remain compatible and default to **Direct**; the new profile format is v3.
 - Added specific proxy diagnostics such as DNS failure, proxy timeout, authentication rejection, SOCKS5 failure and HTTP CONNECT failure.
 - `FORWARDING_REJECTED` now records the concrete forwarding request and points to the relevant SSH-server policy checks. For remote forwarding this includes `AllowTcpForwarding`, the required `PermitListen` listener, `GatewayPorts` when a non-loopback listener is requested, and possible `Match`/per-user restrictions.
-- The stable 1.1.0 release remains unchanged; this prerelease is for validating the new proxy transport on Windows and Linux.
+- 1.2.0 promotes the proxy transport, OpenSSH diagnostics, adaptive table improvements and bilingual UI from the release-candidate cycle into the stable release.
 
 ### Security
 
 Proxy passwords are not written to the profile configuration or exported as plain profile data. They remain session-only and are cleared by the existing “lock and forget in-memory secrets” action or when the application closes.
 
-This is an unsigned prerelease. Validate proxy and SSH-server policy settings in your own environment before production use.
+This release is unsigned. Validate proxy and SSH-server policy settings in your own environment before production use.

@@ -1,12 +1,12 @@
-# Nexu Port Forwarding 1.2.0-rc.4
+# Nexu Port Forwarding 1.2.0
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## Italiano
 
-Quarta release candidate della linea 1.2.0: aggiunge la selezione persistente della lingua Inglese/Italiano con inglese predefinito, mantenendo proxy, diagnostica OpenSSH e miglioramenti della tabella delle release candidate precedenti.
+Release stabile 1.2.0 con trasporto proxy SOCKS5/HTTP CONNECT configurabile, diagnostica di confronto OpenSSH, tabella adattiva, colorazione più chiara degli stati e selezione persistente della lingua Inglese/Italiano con inglese predefinito.
 
-### Novità
+### Principali novità della 1.2.0
 
 - Aggiunto **Settings / Impostazioni → Language / Lingua → English / Italiano**, con **English come default** quando non esiste ancora una preferenza.
 - La lingua scelta viene salvata nella cartella dati locale e applicata al successivo avvio dell'applicazione.
@@ -29,10 +29,10 @@ Quarta release candidate della linea 1.2.0: aggiunge la selezione persistente de
 - I file profilo v1/v2 restano compatibili e diventano automaticamente **Diretto**; il nuovo formato profilo è v3.
 - Aggiunte categorie diagnostiche specifiche per DNS del proxy, timeout, autenticazione, SOCKS5 e HTTP CONNECT.
 - `FORWARDING_REJECTED` registra ora anche il forwarding concreto richiesto e indica le verifiche lato server SSH. Per un forwarding remoto vengono citati esplicitamente `AllowTcpForwarding`, il `PermitListen` necessario per il listener richiesto, `GatewayPorts` quando si richiede un bind non-loopback ed eventuali restrizioni `Match`/per utente.
-- La release stabile 1.1.0 resta invariata; questa prerelease serve a validare il nuovo trasporto proxy su Windows e Linux.
+- La 1.2.0 porta in stabile il trasporto proxy, la diagnostica OpenSSH, i miglioramenti adattivi della tabella e l'interfaccia bilingue validati durante il ciclo delle release candidate.
 
 ### Sicurezza
 
 Le password proxy non vengono scritte nei file profilo né esportate come configurazione in chiaro. Restano solo nella sessione e vengono eliminate con il comando “Blocca e dimentica segreti in memoria” o alla chiusura dell'applicazione.
 
-È una prerelease non firmata: verificare proxy e policy del server SSH nel proprio ambiente prima dell'uso in produzione.
+La release non è firmata: verificare proxy e policy del server SSH nel proprio ambiente prima dell'uso in produzione.
