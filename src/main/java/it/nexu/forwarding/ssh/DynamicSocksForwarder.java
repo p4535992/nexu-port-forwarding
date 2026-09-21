@@ -65,7 +65,8 @@ final class DynamicSocksForwarder implements AutoCloseable {
         try (client) {
             client.setSoTimeout(Math.max(5_000, profile.connectTimeoutSeconds() * 1000));
             DataInputStream in = new DataInputStream(new BufferedInputStream(client.getInputStream()));
-            // SocketOutputStream is intentionally unbuffered: proxy replies and upstream data must be visible immediately.\n            OutputStream rawOut = client.getOutputStream();
+            // SocketOutputStream is intentionally unbuffered: proxy replies and upstream data must be visible immediately.
+            OutputStream rawOut = client.getOutputStream();
             int version = in.readUnsignedByte();
             Request request = switch (version) {
                 case 4 -> readSocks4(in, rawOut);
