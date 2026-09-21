@@ -35,7 +35,7 @@ public final class NexuApplication extends Application {
     private final SecretStore secrets = new SecretStore();
     private final TraySupport tray = new TraySupport();
     private final TableView<TunnelRow> table = new TableView<>();
-    private final TextField search = new TextField(), ipFilter = new TextField();
+    private final TextField installationFilter = new TextField(), nameFilter = new TextField(), hostFilter = new TextField();
     private final TabPane sourceTabs = new TabPane();
     private final Tab activeTab = new Tab("Attivi"), customTab = new Tab("Custom"), tabbyTab = new Tab("Tabby"), mobaTab = new Tab("MobaXterm");
     private final ComboBox<String> statusFilter = new ComboBox<>(), modeFilter = new ComboBox<>();
@@ -137,15 +137,19 @@ public final class NexuApplication extends Application {
         Button importTabby = new Button("Importa Tabby…"); importTabby.setOnAction(e -> importTabby());
         Button importMoba = new Button("Importa MobaXterm…"); importMoba.setOnAction(e -> importMobaXterm());
         FlowPane commands = new FlowPane(9, 9, add, importTabby, importMoba, start, stop, file, vaultUi.menu(), hosts, openLogs, settings, quit);
-        search.setPromptText("Cerca nome, hostname, utente, porta o destinazione…"); HBox.setHgrow(search, Priority.ALWAYS);
-        ipFilter.setPromptText("Filtra indirizzo IP…"); ipFilter.setPrefWidth(190);
+        installationFilter.setPromptText("Filtra installazione…"); installationFilter.setPrefWidth(180);
+        nameFilter.setPromptText("Filtra nome…"); HBox.setHgrow(nameFilter, Priority.ALWAYS);
+        hostFilter.setPromptText("Filtra hostname / indirizzo IP…"); hostFilter.setPrefWidth(240);
         statusFilter.getItems().add("Tutti gli stati");
         for (TunnelEngine.State state : TunnelEngine.State.values()) statusFilter.getItems().add(state.label());
         statusFilter.getSelectionModel().selectFirst(); statusFilter.setPrefWidth(170);
         modeFilter.getItems().addAll("Tutti i tipi", "LOCAL (-L)", "REMOTE (-R)", "DYNAMIC (SOCKS)");
         modeFilter.getSelectionModel().selectFirst(); modeFilter.setPrefWidth(175);
-        Button clear = new Button("Azzera ricerca"); clear.setOnAction(e -> { search.clear(); ipFilter.clear(); statusFilter.getSelectionModel().selectFirst(); modeFilter.getSelectionModel().selectFirst(); });
-        HBox filters = new HBox(10, search, modeFilter, ipFilter, statusFilter, clear);
+        Button clear = new Button("Azzera filtri"); clear.setOnAction(e -> {
+            installationFilter.clear(); nameFilter.clear(); hostFilter.clear();
+            statusFilter.getSelectionModel().selectFirst(); modeFilter.getSelectionModel().selectFirst();
+        });
+        HBox filters = new HBox(10, installationFilter, nameFilter, hostFilter, modeFilter, statusFilter, clear);
         VBox top = new VBox(22, heading, commands, filters); top.setPadding(new Insets(26,26,18,26));
         activeTab.setClosable(false); customTab.setClosable(false); tabbyTab.setClosable(false); mobaTab.setClosable(false);
         sourceTabs.getTabs().setAll(activeTab, customTab, tabbyTab, mobaTab);
@@ -192,8 +196,11 @@ public final class NexuApplication extends Application {
     private void createTable() {
         filtered = new FilteredList<>(rows, r -> true);
         SortedList<TunnelRow> sorted = new SortedList<>(filtered); sorted.comparatorProperty().bind(table.comparatorProperty()); table.setItems(sorted);
-        search.textProperty().addListener((o,a,b) -> updateFilter()); ipFilter.textProperty().addListener((o,a,b) -> updateFilter()); statusFilter.valueProperty().addListener((o,a,b) -> updateFilter()); modeFilter.valueProperty().addListener((o,a,b) -> updateFilter());
-        table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY); table.setFixedCellSize(62); table.setEditable(true);
+        installationFilter.textProperty().addListener((o,a,b) -> updateFilter());
+        nameFilter.textProperty().addListener((o,a,b) -> updateFilter());
+        hostFilter.textProperty().addListener((o,a,b) -> updateFilter());
+        statusFilter.valueProperty().addListener((o,a,b) -> updateFilter()); modeFilter.valueProperty().addListener((o,a,b) -> updateFilter());
+        table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY); table.setFixedCellSize(-1); table.setEditable(true);
         TableColumn<TunnelRow,TunnelEngine.State> state = new TableColumn<>("STATO"); state.setPrefWidth(145);
         state.setCellValueFactory(c -> c.getValue().stateProperty());
         state.setCellFactory(c -> new TableCell<>() {
@@ -206,6 +213,8 @@ public final class NexuApplication extends Application {
                 }
             }
         });
+        TableColumn<TunnelRow,String> installation = textColumn("INSTALLAZIONE", 170,
+            r -> r.profile().installation().isBlank() ? "—" : r.profile().installation());
         TableColumn<TunnelRow,String> name = textColumn("NOME", 200, r -> r.profile().name());
         name.setEditable(true);
         name.setCellFactory(c -> new AutoSaveTextCell());
@@ -275,9 +284,9 @@ public final class NexuApplication extends Application {
                 HBox box = new HBox(6, runStop, menu); box.setAlignment(Pos.CENTER_LEFT); setGraphic(box);
             }
         });
-        state.setEditable(false); forwarding.setEditable(false); hostAddress.setEditable(false);
+        state.setEditable(false); installation.setEditable(false); forwarding.setEditable(false); hostAddress.setEditable(false);
         actions.setEditable(false);
-        table.getColumns().addAll(actions, state, name, forwarding, hostAddress);
+        table.getColumns().addAll(actions, state, installation, name, forwarding, hostAddress);
         Label emptyTitle = new Label("Nessun tunnel da mostrare"); emptyTitle.getStyleClass().add("empty-title");
         Label emptyHelp = new Label("Attivi: solo tunnel connessi. Custom: + Nuovo tunnel. Tabby/MobaXterm: usa i pulsanti Importa."); emptyHelp.getStyleClass().add("muted");
         VBox empty = new VBox(12, emptyTitle, emptyHelp); empty.setAlignment(Pos.CENTER); table.setPlaceholder(empty);
@@ -302,6 +311,7 @@ public final class NexuApplication extends Application {
                     }
                 }
             };
+            row.setMinHeight(62);
             row.setOnMouseClicked(e -> {
                 if (e.getClickCount() == 2 && !row.isEmpty() && table.getEditingCell() == null) {
                     javafx.scene.Node node = e.getTarget() instanceof javafx.scene.Node n ? n : null;
@@ -316,6 +326,10 @@ public final class NexuApplication extends Application {
 
     private static final class AutoSaveTextCell extends TableCell<TunnelRow,String> {
         private TextField editor;
+        private AutoSaveTextCell() {
+            setWrapText(true);
+            setTextOverrun(OverrunStyle.CLIP);
+        }
         @Override public void startEdit() {
             if (!isEditable() || !getTableView().isEditable() || !getTableColumn().isEditable()) return;
             super.startEdit();
@@ -351,8 +365,9 @@ public final class NexuApplication extends Application {
         }); return column;
     }
     private void updateFilter() {
-        String query = search.getText().trim().toLowerCase(Locale.ROOT);
-        String ipQuery = ipFilter.getText().trim().toLowerCase(Locale.ROOT);
+        String installationQuery = installationFilter.getText().trim().toLowerCase(Locale.ROOT);
+        String nameQuery = nameFilter.getText().trim().toLowerCase(Locale.ROOT);
+        String hostQuery = hostFilter.getText().trim().toLowerCase(Locale.ROOT);
         String status = statusFilter.getValue(), mode = modeFilter.getValue();
         Tab selected = sourceTabs.getSelectionModel().getSelectedItem();
         filtered.setPredicate(row -> {
@@ -364,8 +379,13 @@ public final class NexuApplication extends Application {
                 || (mode.startsWith("LOCAL") && row.profile().mode() == TunnelProfile.Mode.LOCAL)
                 || (mode.startsWith("REMOTE") && row.profile().mode() == TunnelProfile.Mode.REMOTE)
                 || (mode.startsWith("DYNAMIC") && row.profile().mode() == TunnelProfile.Mode.DYNAMIC);
-            boolean ipMatch = ipQuery.isEmpty() || row.resolvedIp().toLowerCase(Locale.ROOT).contains(ipQuery);
-            return tab && type && ipMatch && row.profile().searchable().contains(query)
+            boolean installationMatch = installationQuery.isEmpty()
+                || row.profile().installation().toLowerCase(Locale.ROOT).contains(installationQuery);
+            boolean nameMatch = nameQuery.isEmpty()
+                || row.profile().name().toLowerCase(Locale.ROOT).contains(nameQuery);
+            boolean hostMatch = hostQuery.isEmpty()
+                || row.hostAddressDisplay().toLowerCase(Locale.ROOT).contains(hostQuery);
+            return tab && type && installationMatch && nameMatch && hostMatch
                 && (status == null || status.equals("Tutti gli stati") || row.state().label().equals(status));
         });
     }
@@ -534,7 +554,7 @@ public final class NexuApplication extends Application {
                 TabbyImport.Plan plan = TabbyImport.append(profiles(),selected);
                 if (!plan.added().isEmpty() && !persist(plan.profiles())) return;
                 plan.added().forEach(p -> { TunnelRow row=new TunnelRow(p); rows.add(row); resolveHost(row); });
-                search.clear(); ipFilter.clear(); statusFilter.getSelectionModel().selectFirst(); modeFilter.getSelectionModel().selectFirst(); updateFilter(); refreshCounters();
+                installationFilter.clear(); nameFilter.clear(); hostFilter.clear(); statusFilter.getSelectionModel().selectFirst(); modeFilter.getSelectionModel().selectFirst(); updateFilter(); refreshCounters();
                 appLog.mark("tabby-import-added="+plan.added().size()+" duplicates="+plan.duplicates());
                 Alert a = new Alert(Alert.AlertType.INFORMATION,
                     "Importati "+plan.added().size()+" inoltri in Tabby. Duplicati ignorati: "+plan.duplicates()+
@@ -552,7 +572,7 @@ public final class NexuApplication extends Application {
                 MobaXtermImport.Plan plan = MobaXtermImport.append(profiles(),selected);
                 if (!plan.added().isEmpty() && !persist(plan.profiles())) return;
                 plan.added().forEach(p -> { TunnelRow row=new TunnelRow(p); rows.add(row); resolveHost(row); });
-                search.clear(); ipFilter.clear(); statusFilter.getSelectionModel().selectFirst(); modeFilter.getSelectionModel().selectFirst(); updateFilter(); refreshCounters();
+                installationFilter.clear(); nameFilter.clear(); hostFilter.clear(); statusFilter.getSelectionModel().selectFirst(); modeFilter.getSelectionModel().selectFirst(); updateFilter(); refreshCounters();
                 appLog.mark("mobaxterm-import-added="+plan.added().size()+" duplicates="+plan.duplicates());
                 Alert a = new Alert(Alert.AlertType.INFORMATION,
                     "Importati "+plan.added().size()+" inoltri in MobaXterm. Duplicati ignorati: "+plan.duplicates()+
@@ -573,7 +593,7 @@ public final class NexuApplication extends Application {
         Thread.ofVirtual().name("npf-dns-"+id).start(() -> {
             String resolved=""; try { resolved=HostAddressResolver.resolve(host); } catch (UnknownHostException ignored) { }
             String value=resolved; Platform.runLater(() -> {
-                if (row.profile().id().equals(id) && row.profile().sshHost().equals(host)) { row.setResolvedIp(value); if (!ipFilter.getText().isBlank()) updateFilter(); }
+                if (row.profile().id().equals(id) && row.profile().sshHost().equals(host)) { row.setResolvedIp(value); if (!hostFilter.getText().isBlank()) updateFilter(); }
             });
         });
     }

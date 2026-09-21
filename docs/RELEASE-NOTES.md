@@ -1,12 +1,16 @@
-# Nexu Port Forwarding 1.1.0-rc.11
+# Nexu Port Forwarding 1.1.0-rc.12
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## English
 
-Fresh test rebuild of the current 1.1.0 release-candidate line, with the same application features as rc.6 and a new independently built Windows/Linux package set.
+Updated test build of the 1.1.0 release-candidate line with table readability and focused search improvements, plus a new independently built Windows/Linux package set.
 
 ### New in this prerelease
+
+- **NOME** cells now wrap onto multiple lines instead of truncating long labels with an ellipsis; table rows grow as needed while keeping a 62 px minimum height.
+- **INSTALLAZIONE** is shown again immediately before **NOME** in the main grid.
+- The broad free-text search has been replaced by three explicit text filters: **Installazione**, **Nome**, and **Hostname / Indirizzo IP**. Type and state remain separate structured filters.
 
 - Fixed native runtime packaging by including the JDK `java.rmi` module required by the packaged SSH stack; this resolves the reported missing `java.rmi.ServerException` failure.
 - The packaged SSH runtime smoke test now explicitly loads `java.rmi.ServerException`, so a native image missing this module cannot be published.
@@ -29,7 +33,7 @@ Fresh test rebuild of the current 1.1.0 release-candidate line, with the same ap
 - Persistent logs now record sanitized diagnostic categories and safe context for recognized failures, while still excluding credentials and arbitrary raw exception text.
 
 - Inline-editable **NOME** with automatic persistence on Enter or focus loss.
-- Removed the **INSTALLAZIONE** column from the main grid.
+- **INSTALLAZIONE** is displayed directly before **NOME** in the main grid.
 - **TIPO**, **ASCOLTO** and **DESTINAZIONE** are condensed into one **FORWARDING** column with explicit listener-side arrows.
 - Separate command exports for Windows PowerShell, Windows CMD and Linux/POSIX; CMD no longer receives PowerShell quoting.
 
@@ -41,7 +45,7 @@ Fresh test rebuild of the current 1.1.0 release-candidate line, with the same ap
 - Read-only **Tabby** import from `config.yaml`, with preview and Local/Remote/Dynamic forwarding conversion.
 - Read-only **MobaXterm** import from `[PortForwarding]` in `MobaXterm.ini`/`.mobaconf`; password sections and unrelated settings are ignored.
 - Imported rows become ordinary local Nexu Port Forwarding profiles. Reopening Tabby or MobaXterm is not required after import, and imports never auto-start tunnels.
-- Search filters for forwarding type and resolved SSH-server IP, in addition to free text and state.
+- Search uses dedicated **Installazione**, **Nome**, and **Hostname / Indirizzo IP** fields; forwarding type and state remain separate filters.
 - DYNAMIC (`-D`) SOCKS forwarding supported by the Apache MINA SSHD backend.
 - Storage layout: portable packages use sibling `data/` and `logs/`; installed builds use the user parent `nexu-port-forwarding/data/` and `nexu-port-forwarding/logs/`. Recognized 1.0.0 user-data files are copied once into `data/` without deleting originals.
 

@@ -1,12 +1,16 @@
-# Nexu Port Forwarding 1.1.0-rc.11
+# Nexu Port Forwarding 1.1.0-rc.12
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## Italiano
 
-Nuova build di test della linea 1.1.0 release-candidate, con le stesse funzionalità applicative della rc.6 e un nuovo set di pacchetti Windows/Linux compilato e verificato indipendentemente.
+Build di test aggiornata della linea 1.1.0 release-candidate con miglioramenti alla leggibilità della tabella e alla ricerca mirata, più un nuovo set di pacchetti Windows/Linux compilato e verificato indipendentemente.
 
 ### Novità
+
+- Le celle **NOME** vanno ora a capo su più righe invece di troncare le etichette lunghe con "..."; l'altezza della riga cresce quando serve mantenendo un minimo di 62 px.
+- La colonna **INSTALLAZIONE** torna nella griglia principale immediatamente prima di **NOME**.
+- La ricerca testuale generica è sostituita da tre filtri espliciti: **Installazione**, **Nome** e **Hostname / Indirizzo IP**. Tipo e stato restano filtri strutturati separati.
 
 - Corretto il runtime nativo includendo il modulo JDK `java.rmi` richiesto dallo stack SSH pacchettizzato; risolve l'errore di classe mancante `java.rmi.ServerException`.
 - Lo smoke test SSH sul pacchetto carica ora esplicitamente `java.rmi.ServerException`, impedendo la pubblicazione di immagini native prive di questo modulo.
@@ -29,7 +33,7 @@ Nuova build di test della linea 1.1.0 release-candidate, con le stesse funzional
 - I log persistenti registrano ora categorie diagnostiche sanificate e contesto sicuro per gli errori riconosciuti, continuando a escludere credenziali e testo grezzo arbitrario delle eccezioni.
 
 - **NOME** modificabile direttamente in griglia con salvataggio automatico su Invio o perdita del focus.
-- Rimossa la colonna **INSTALLAZIONE** dalla griglia principale.
+- **INSTALLAZIONE** è visualizzata direttamente prima di **NOME** nella griglia principale.
 - **TIPO**, **ASCOLTO** e **DESTINAZIONE** sono riuniti in una singola colonna **FORWARDING** con frecce che rendono esplicito il lato di ascolto.
 - Esportazioni separate per Windows PowerShell, Windows CMD e Linux/POSIX; CMD non usa più quoting PowerShell.
 
@@ -41,7 +45,7 @@ Nuova build di test della linea 1.1.0 release-candidate, con le stesse funzional
 - Importazione **Tabby** in sola lettura da `config.yaml`, con anteprima e conversione Local/Remote/Dynamic.
 - Importazione **MobaXterm** in sola lettura della sezione `[PortForwarding]` da `MobaXterm.ini`/`.mobaconf`; sezioni password e impostazioni non pertinenti vengono ignorate.
 - Dopo l'importazione le righe diventano normali profili locali di Nexu Port Forwarding. Non è necessario mantenere aperto Tabby/MobaXterm e nessun tunnel parte automaticamente.
-- Filtri per tipologia di forwarding e IP risolto del server SSH, oltre a testo libero e stato.
+- La ricerca usa campi dedicati **Installazione**, **Nome** e **Hostname / Indirizzo IP**; tipologia di forwarding e stato restano filtri separati.
 - Supporto DYNAMIC (`-D`) SOCKS tramite Apache MINA SSHD.
 - Salvataggio: i portabili usano `data/` e `logs/` affiancate; le installazioni usano `nexu-port-forwarding/data/` e `nexu-port-forwarding/logs/` nella cartella utente. I file dati 1.0.0 riconosciuti vengono copiati una sola volta in `data/` senza eliminare gli originali.
 

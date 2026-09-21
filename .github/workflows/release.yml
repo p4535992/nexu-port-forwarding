@@ -15,7 +15,7 @@ concurrency:
 
 env:
   APP_VERSION: '1.1.0'
-  RELEASE_TAG: v1.1.0-rc.11
+  RELEASE_TAG: v1.1.0-rc.12
 
 jobs:
   prepare:
