@@ -30,9 +30,9 @@ Green means the SSH connection and forwarding listener were established; it does
 
 Each profile owns its own SSH connection. No tunnel starts automatically when the application opens. Authentication, host-key and bind failures are not automatically retried. Apache MINA SSHD is used directly, so passwords are not passed through BAT files, PowerShell commands or external-process arguments.
 
-## Release 1.1.0-rc.10
+## Release 1.1.0-rc.11
 
-Download **[v1.1.0-rc.10](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.10)**.
+Download **[v1.1.0-rc.11](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.11)**.
 
 | Platform | Packages |
 | --- | --- |

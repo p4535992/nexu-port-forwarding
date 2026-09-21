@@ -1,4 +1,4 @@
-# Nexu Port Forwarding 1.1.0-rc.10
+# Nexu Port Forwarding 1.1.0-rc.11
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
@@ -7,6 +7,9 @@
 Fresh test rebuild of the current 1.1.0 release-candidate line, with the same application features as rc.6 and a new independently built Windows/Linux package set.
 
 ### New in this prerelease
+
+- Fixed native runtime packaging by including the JDK `java.rmi` module required by the packaged SSH stack; this resolves the reported missing `java.rmi.ServerException` failure.
+- The packaged SSH runtime smoke test now explicitly loads `java.rmi.ServerException`, so a native image missing this module cannot be published.
 
 - Row **Avvia/Ferma** controls are now one compact state-aware button; pressing it automatically selects the row and shows its tunnel log.
 - The activity/log area is now a **right-side vertical panel** beside the tunnel grid.

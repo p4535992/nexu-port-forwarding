@@ -18,7 +18,7 @@ Invoke-Jpackage @('--type','app-image','--name','NexuPortForwarding','--app-vers
     '--input',$inputDir,'--dest',$out,'--main-jar','nexu-port-forwarding.jar',
     '--main-class','it.nexu.forwarding.Launcher','--icon',"$root\src\main\resources\app-icon.ico",
     '--java-options','-Dfile.encoding=UTF-8',
-    '--add-modules','java.base,java.desktop,java.logging,java.naming,java.management,java.security.jgss,java.security.sasl,java.sql,java.xml,jdk.crypto.ec,jdk.unsupported,jdk.unsupported.desktop,jdk.charsets,jdk.zipfs')
+    '--add-modules','java.base,java.desktop,java.logging,java.naming,java.management,java.rmi,java.security.jgss,java.security.sasl,java.sql,java.xml,jdk.crypto.ec,jdk.unsupported,jdk.unsupported.desktop,jdk.charsets,jdk.zipfs')
 Copy-Item docs/DATA-AND-LOGS.txt "$image\LOGS.txt"
 Copy-Item THIRD_PARTY_NOTICES.md $image
 Copy-Item LICENSE $image

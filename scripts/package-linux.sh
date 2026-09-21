@@ -13,7 +13,7 @@ jpackage --type app-image --name NexuPortForwarding --app-version "$VERSION" \
   --input target/app --dest "$OUT" --main-jar nexu-port-forwarding.jar \
   --main-class it.nexu.forwarding.Launcher --icon src/main/resources/app-icon.png \
   --java-options '-Dfile.encoding=UTF-8' \
-  --add-modules java.base,java.desktop,java.logging,java.naming,java.management,java.security.jgss,java.security.sasl,java.sql,java.xml,jdk.crypto.ec,jdk.unsupported,jdk.unsupported.desktop,jdk.charsets,jdk.zipfs
+  --add-modules java.base,java.desktop,java.logging,java.naming,java.management,java.rmi,java.security.jgss,java.security.sasl,java.sql,java.xml,jdk.crypto.ec,jdk.unsupported,jdk.unsupported.desktop,jdk.charsets,jdk.zipfs
 cp docs/DATA-AND-LOGS.txt "$OUT/NexuPortForwarding/LOGS.txt"
 cp THIRD_PARTY_NOTICES.md "$OUT/NexuPortForwarding/"
 cp LICENSE "$OUT/NexuPortForwarding/"

@@ -22,6 +22,8 @@ public final class Launcher {
     private static void sshRuntimeSmokeTest() {
         Path temp=null;
         try {
+            // Reflectively used by SSH/security dependencies: verify the jpackage runtime really contains java.rmi.
+            Class.forName("java.rmi.ServerException");
             temp=Files.createTempDirectory("nexu-ssh-runtime-");
             int closedPort;
             try(ServerSocket socket=new ServerSocket(0,0,InetAddress.getLoopbackAddress())) {

@@ -1,4 +1,4 @@
-# Nexu Port Forwarding 1.1.0-rc.10
+# Nexu Port Forwarding 1.1.0-rc.11
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
@@ -7,6 +7,9 @@
 Nuova build di test della linea 1.1.0 release-candidate, con le stesse funzionalità applicative della rc.6 e un nuovo set di pacchetti Windows/Linux compilato e verificato indipendentemente.
 
 ### Novità
+
+- Corretto il runtime nativo includendo il modulo JDK `java.rmi` richiesto dallo stack SSH pacchettizzato; risolve l'errore di classe mancante `java.rmi.ServerException`.
+- Lo smoke test SSH sul pacchetto carica ora esplicitamente `java.rmi.ServerException`, impedendo la pubblicazione di immagini native prive di questo modulo.
 
 - I controlli **Avvia/Ferma** della riga sono ora un solo pulsante compatto e contestuale; premendolo la riga viene selezionata automaticamente e vengono mostrati i suoi log.
 - L'area attività/log è ora un **pannello verticale a destra** della griglia.
