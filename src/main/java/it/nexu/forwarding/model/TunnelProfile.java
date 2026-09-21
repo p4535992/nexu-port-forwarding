@@ -117,7 +117,7 @@ public record TunnelProfile(
     public boolean isLoopbackBind() {
         return bindHost.equals("127.0.0.1") || bindHost.equals("::1") || bindHost.equalsIgnoreCase("localhost");
     }
-    public String searchable() { return (origin + " " + name + " " + mode + " " + endpoint() + " " + listener() + " " + destination() + " " + notes).toLowerCase(Locale.ROOT); }
+    public String searchable() { return (installation + " " + origin + " " + name + " " + mode + " " + endpoint() + " " + listener() + " " + destination() + " " + notes).toLowerCase(Locale.ROOT); }
     public static String address(String host, int port) { return bracket(host) + ":" + port; }
     public static String bracket(String host) { return host.contains(":") ? "[" + host + "]" : host; }
 }
