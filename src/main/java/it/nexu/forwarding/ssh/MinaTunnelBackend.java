@@ -106,26 +106,30 @@ public final class MinaTunnelBackend implements TunnelBackend {
                 password = null;
             }
             token.check();
+            DynamicSocksForwarder dynamic = null;
             try {
                 SshdSocketAddress bind = new SshdSocketAddress(p.bindHost(), p.bindPort());
-                // Dynamic forwarding is a local SOCKS listener, not a fixed-target -L tunnel.
-                // The existing client policy still rejects unsolicited server-initiated channels.
                 switch (p.mode()) {
                     case REMOTE -> session.startRemotePortForwarding(bind, new SshdSocketAddress(p.targetHost(),p.targetPort()));
                     case LOCAL -> session.startLocalPortForwarding(bind, new SshdSocketAddress(p.targetHost(),p.targetPort()));
-                    case DYNAMIC -> session.startDynamicPortForwarding(bind);
+                    // MINA 2.19.0 has a fragmented SOCKS5 parsing bug in its built-in -D frontend.
+                    // Use our stream-safe SOCKS frontend while still creating target channels through MINA/SSH.
+                    case DYNAMIC -> dynamic = DynamicSocksForwarder.start(session,p,token);
                 }
             } catch (Exception e) {
+                if (dynamic != null) dynamic.close();
                 token.check();
                 throw new Failure("Forwarding rifiutato: porta occupata, bind non disponibile o policy SSH (AllowTcpForwarding / PermitListen / GatewayPorts).", false, e);
             }
             token.check();
+            DynamicSocksForwarder socks = dynamic;
             AtomicBoolean disposed = new AtomicBoolean();
             Connection result = new Connection() {
-                @Override public boolean isOpen() { return session.isOpen() && session.isAuthenticated() && !disposed.get(); }
+                @Override public boolean isOpen() { return session.isOpen() && session.isAuthenticated() && !disposed.get() && (socks == null || socks.isOpen()); }
                 @Override public String closedReason() { return "Connessione SSH interrotta o keepalive scaduto."; }
                 @Override public void close() {
                     if (!disposed.compareAndSet(false, true)) return;
+                    if (socks != null) socks.close();
                     try { cancellationHook.close(); } catch (Exception ignored) { }
                     session.close(true);
                     client.stop();
