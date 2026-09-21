@@ -267,12 +267,18 @@ public final class NexuApplication extends Application {
                 if (runStop != null) {
                     runStop.textProperty().unbind();
                     runStop.disableProperty().unbind();
+                    runStop.styleProperty().unbind();
                 }
                 super.updateItem(row,empty); setGraphic(null); setText(null);
                 if (empty || row == null) return;
                 runStop = new Button(); runStop.getStyleClass().add("small-primary");
                 runStop.textProperty().bind(Bindings.createStringBinding(
                     () -> row.state().busy() ? "■ Ferma" : "▶ Avvia", row.stateProperty()));
+                runStop.styleProperty().bind(Bindings.createStringBinding(
+                    () -> row.state().busy()
+                        ? "-fx-text-fill: #ff9da6; -fx-background-color: #4c2631;"
+                        : "-fx-text-fill: #7eead9; -fx-background-color: #16433f;",
+                    row.stateProperty()));
                 runStop.disableProperty().bind(Bindings.createBooleanBinding(
                     () -> row.state() == TunnelEngine.State.STOPPING, row.stateProperty()));
                 runStop.setOnAction(e -> {
