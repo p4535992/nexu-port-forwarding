@@ -16,6 +16,8 @@ import org.apache.sshd.server.forward.ForwardingFilter;
 import java.net.BindException;
 import java.net.ConnectException;
 import java.net.NoRouteToHostException;
+import java.net.ServerSocket;
+import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.nio.channels.UnresolvedAddressException;
@@ -34,6 +36,7 @@ public final class MinaTunnelBackend implements TunnelBackend {
 
     @Override public Connection open(TunnelProfile p, char[] secret, Cancellation token) throws Exception {
         token.check();
+        preflightLocalListener(p);
         if (p.auth() == TunnelProfile.Auth.PASSWORD && secret.length == 0)
             throw new Failure("Inserire la password SSH.", false);
         SshClient client = SshClient.setUpDefaultClient();
@@ -150,6 +153,26 @@ public final class MinaTunnelBackend implements TunnelBackend {
             }
         }
     }
+
+    public static void preflightLocalListener(TunnelProfile p) throws Failure {
+        if (p.mode() == TunnelProfile.Mode.REMOTE) return;
+        InetSocketAddress address = new InetSocketAddress(p.bindHost(), p.bindPort());
+        try (ServerSocket socket = new ServerSocket()) {
+            socket.setReuseAddress(false);
+            socket.bind(address);
+        } catch (Exception e) {
+            String messages = causeMessages(e).toLowerCase(java.util.Locale.ROOT);
+            if (hasCause(e, BindException.class) && (messages.contains("already in use")
+                || messages.contains("address in use") || messages.contains("only one usage"))) {
+                throw new Failure("Porta locale già in uso: " + p.listener()
+                    + ". Un altro processo (per esempio Tabby o MobaXterm) sta probabilmente già ascoltando su questa porta. "
+                    + "Chiudilo oppure scegli un'altra porta di ascolto.", false, e);
+            }
+            throw new Failure("Impossibile usare l'indirizzo di ascolto locale " + p.listener()
+                + ". Verificare che l'indirizzo appartenga a questo PC e che firewall/policy locali consentano il bind.", false, e);
+        }
+    }
+
     static Failure connectionFailure(TunnelProfile p, Exception error) {
         String endpoint = p.sshHost() + ":" + p.sshPort();
         Throwable root = rootCause(error);

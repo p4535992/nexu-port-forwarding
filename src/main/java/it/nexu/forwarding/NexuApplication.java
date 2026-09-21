@@ -388,6 +388,13 @@ public final class NexuApplication extends Application {
         if (quitting || UiWork.busy() || engine.isRunning(p.id())) return;
         if (!p.isLoopbackBind() && !confirm("Ascolto non limitato al loopback",
             "Il profilo «"+p.name()+"» richiede l'ascolto su "+p.listener()+".\nPotrebbe rendere accessibile il servizio ad altri dispositivi. Continuare?")) return;
+        try {
+            MinaTunnelBackend.preflightLocalListener(p);
+        } catch (TunnelBackend.Failure preflight) {
+            TunnelEngine.Event event = new TunnelEngine.Event(p.id(), TunnelEngine.State.ERROR, preflight.getMessage(), java.time.Instant.now());
+            appLog.event(event); row.accept(event); table.refresh(); refreshCounters(); showSelection();
+            return;
+        }
         char[] secret = secrets.copy(p.id());
         try {
             if (secret.length == 0 && vault.exists() && !vault.unlocked() && !vaultUi.ensureOpen()) return;
