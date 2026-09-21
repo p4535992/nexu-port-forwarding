@@ -108,8 +108,9 @@ public final class TabbyImportSelfTest {
         test("unknown authentication is not guessed",()->{var p=ssh("Local");opts(p).put("auth","unknown");eq(convert(p).skippedProfiles(),1);});
         test("auto authentication is marked for review",()->{var p=ssh("Local");opts(p).remove("auth");check(convert(p).candidates().getFirst().requiresReview());});
         test("private key path is imported without reading the file",()->{
-            var p=ssh("Local");opts(p).put("auth","publicKey");opts(p).put("privateKeys",List.of("/does-not-exist/example-key"));
-            eq(one(p).auth(),TunnelProfile.Auth.PRIVATE_KEY);eq(one(p).privateKey(),"/does-not-exist/example-key");
+            String absolute=Path.of(System.getProperty("user.home"),"does-not-exist","example-key").toAbsolutePath().toString();
+            var p=ssh("Local");opts(p).put("auth","publicKey");opts(p).put("privateKeys",List.of(absolute));
+            eq(one(p).auth(),TunnelProfile.Auth.PRIVATE_KEY);eq(one(p).privateKey(),absolute);
         });
         test("multiple private keys require review",()->{
             var p=ssh("Local");opts(p).put("auth","publicKey");opts(p).put("privateKeys",List.of("/tmp/a","/tmp/b"));check(convert(p).candidates().getFirst().requiresReview());
