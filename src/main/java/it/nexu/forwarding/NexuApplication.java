@@ -3,6 +3,7 @@ package it.nexu.forwarding;
 import it.nexu.forwarding.config.*;
 import it.nexu.forwarding.importer.TabbyImport;
 import it.nexu.forwarding.importer.MobaXtermImport;
+import it.nexu.forwarding.i18n.I18n;
 import it.nexu.forwarding.model.*;
 import it.nexu.forwarding.ssh.*;
 import it.nexu.forwarding.ui.*;
@@ -47,7 +48,7 @@ public final class NexuApplication extends Application {
     private Stage window;
     private BorderPane root;
     private AppLock appLock;
-    private Path configFile;
+    private Path configFile, languageFile;
     private HostKeyStore hostKeys;
     private TunnelEngine engine;
     private VaultStore vault;
@@ -67,6 +68,8 @@ public final class NexuApplication extends Application {
             int migrated = StorageLocations.migrateLegacyUserData(storage);
             Path home = storage.dataDirectory();
             appLock = new AppLock(home);
+            languageFile = home.resolve("language.properties");
+            I18n.setLanguage(LanguageSettings.load(languageFile));
             appLog = AppLog.inDirectory(storage.logsDirectory());
             windowStateStore = new WindowStateStore(home.resolve("window.properties"));
             vault = new VaultStore(home.resolve("credentials.npfvault"));
@@ -110,33 +113,48 @@ public final class NexuApplication extends Application {
     }
 
     private void buildWindow() {
+        activeTab.setText(I18n.t("Active","Attivi"));
+        customTab.setText("Custom"); tabbyTab.setText("Tabby"); mobaTab.setText("MobaXterm");
+        openSshDiagnostics.setText(I18n.t("Diagnose local OpenSSH configuration on Start","Diagnostica configurazione OpenSSH locale all'avvio"));
+        selectedInfo.setText(I18n.t("Select a row to view details.","Seleziona una riga per vedere i dettagli."));
         Label title = new Label("Nexu Port Forwarding"); title.getStyleClass().add("app-title");
-        Label subtitle = new Label("Tunnel SSH dal tuo desktop · Windows / Linux"); subtitle.getStyleClass().add("muted");
+        Label subtitle = new Label(I18n.t("SSH tunnels from your desktop · Windows / Linux","Tunnel SSH dal tuo desktop · Windows / Linux")); subtitle.getStyleClass().add("muted");
         VBox branding = new VBox(5, title, subtitle);
-        HBox counters = new HBox(10, counter("PROFILI", totals), counter("ATTIVI", active), counter("ERRORI", errors));
+        HBox counters = new HBox(10, counter(I18n.t("PROFILES","PROFILI"), totals), counter(I18n.t("ACTIVE","ATTIVI"), active), counter(I18n.t("ERRORS","ERRORI"), errors));
         Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
         HBox heading = new HBox(20, branding, spacer, counters); heading.setAlignment(Pos.CENTER_LEFT);
-        Button add = new Button("+ Nuovo tunnel"); add.getStyleClass().add("primary"); add.setOnAction(e -> edit(null));
-        Button stop = new Button("Ferma tutti"); stop.setOnAction(e -> engine.stopAll());
-        MenuButton file = new MenuButton("Profili");
-        MenuItem sample = new MenuItem("Aggiungi l'esempio Maven"); sample.setOnAction(e -> addProfile(TunnelProfile.example()));
-        MenuItem importTabbyItem = new MenuItem("Importa Tabby…"); importTabbyItem.setOnAction(e -> importTabby());
-        MenuItem importMobaItem = new MenuItem("Importa MobaXterm…"); importMobaItem.setOnAction(e -> importMobaXterm());
-        MenuItem importItem = new MenuItem("Importa configurazione…"); importItem.setOnAction(e -> importProfiles());
-        MenuItem exportItem = new MenuItem("Esporta configurazione…"); exportItem.setOnAction(e -> exportProfiles());
+        Button add = new Button(I18n.t("+ New tunnel","+ Nuovo tunnel")); add.getStyleClass().add("primary"); add.setOnAction(e -> edit(null));
+        Button stop = new Button(I18n.t("Stop all","Ferma tutti")); stop.setOnAction(e -> engine.stopAll());
+        MenuButton file = new MenuButton(I18n.t("Profiles","Profili"));
+        MenuItem sample = new MenuItem(I18n.t("Add Maven example","Aggiungi l'esempio Maven")); sample.setOnAction(e -> addProfile(TunnelProfile.example()));
+        MenuItem importTabbyItem = new MenuItem(I18n.t("Import Tabby…","Importa Tabby…")); importTabbyItem.setOnAction(e -> importTabby());
+        MenuItem importMobaItem = new MenuItem(I18n.t("Import MobaXterm…","Importa MobaXterm…")); importMobaItem.setOnAction(e -> importMobaXterm());
+        MenuItem importItem = new MenuItem(I18n.t("Import configuration…","Importa configurazione…")); importItem.setOnAction(e -> importProfiles());
+        MenuItem exportItem = new MenuItem(I18n.t("Export configuration…","Esporta configurazione…")); exportItem.setOnAction(e -> exportProfiles());
         file.getItems().addAll(sample, new SeparatorMenuItem(), importTabbyItem, importMobaItem,
             new SeparatorMenuItem(), importItem, exportItem);
-        Button hosts = new Button("Chiavi host"); hosts.setOnAction(e -> showHostKeys());
-        Button quit = new Button("Esci"); quit.setOnAction(e -> requestExit());
-        Button openLogs = new Button("Apri log"); openLogs.setOnAction(e -> {
+        Button hosts = new Button(I18n.t("Host keys","Chiavi host")); hosts.setOnAction(e -> showHostKeys());
+        Button quit = new Button(I18n.t("Exit","Esci")); quit.setOnAction(e -> requestExit());
+        Button openLogs = new Button(I18n.t("Open logs","Apri log")); openLogs.setOnAction(e -> {
             try { java.awt.Desktop.getDesktop().open(appLog.directory().toFile()); }
             catch (Exception ex) { error("Cartella dei log: " + appLog.directory()); }
         });
-        MenuButton settings = new MenuButton("Impostazioni");
-        MenuItem dataLocation = new MenuItem("Cartella dati…");
+        MenuButton settings = new MenuButton(I18n.t("Settings","Impostazioni"));
+        MenuItem dataLocation = new MenuItem(I18n.t("Data folder…","Cartella dati…"));
         dataLocation.setOnAction(e -> {
             if (!quitting && !UiWork.busy()) StorageSettingsDialog.show(window, storage, this::error);
         });
+        Menu languageMenu = new Menu(I18n.t("Language","Lingua"));
+        ToggleGroup languageGroup = new ToggleGroup();
+        RadioMenuItem englishLanguage = new RadioMenuItem("English");
+        RadioMenuItem italianLanguage = new RadioMenuItem("Italiano");
+        englishLanguage.setToggleGroup(languageGroup); italianLanguage.setToggleGroup(languageGroup);
+        I18n.Language savedLanguage = LanguageSettings.load(languageFile);
+        englishLanguage.setSelected(savedLanguage == I18n.Language.ENGLISH);
+        italianLanguage.setSelected(savedLanguage == I18n.Language.ITALIAN);
+        englishLanguage.setOnAction(e -> saveLanguagePreference(I18n.Language.ENGLISH,englishLanguage,italianLanguage));
+        italianLanguage.setOnAction(e -> saveLanguagePreference(I18n.Language.ITALIAN,englishLanguage,italianLanguage));
+        languageMenu.getItems().addAll(englishLanguage,italianLanguage);
         openSshDiagnostics.setSelected(false);
         openSshDiagnostics.setOnAction(e -> {
             if (openSshDiagnostics.isSelected() && !confirm("Diagnostica OpenSSH locale",
@@ -146,17 +164,17 @@ public final class NexuApplication extends Application {
                 openSshDiagnostics.setSelected(false);
             }
         });
-        settings.getItems().addAll(dataLocation, new SeparatorMenuItem(), openSshDiagnostics);
+        settings.getItems().addAll(dataLocation, languageMenu, new SeparatorMenuItem(), openSshDiagnostics);
         FlowPane commands = new FlowPane(9, 9, add, stop, file, vaultUi.menu(), hosts, openLogs, settings, quit);
-        installationFilter.setPromptText("Filtra installazione…"); installationFilter.setPrefWidth(180);
-        nameFilter.setPromptText("Filtra nome…"); HBox.setHgrow(nameFilter, Priority.ALWAYS);
-        hostFilter.setPromptText("Filtra hostname / indirizzo IP…"); hostFilter.setPrefWidth(240);
-        statusFilter.getItems().add("Tutti gli stati");
+        installationFilter.setPromptText(I18n.t("Filter installation…","Filtra installazione…")); installationFilter.setPrefWidth(180);
+        nameFilter.setPromptText(I18n.t("Filter name…","Filtra nome…")); HBox.setHgrow(nameFilter, Priority.ALWAYS);
+        hostFilter.setPromptText(I18n.t("Filter hostname / IP address…","Filtra hostname / indirizzo IP…")); hostFilter.setPrefWidth(240);
+        statusFilter.getItems().add(I18n.t("All states","Tutti gli stati"));
         for (TunnelEngine.State state : TunnelEngine.State.values()) statusFilter.getItems().add(state.label());
         statusFilter.getSelectionModel().selectFirst(); statusFilter.setPrefWidth(170);
-        modeFilter.getItems().addAll("Tutti i tipi", "LOCAL (-L)", "REMOTE (-R)", "DYNAMIC (SOCKS)");
+        modeFilter.getItems().addAll(I18n.t("All types","Tutti i tipi"), "LOCAL (-L)", "REMOTE (-R)", "DYNAMIC (SOCKS)");
         modeFilter.getSelectionModel().selectFirst(); modeFilter.setPrefWidth(175);
-        Button clear = new Button("Azzera filtri"); clear.setOnAction(e -> {
+        Button clear = new Button(I18n.t("Clear filters","Azzera filtri")); clear.setOnAction(e -> {
             installationFilter.clear(); nameFilter.clear(); hostFilter.clear();
             statusFilter.getSelectionModel().selectFirst(); modeFilter.getSelectionModel().selectFirst();
         });
@@ -175,12 +193,12 @@ public final class NexuApplication extends Application {
         });
         updateFilter();
         logs.setEditable(false); logs.setWrapText(true); logs.getStyleClass().add("log-area");
-        logs.setPromptText("Gli eventi del tunnel selezionato compariranno qui. Lo storico di stato viene salvato anche nella cartella logs locale; gli ultimi 300 dettagli restano in memoria.");
+        logs.setPromptText(I18n.t("Events for the selected tunnel appear here. State history is also saved in the local logs folder; the last 300 details stay in memory.","Gli eventi del tunnel selezionato compariranno qui. Lo storico di stato viene salvato anche nella cartella logs locale; gli ultimi 300 dettagli restano in memoria."));
         logs.setMinHeight(0); logs.setMaxHeight(Double.MAX_VALUE); VBox.setVgrow(logs, Priority.ALWAYS);
         selectedInfo.setWrapText(true); selectedInfo.getStyleClass().add("muted");
-        Label logTitle = new Label("ATTIVITÀ DEL TUNNEL"); logTitle.getStyleClass().add("section-title");
+        Label logTitle = new Label(I18n.t("TUNNEL ACTIVITY","ATTIVITÀ DEL TUNNEL")); logTitle.getStyleClass().add("section-title");
         footer.getStyleClass().add("muted"); footer.setWrapText(true);
-        Label meaning = new Label("Verde = SSH + forwarding stabiliti. Non è un controllo di salute dell'applicazione finale.");
+        Label meaning = new Label(I18n.t("Green = SSH + forwarding established. This is not a health check of the final application.","Verde = SSH + forwarding stabiliti. Non è un controllo di salute dell'applicazione finale."));
         meaning.getStyleClass().add("muted"); meaning.setWrapText(true);
         VBox logPanel = new VBox(10, logTitle, selectedInfo, logs, meaning, footer);
         logPanel.getStyleClass().add("log-side-panel"); logPanel.setPadding(new Insets(16));
@@ -191,17 +209,17 @@ public final class NexuApplication extends Application {
         double[] logDivider = {0.72};
         Button logToggle = new Button("›");
         logToggle.getStyleClass().add("log-toggle");
-        logToggle.setTooltip(new Tooltip("Nascondi pannello log"));
+        logToggle.setTooltip(new Tooltip(I18n.t("Hide log panel","Nascondi pannello log")));
         logToggle.setOnAction(e -> {
             if (workspace.getItems().contains(logPanel)) {
                 if (!workspace.getDividers().isEmpty()) logDivider[0] = workspace.getDividers().getFirst().getPosition();
                 workspace.getItems().remove(logPanel);
                 logToggle.setText("‹");
-                logToggle.setTooltip(new Tooltip("Mostra pannello log"));
+                logToggle.setTooltip(new Tooltip(I18n.t("Show log panel","Mostra pannello log")));
             } else {
                 workspace.getItems().add(logPanel);
                 logToggle.setText("›");
-                logToggle.setTooltip(new Tooltip("Nascondi pannello log"));
+                logToggle.setTooltip(new Tooltip(I18n.t("Hide log panel","Nascondi pannello log")));
                 Platform.runLater(() -> workspace.setDividerPositions(logDivider[0]));
             }
         });
@@ -221,6 +239,21 @@ public final class NexuApplication extends Application {
         window.setOnCloseRequest(e -> { e.consume(); handleWindowClose(); });
         table.getSelectionModel().selectedItemProperty().addListener((o, old, selected) -> showSelection());
     }
+    private void saveLanguagePreference(I18n.Language language,RadioMenuItem english,RadioMenuItem italian) {
+        try {
+            LanguageSettings.save(languageFile,language);
+            english.setSelected(language==I18n.Language.ENGLISH); italian.setSelected(language==I18n.Language.ITALIAN);
+            Alert done=new Alert(Alert.AlertType.INFORMATION,
+                I18n.t("Language saved. Restart Nexu Port Forwarding to apply it.","Lingua salvata. Riavvia Nexu Port Forwarding per applicarla."),
+                ButtonType.OK);
+            done.initOwner(window); done.setHeaderText(I18n.t("Restart required","Riavvio necessario")); done.showAndWait();
+        } catch(Exception ex) {
+            I18n.Language saved=LanguageSettings.load(languageFile);
+            english.setSelected(saved==I18n.Language.ENGLISH); italian.setSelected(saved==I18n.Language.ITALIAN);
+            error(I18n.t("Could not save the language preference.\n","Impossibile salvare la preferenza della lingua.\n")+ex.getMessage());
+        }
+    }
+
     private VBox counter(String label, Label value) {
         Label caption = new Label(label); caption.getStyleClass().add("section-title"); value.getStyleClass().add("counter-number");
         VBox box = new VBox(5, value, caption); box.getStyleClass().add("counter"); box.setMinWidth(100); return box;
@@ -234,7 +267,7 @@ public final class NexuApplication extends Application {
         hostFilter.textProperty().addListener((o,a,b) -> updateFilter());
         statusFilter.valueProperty().addListener((o,a,b) -> updateFilter()); modeFilter.valueProperty().addListener((o,a,b) -> updateFilter());
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN); table.setFixedCellSize(-1); table.setEditable(true);
-        TableColumn<TunnelRow,String> installation = textColumn("INSTALLAZIONE", 155, r -> r.profile().installation());
+        TableColumn<TunnelRow,String> installation = textColumn(I18n.t("INSTALLATION","INSTALLAZIONE"), 155, r -> r.profile().installation());
         installation.setMinWidth(110);
         installation.setEditable(true);
         installation.setCellFactory(c -> new AutoSaveTextCell("—"));
@@ -251,7 +284,7 @@ public final class NexuApplication extends Application {
             } catch (RuntimeException ex) { error(ex.getMessage()); }
             table.refresh();
         });
-        TableColumn<TunnelRow,String> name = textColumn("NOME", 230, r -> r.profile().name());
+        TableColumn<TunnelRow,String> name = textColumn(I18n.t("NAME","NOME"), 230, r -> r.profile().name());
         name.setMinWidth(150);
         name.setEditable(true);
         name.setCellFactory(c -> new AutoSaveTextCell());
@@ -271,10 +304,10 @@ public final class NexuApplication extends Application {
         TableColumn<TunnelRow,String> forwarding = textColumn("FORWARDING", 320, r -> r.profile().forwardingSummary());
         forwarding.setMinWidth(220);
         forwarding.setCellFactory(c -> new WrappingTextCell());
-        TableColumn<TunnelRow,String> hostAddress = new TableColumn<>("HOSTNAME / INDIRIZZO IP"); hostAddress.setPrefWidth(250); hostAddress.setMinWidth(180);
+        TableColumn<TunnelRow,String> hostAddress = new TableColumn<>(I18n.t("HOSTNAME / IP ADDRESS","HOSTNAME / INDIRIZZO IP")); hostAddress.setPrefWidth(250); hostAddress.setMinWidth(180);
         hostAddress.setCellValueFactory(c -> Bindings.createStringBinding(c.getValue()::hostAddressDisplay, c.getValue().resolvedIpProperty()));
         hostAddress.setCellFactory(c -> new WrappingTextCell());
-        TableColumn<TunnelRow,TunnelRow> actions = new TableColumn<>("AZIONI"); actions.setPrefWidth(185); actions.setMinWidth(165); actions.setSortable(false);
+        TableColumn<TunnelRow,TunnelRow> actions = new TableColumn<>(I18n.t("ACTIONS","AZIONI")); actions.setPrefWidth(185); actions.setMinWidth(165); actions.setSortable(false);
         actions.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue()));
         actions.setCellFactory(c -> new TableCell<>() {
             private Button runStop;
@@ -288,7 +321,7 @@ public final class NexuApplication extends Application {
                 if (empty || row == null) return;
                 runStop = new Button(); runStop.getStyleClass().add("small-primary");
                 runStop.textProperty().bind(Bindings.createStringBinding(
-                    () -> row.state().busy() ? "■ Ferma" : "▶ Avvia", row.stateProperty()));
+                    () -> row.state().busy() ? I18n.t("■ Stop","■ Ferma") : I18n.t("▶ Start","▶ Avvia"), row.stateProperty()));
                 runStop.styleProperty().bind(Bindings.createStringBinding(
                     () -> row.state().busy()
                         ? "-fx-text-fill: #ff9da6; -fx-background-color: #4c2631;"
@@ -302,23 +335,23 @@ public final class NexuApplication extends Application {
                     else startOne(row);
                 });
                 MenuButton menu = new MenuButton("⋯");
-                MenuItem edit = new MenuItem("Modifica…"); edit.setOnAction(e -> edit(row));
-                MenuItem duplicate = new MenuItem("Duplica (senza password)"); duplicate.setOnAction(e -> {
+                MenuItem edit = new MenuItem(I18n.t("Edit…","Modifica…")); edit.setOnAction(e -> edit(row));
+                MenuItem duplicate = new MenuItem(I18n.t("Duplicate (without password)","Duplica (senza password)")); duplicate.setOnAction(e -> {
                     try { addProfile(row.profile().duplicate()); } catch (RuntimeException ex) { error(ex.getMessage()); }
                 });
-                MenuItem log = new MenuItem("Mostra log"); log.setOnAction(e -> showLogsFor(row));
-                MenuItem copyPs = new MenuItem("Copia comando Windows PowerShell"); copyPs.setOnAction(e -> copy(OpenSshCommand.powershell(row.profile())));
-                MenuItem copyCmd = new MenuItem("Copia comando Windows CMD"); copyCmd.setOnAction(e -> copy(OpenSshCommand.cmd(row.profile())));
-                MenuItem copySh = new MenuItem("Copia comando Linux / POSIX"); copySh.setOnAction(e -> copy(OpenSshCommand.posix(row.profile())));
-                MenuItem forget = new MenuItem("Dimentica password in memoria"); forget.setOnAction(e -> {
+                MenuItem log = new MenuItem(I18n.t("Show log","Mostra log")); log.setOnAction(e -> showLogsFor(row));
+                MenuItem copyPs = new MenuItem(I18n.t("Copy Windows PowerShell command","Copia comando Windows PowerShell")); copyPs.setOnAction(e -> copy(OpenSshCommand.powershell(row.profile())));
+                MenuItem copyCmd = new MenuItem(I18n.t("Copy Windows CMD command","Copia comando Windows CMD")); copyCmd.setOnAction(e -> copy(OpenSshCommand.cmd(row.profile())));
+                MenuItem copySh = new MenuItem(I18n.t("Copy Linux / POSIX command","Copia comando Linux / POSIX")); copySh.setOnAction(e -> copy(OpenSshCommand.posix(row.profile())));
+                MenuItem forget = new MenuItem(I18n.t("Forget in-memory password","Dimentica password in memoria")); forget.setOnAction(e -> {
                     if (engine.isRunning(row.profile().id())) { error("Ferma il tunnel prima di dimenticare la password."); return; }
                     secrets.forget(row.profile().id());
                 });
-                MenuItem forgetSaved = new MenuItem("Rimuovi password salvata…"); forgetSaved.setOnAction(e -> {
+                MenuItem forgetSaved = new MenuItem(I18n.t("Remove saved password…","Rimuovi password salvata…")); forgetSaved.setOnAction(e -> {
                     if (engine.isRunning(row.profile().id())) { error("Ferma il tunnel prima di rimuovere la password."); return; }
                     if (confirm("Rimuovi credenziale", "Rimuovere la password salvata per questo profilo?") && vaultUi.forget(row.profile().id())) secrets.forget(row.profile().id());
                 });
-                MenuItem delete = new MenuItem("Elimina…"); delete.setOnAction(e -> delete(row));
+                MenuItem delete = new MenuItem(I18n.t("Delete…","Elimina…")); delete.setOnAction(e -> delete(row));
                 menu.getItems().addAll(edit, duplicate, log, new SeparatorMenuItem(), copyPs, copyCmd, copySh, forget, forgetSaved, new SeparatorMenuItem(), delete);
                 HBox box = new HBox(6, runStop, menu); box.setAlignment(Pos.CENTER_LEFT); setGraphic(box);
             }
@@ -326,8 +359,8 @@ public final class NexuApplication extends Application {
         forwarding.setEditable(false); hostAddress.setEditable(false);
         actions.setEditable(false);
         table.getColumns().addAll(actions, installation, name, forwarding, hostAddress);
-        Label emptyTitle = new Label("Nessun tunnel da mostrare"); emptyTitle.getStyleClass().add("empty-title");
-        Label emptyHelp = new Label("Attivi: solo tunnel connessi. Custom: + Nuovo tunnel. Tabby/MobaXterm: usa i pulsanti Importa."); emptyHelp.getStyleClass().add("muted");
+        Label emptyTitle = new Label(I18n.t("No tunnels to display","Nessun tunnel da mostrare")); emptyTitle.getStyleClass().add("empty-title");
+        Label emptyHelp = new Label(I18n.t("Active: connected tunnels only. Custom: + New tunnel. Tabby/MobaXterm: use Import.","Attivi: solo tunnel connessi. Custom: + Nuovo tunnel. Tabby/MobaXterm: usa i pulsanti Importa.")); emptyHelp.getStyleClass().add("muted");
         VBox empty = new VBox(12, emptyTitle, emptyHelp); empty.setAlignment(Pos.CENTER); table.setPlaceholder(empty);
         table.setRowFactory(t -> {
             TableRow<TunnelRow> row = new TableRow<>() {
@@ -492,7 +525,7 @@ public final class NexuApplication extends Application {
                 : selected == tabbyTab ? row.profile().origin() == TunnelProfile.Origin.TABBY
                 : selected == mobaTab ? row.profile().origin() == TunnelProfile.Origin.MOBAXTERM
                 : row.profile().origin() == TunnelProfile.Origin.CUSTOM;
-            boolean type = mode == null || mode.equals("Tutti i tipi")
+            boolean type = mode == null || mode.equals(I18n.t("All types","Tutti i tipi"))
                 || (mode.startsWith("LOCAL") && row.profile().mode() == TunnelProfile.Mode.LOCAL)
                 || (mode.startsWith("REMOTE") && row.profile().mode() == TunnelProfile.Mode.REMOTE)
                 || (mode.startsWith("DYNAMIC") && row.profile().mode() == TunnelProfile.Mode.DYNAMIC);
@@ -503,7 +536,7 @@ public final class NexuApplication extends Application {
             boolean hostMatch = hostQuery.isEmpty()
                 || row.hostAddressDisplay().toLowerCase(Locale.ROOT).contains(hostQuery);
             return tab && type && installationMatch && nameMatch && hostMatch
-                && (status == null || status.equals("Tutti gli stati") || row.state().label().equals(status));
+                && (status == null || status.equals(I18n.t("All states","Tutti gli stati")) || row.state().label().equals(status));
         });
     }
     private void refreshCounters() {
@@ -517,7 +550,7 @@ public final class NexuApplication extends Application {
     }
     private void showSelection() {
         TunnelRow row = table.getSelectionModel().getSelectedItem();
-        if (row == null) { selectedInfo.setText("Seleziona una riga per vedere i dettagli."); logs.clear(); return; }
+        if (row == null) { selectedInfo.setText(I18n.t("Select a row to view details.","Seleziona una riga per vedere i dettagli.")); logs.clear(); return; }
         selectedInfo.setText((row.profile().installation().isBlank() ? "" : row.profile().installation() + " · ") + row.profile().name() + " · " + row.detail());
         logs.setText(row.logs()); logs.positionCaret(logs.getLength());
     }

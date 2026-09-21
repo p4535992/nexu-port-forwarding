@@ -1,5 +1,6 @@
 package it.nexu.forwarding.ssh;
 
+import it.nexu.forwarding.i18n.I18n;
 import it.nexu.forwarding.model.TunnelProfile;
 import java.time.Instant;
 import java.util.*;
@@ -9,11 +10,11 @@ import java.util.function.Consumer;
 /** No JavaFX dependency. Each row owns an independent connection and bounded retry budget. */
 public final class TunnelEngine implements AutoCloseable {
     public enum State {
-        STOPPED("Fermo"), CONNECTING("Connessione"), ACTIVE("Attivo"),
-        RECONNECTING("Riconnessione"), STOPPING("Arresto"), ERROR("Errore");
-        private final String label;
-        State(String label) { this.label = label; }
-        public String label() { return label; }
+        STOPPED("Stopped","Fermo"), CONNECTING("Connecting","Connessione"), ACTIVE("Active","Attivo"),
+        RECONNECTING("Reconnecting","Riconnessione"), STOPPING("Stopping","Arresto"), ERROR("Error","Errore");
+        private final String english, italian;
+        State(String english,String italian) { this.english=english; this.italian=italian; }
+        public String label() { return I18n.t(english,italian); }
         public boolean busy() { return this != STOPPED && this != ERROR; }
     }
     public record Event(UUID id, State state, String detail, Instant time) { }
@@ -38,7 +39,7 @@ public final class TunnelEngine implements AutoCloseable {
             if (closed || runs.containsKey(profile.id())) return false;
             Run run = new Run(profile, Objects.requireNonNull(secret));
             runs.put(profile.id(), run);
-            emit(run, State.CONNECTING, "Apertura della connessione SSH…");
+            emit(run, State.CONNECTING, I18n.t("Opening SSH connection…","Apertura della connessione SSH…"));
             workers.execute(() -> work(run));
             return true;
         }
@@ -49,7 +50,7 @@ public final class TunnelEngine implements AutoCloseable {
         synchronized (lock) {
             Run run = runs.get(id);
             if (run == null || run.cancellation.isCancelled()) return;
-            emit(run, State.STOPPING, "Chiusura connessione e canali…");
+            emit(run, State.STOPPING, I18n.t("Closing connection and channels…","Chiusura connessione e canali…"));
             run.cancellation.cancel();
             if (run.thread != null) run.thread.interrupt();
         }
@@ -58,7 +59,7 @@ public final class TunnelEngine implements AutoCloseable {
     private void work(Run run) {
         run.thread = Thread.currentThread();
         State end = State.STOPPED;
-        String detail = "Tunnel arrestato.";
+        String detail = I18n.t("Tunnel stopped.","Tunnel arrestato.");
         int retries = 0;
         try {
             while (!run.cancellation.isCancelled()) {
@@ -68,7 +69,7 @@ public final class TunnelEngine implements AutoCloseable {
                     if (!connection.isOpen()) throw new TunnelBackend.Failure(connection.closedReason(), true);
                     synchronized (lock) {
                         if (!run.cancellation.isCancelled()) emit(run, State.ACTIVE,
-                            "Forwarding stabilito. La salute del servizio di destinazione non è verificata.");
+                            I18n.t("Forwarding established. Destination service health is not verified.","Forwarding stabilito. La salute del servizio di destinazione non è verificata."));
                     }
                     while (connection.isOpen()) {
                         run.cancellation.check();
@@ -93,14 +94,14 @@ public final class TunnelEngine implements AutoCloseable {
                     Thread.sleep(delay * 1000L);
                     run.cancellation.check();
                     synchronized (lock) {
-                        if (!run.cancellation.isCancelled()) emit(run, State.CONNECTING, "Riconnessione SSH in corso…");
+                        if (!run.cancellation.isCancelled()) emit(run, State.CONNECTING, I18n.t("SSH reconnection in progress…","Riconnessione SSH in corso…"));
                     }
                 }
             }
         } catch (InterruptedException e) { Thread.currentThread().interrupt(); }
         finally {
             synchronized (lock) {
-                if (run.cancellation.isCancelled()) { end = State.STOPPED; detail = "Tunnel arrestato."; }
+                if (run.cancellation.isCancelled()) { end = State.STOPPED; detail = I18n.t("Tunnel stopped.","Tunnel arrestato."); }
                 emit(run, end, detail);
                 // Publish final state before a replacement run can be started.
                 runs.remove(run.profile.id(), run);
