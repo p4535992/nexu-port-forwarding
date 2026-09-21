@@ -1,12 +1,17 @@
-# Nexu Port Forwarding 1.1.0-rc.12
+# Nexu Port Forwarding 1.1.0-rc.13
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## English
 
-Updated test build of the 1.1.0 release-candidate line with table readability and focused search improvements, plus a new independently built Windows/Linux package set.
+Updated 1.1.0 release candidate with safer main-toolbar actions and a cleaner profile menu, plus a new independently built Windows/Linux package set.
 
 ### New in this prerelease
+
+- Removed the global **Avvia visibili** button from the main toolbar to avoid accidental bulk starts.
+- Moved **Importa Tabby…** and **Importa MobaXterm…** into the **Profili** menu, keeping import operations grouped with profile management.
+- **Ferma tutti** remains directly available in the toolbar for fast shutdown of active tunnels.
+- **INSTALLAZIONE**, **NOME**, and **HOSTNAME / INDIRIZZO IP** now wrap automatically across multiple lines; **INSTALLAZIONE** and **NOME** can be edited directly in the grid with automatic persistence.
 
 - **NOME** cells now wrap onto multiple lines instead of truncating long labels with an ellipsis; table rows grow as needed while keeping a 62 px minimum height.
 - **INSTALLAZIONE** is shown again immediately before **NOME** in the main grid.

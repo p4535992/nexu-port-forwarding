@@ -115,13 +115,15 @@ public final class NexuApplication extends Application {
         Region spacer = new Region(); HBox.setHgrow(spacer, Priority.ALWAYS);
         HBox heading = new HBox(20, branding, spacer, counters); heading.setAlignment(Pos.CENTER_LEFT);
         Button add = new Button("+ Nuovo tunnel"); add.getStyleClass().add("primary"); add.setOnAction(e -> edit(null));
-        Button start = new Button("Avvia visibili"); start.setOnAction(e -> startAll(true));
         Button stop = new Button("Ferma tutti"); stop.setOnAction(e -> engine.stopAll());
         MenuButton file = new MenuButton("Profili");
         MenuItem sample = new MenuItem("Aggiungi l'esempio Maven"); sample.setOnAction(e -> addProfile(TunnelProfile.example()));
+        MenuItem importTabbyItem = new MenuItem("Importa Tabby…"); importTabbyItem.setOnAction(e -> importTabby());
+        MenuItem importMobaItem = new MenuItem("Importa MobaXterm…"); importMobaItem.setOnAction(e -> importMobaXterm());
         MenuItem importItem = new MenuItem("Importa configurazione…"); importItem.setOnAction(e -> importProfiles());
         MenuItem exportItem = new MenuItem("Esporta configurazione…"); exportItem.setOnAction(e -> exportProfiles());
-        file.getItems().addAll(sample, new SeparatorMenuItem(), importItem, exportItem);
+        file.getItems().addAll(sample, new SeparatorMenuItem(), importTabbyItem, importMobaItem,
+            new SeparatorMenuItem(), importItem, exportItem);
         Button hosts = new Button("Chiavi host"); hosts.setOnAction(e -> showHostKeys());
         Button quit = new Button("Esci"); quit.setOnAction(e -> requestExit());
         Button openLogs = new Button("Apri log"); openLogs.setOnAction(e -> {
@@ -134,9 +136,7 @@ public final class NexuApplication extends Application {
             if (!quitting && !UiWork.busy()) StorageSettingsDialog.show(window, storage, this::error);
         });
         settings.getItems().add(dataLocation);
-        Button importTabby = new Button("Importa Tabby…"); importTabby.setOnAction(e -> importTabby());
-        Button importMoba = new Button("Importa MobaXterm…"); importMoba.setOnAction(e -> importMobaXterm());
-        FlowPane commands = new FlowPane(9, 9, add, importTabby, importMoba, start, stop, file, vaultUi.menu(), hosts, openLogs, settings, quit);
+        FlowPane commands = new FlowPane(9, 9, add, stop, file, vaultUi.menu(), hosts, openLogs, settings, quit);
         installationFilter.setPromptText("Filtra installazione…"); installationFilter.setPrefWidth(180);
         nameFilter.setPromptText("Filtra nome…"); HBox.setHgrow(nameFilter, Priority.ALWAYS);
         hostFilter.setPromptText("Filtra hostname / indirizzo IP…"); hostFilter.setPrefWidth(240);

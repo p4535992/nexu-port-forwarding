@@ -1,12 +1,17 @@
-# Nexu Port Forwarding 1.1.0-rc.12
+# Nexu Port Forwarding 1.1.0-rc.13
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## Italiano
 
-Build di test aggiornata della linea 1.1.0 release-candidate con miglioramenti alla leggibilità della tabella e alla ricerca mirata, più un nuovo set di pacchetti Windows/Linux compilato e verificato indipendentemente.
+Release candidate 1.1.0 aggiornata con azioni principali più sicure e un menu Profili più ordinato, più un nuovo set di pacchetti Windows/Linux compilato e verificato indipendentemente.
 
 ### Novità
+
+- Rimosso il pulsante globale **Avvia visibili** dalla barra principale per evitare avvii multipli accidentali.
+- **Importa Tabby…** e **Importa MobaXterm…** sono stati spostati nel menu **Profili**, insieme alle altre operazioni sui profili.
+- **Ferma tutti** resta disponibile direttamente nella barra principale per arrestare rapidamente i tunnel attivi.
+- **INSTALLAZIONE**, **NOME** e **HOSTNAME / INDIRIZZO IP** vanno automaticamente a capo su più righe; **INSTALLAZIONE** e **NOME** sono modificabili direttamente nella griglia con salvataggio automatico.
 
 - Le celle **NOME** vanno ora a capo su più righe invece di troncare le etichette lunghe con "..."; l'altezza della riga cresce quando serve mantenendo un minimo di 62 px.
 - La colonna **INSTALLAZIONE** torna nella griglia principale immediatamente prima di **NOME**.
