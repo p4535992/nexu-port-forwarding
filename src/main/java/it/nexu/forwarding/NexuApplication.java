@@ -176,7 +176,29 @@ public final class NexuApplication extends Application {
         logPanel.setMinWidth(300); logPanel.setPrefWidth(380);
         SplitPane workspace = new SplitPane(sourceTabs, logPanel);
         workspace.setOrientation(Orientation.HORIZONTAL); workspace.setDividerPositions(0.72);
-        root = new BorderPane(workspace, top, null, null, null); BorderPane.setMargin(workspace, new Insets(0,26,20,26));
+
+        double[] logDivider = {0.72};
+        Button logToggle = new Button("›");
+        logToggle.getStyleClass().add("log-toggle");
+        logToggle.setTooltip(new Tooltip("Nascondi pannello log"));
+        logToggle.setOnAction(e -> {
+            if (workspace.getItems().contains(logPanel)) {
+                if (!workspace.getDividers().isEmpty()) logDivider[0] = workspace.getDividers().getFirst().getPosition();
+                workspace.getItems().remove(logPanel);
+                logToggle.setText("‹");
+                logToggle.setTooltip(new Tooltip("Mostra pannello log"));
+            } else {
+                workspace.getItems().add(logPanel);
+                logToggle.setText("›");
+                logToggle.setTooltip(new Tooltip("Nascondi pannello log"));
+                Platform.runLater(() -> workspace.setDividerPositions(logDivider[0]));
+            }
+        });
+
+        StackPane workspaceShell = new StackPane(workspace, logToggle);
+        StackPane.setAlignment(logToggle, Pos.CENTER_RIGHT);
+        StackPane.setMargin(logToggle, new Insets(0, 6, 0, 0));
+        root = new BorderPane(workspaceShell, top, null, null, null); BorderPane.setMargin(workspaceShell, new Insets(0,26,20,26));
         Scene scene = new Scene(root, 1320, 760); scene.getStylesheets().add(getClass().getResource("/app.css").toExternalForm());
         window.setScene(scene); window.setTitle("Nexu Port Forwarding 1.1.0");
         window.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/app-icon.png"))));
