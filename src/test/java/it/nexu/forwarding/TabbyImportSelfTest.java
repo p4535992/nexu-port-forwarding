@@ -113,10 +113,17 @@ public final class TabbyImportSelfTest {
             eq(one(p).auth(),TunnelProfile.Auth.PRIVATE_KEY);eq(one(p).privateKey(),absolute);
         });
         test("multiple private keys require review",()->{
-            var p=ssh("Local");opts(p).put("auth","publicKey");opts(p).put("privateKeys",List.of("/tmp/a","/tmp/b"));check(convert(p).candidates().getFirst().requiresReview());
+            String a=Path.of(System.getProperty("user.home"),"keys","a").toAbsolutePath().toString();
+            String b=Path.of(System.getProperty("user.home"),"keys","b").toAbsolutePath().toString();
+            var p=ssh("Local");opts(p).put("auth","publicKey");opts(p).put("privateKeys",List.of(a,b));check(convert(p).candidates().getFirst().requiresReview());
         });
         test("vault and URL private key references are skipped",()->{for(String key:List.of("vault:example","https://example.com/key","relative-key")){var p=ssh("Local");opts(p).put("auth","publicKey");opts(p).put("privateKeys",List.of(key));eq(convert(p).skippedProfiles(),1);}});
-        test("private key placeholders are expanded",()->{var p=ssh("Local");opts(p).put("auth","publicKey");opts(p).put("privateKeys",List.of("~/.ssh/%h-%r"));check(one(p).privateKey().endsWith(".ssh/ssh.example.com-user"));});
+        test("private key placeholders are expanded",()->{
+            var p=ssh("Local");opts(p).put("auth","publicKey");opts(p).put("privateKeys",List.of("~/.ssh/%h-%r"));
+            Path actual=Path.of(one(p).privateKey()).toAbsolutePath().normalize();
+            Path expected=Path.of(System.getProperty("user.home"),".ssh","ssh.example.com-user").toAbsolutePath().normalize();
+            eq(actual,expected);
+        });
         test("missing bind becomes loopback and requests review",()->{var p=ssh("Local");forward(p).remove("host");var c=convert(p).candidates().getFirst();eq(c.profile().bindHost(),"127.0.0.1");check(c.requiresReview());});
         test("non loopback bind is preserved and requires review",()->{var p=ssh("Dynamic");forward(p).put("host","0.0.0.0");check(convert(p).candidates().getFirst().requiresReview());eq(one(p).bindHost(),"0.0.0.0");});
         test("empty configuration returns zero rows",()->{eq(TabbyImport.convert(obj("profiles",List.of()),"").candidates().size(),0);});
