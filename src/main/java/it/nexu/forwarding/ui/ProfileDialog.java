@@ -14,7 +14,7 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
     public record Result(TunnelProfile profile, char[] newSecret, boolean remember) { }
     private final TextField name = new TextField(), host = new TextField(), port = new TextField(), user = new TextField();
     private final ComboBox<TunnelProfile.Auth> auth = new ComboBox<>();
-    private final PasswordField secret = new PasswordField();
+    private final PasswordRevealField secret = new PasswordRevealField();
     private final CheckBox remember = new CheckBox("Salva la credenziale nell’archivio locale cifrato");
     private final TextField key = new TextField(), bind = new TextField(), bindPort = new TextField();
     private final TextField target = new TextField(), targetPort = new TextField();
@@ -102,7 +102,7 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
         row(advanced, 2, "Timeout risposta (× intervallo)", misses); advanced.add(reconnect, 0, 3, 2, 1);
         row(advanced, 4, "Massimo riconnessioni", attempts); row(advanced, 5, "Attesa iniziale (s)", delay); row(advanced, 6, "Note", notes);
         attempts.disableProperty().bind(reconnect.selectedProperty().not()); delay.disableProperty().bind(reconnect.selectedProperty().not());
-        advanced.add(help("La soglia keepalive imposta un timeout di risposta: con 15 × 3 il timeout è 45 secondi. Non è identica al contatore di messaggi OpenSSH. Le riconnessioni hanno attesa crescente, fino a 60 secondi, e non ritentano errori di credenziali, chiave host o bind."), 0, 7, 2, 1);
+        advanced.add(help("La soglia keepalive imposta un timeout di risposta: con 15 × 3 il timeout è 45 secondi. Non è identica al contatore di messaggi OpenSSH. Le riconnessioni hanno attesa crescente, fino a 60 secondi, e non ritentano errori di credenziali, chiave host o bind. La connessione SSH è diretta: il proxy HTTP/SOCKS del sistema non viene usato automaticamente."), 0, 7, 2, 1);
         TabPane tabs = new TabPane(tab("Connessione", connection), tab("Inoltro", forwarding), tab("Avanzate", advanced));
         validation.getStyleClass().add("error-text"); validation.setWrapText(true);
         VBox content = new VBox(12, tabs, validation); content.setPrefSize(730, 480); VBox.setVgrow(tabs, Priority.ALWAYS);

@@ -13,6 +13,12 @@ import org.apache.sshd.common.keyprovider.FileKeyPairProvider;
 import org.apache.sshd.common.keyprovider.KeyIdentityProvider;
 import org.apache.sshd.common.util.net.SshdSocketAddress;
 import org.apache.sshd.server.forward.ForwardingFilter;
+import java.net.BindException;
+import java.net.ConnectException;
+import java.net.NoRouteToHostException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
+import java.nio.channels.UnresolvedAddressException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPair;
@@ -78,7 +84,7 @@ public final class MinaTunnelBackend implements TunnelBackend {
             } catch (Exception e) {
                 token.check();
                 if (rejectedKey.get() != null) throw new Failure(rejectedKey.get(), false, e);
-                throw new Failure("Connessione SSH non riuscita: controllare host, porta, rete e timeout.", true, e);
+                throw connectionFailure(p, e);
             }
             token.check();
             String password = new String(secret);
@@ -100,7 +106,7 @@ public final class MinaTunnelBackend implements TunnelBackend {
                 token.check();
                 if (rejectedKey.get() != null) throw new Failure(rejectedKey.get(), false, e);
                 if (e instanceof Failure) throw e;
-                throw new Failure("Autenticazione SSH fallita. Controllare utente, password/chiave, passphrase e metodo consentito dal server.", false, e);
+                throw authenticationFailure(p, e);
             } finally {
                 if (p.auth() == TunnelProfile.Auth.PASSWORD) session.removePasswordIdentity(password);
                 password = null;
@@ -119,7 +125,7 @@ public final class MinaTunnelBackend implements TunnelBackend {
             } catch (Exception e) {
                 if (dynamic != null) dynamic.close();
                 token.check();
-                throw new Failure("Forwarding rifiutato: porta occupata, bind non disponibile o policy SSH (AllowTcpForwarding / PermitListen / GatewayPorts).", false, e);
+                throw forwardingFailure(p, e);
             }
             token.check();
             DynamicSocksForwarder socks = dynamic;
@@ -144,4 +150,52 @@ public final class MinaTunnelBackend implements TunnelBackend {
             }
         }
     }
+    static Failure connectionFailure(TunnelProfile p, Exception error) {
+        String endpoint = p.sshHost() + ":" + p.sshPort();
+        Throwable root = rootCause(error);
+        String messages = causeMessages(error).toLowerCase(java.util.Locale.ROOT);
+        if (hasCause(error, UnknownHostException.class) || hasCause(error, UnresolvedAddressException.class))
+            return new Failure("DNS: impossibile risolvere il server SSH «" + p.sshHost() + "». Verificare DNS, VPN e suffissi DNS aziendali. Nessuna connessione TCP è stata aperta.", true, error);
+        if (hasCause(error, SocketTimeoutException.class) || messages.contains("timed out") || messages.contains("timeout"))
+            return new Failure("Timeout durante la connessione TCP/SSH diretta a " + endpoint + " dopo " + p.connectTimeoutSeconds() + " s. Nexu Port Forwarding non usa automaticamente il proxy HTTP/SOCKS configurato nel sistema. Se la rete aziendale richiede proxy o VPN, la connessione diretta può essere bloccata.", true, error);
+        if (hasCause(error, NoRouteToHostException.class) || messages.contains("no route") || messages.contains("network is unreachable"))
+            return new Failure("Nessun percorso di rete verso " + endpoint + ". Verificare VPN, routing, firewall e rete aziendale. La connessione SSH è diretta e non usa automaticamente il proxy di sistema.", true, error);
+        if (hasCause(error, ConnectException.class) && (messages.contains("refused") || messages.contains("actively refused")))
+            return new Failure("Connessione rifiutata da " + endpoint + ". L'host è raggiungibile, ma la porta SSH non accetta la connessione: possibile porta errata, servizio SSH spento o firewall con rifiuto esplicito.", true, error);
+        if (messages.contains("reset") || messages.contains("closed") || messages.contains("eof"))
+            return new Failure("Connessione verso " + endpoint + " aperta ma interrotta durante l'handshake SSH. Possibili cause: servizio non SSH sulla porta, firewall/proxy trasparente o chiusura dal server.", true, error);
+        return new Failure("Connessione TCP/SSH diretta verso " + endpoint + " fallita (" + root.getClass().getSimpleName() + "). Il proxy HTTP/SOCKS di sistema non viene usato automaticamente. Verificare DNS, VPN, firewall, porta SSH e policy della rete aziendale.", true, error);
+    }
+
+    static Failure authenticationFailure(TunnelProfile p, Exception error) {
+        String endpoint = p.sshHost() + ":" + p.sshPort();
+        String messages = causeMessages(error).toLowerCase(java.util.Locale.ROOT);
+        if (hasCause(error, SocketTimeoutException.class) || messages.contains("timed out") || messages.contains("timeout"))
+            return new Failure("Timeout durante handshake/autenticazione SSH su " + endpoint + ". Il collegamento TCP è stato avviato, ma il server non ha completato l'autenticazione nei tempi previsti. Verificare latenza, MFA/metodi non supportati e policy SSH del server.", false, error);
+        return new Failure("Server SSH raggiunto su " + endpoint + ", ma autenticazione fallita per l'utente «" + p.username() + "» con metodo " + p.auth().name() + ". Controllare utente, password/chiave, passphrase e i metodi consentiti dal server.", false, error);
+    }
+
+    static Failure forwardingFailure(TunnelProfile p, Exception error) {
+        if (hasCause(error, BindException.class))
+            return new Failure("Impossibile aprire la porta di ascolto " + p.listener() + ": indirizzo/porta già occupati o non disponibili.", false, error);
+        return new Failure("Connessione SSH autenticata, ma il forwarding è stato rifiutato. Verificare porta di ascolto e policy SSH del server (AllowTcpForwarding / PermitListen / GatewayPorts).", false, error);
+    }
+
+    private static boolean hasCause(Throwable error, Class<? extends Throwable> type) {
+        for (Throwable t = error; t != null; t = t.getCause()) if (type.isInstance(t)) return true;
+        return false;
+    }
+
+    private static Throwable rootCause(Throwable error) {
+        Throwable root = error;
+        for (int i = 0; i < 20 && root.getCause() != null && root.getCause() != root; i++) root = root.getCause();
+        return root;
+    }
+
+    private static String causeMessages(Throwable error) {
+        StringBuilder out = new StringBuilder();
+        for (Throwable t = error; t != null; t = t.getCause()) if (t.getMessage() != null) out.append(' ').append(t.getMessage());
+        return out.toString();
+    }
+
 }

@@ -56,7 +56,7 @@ public final class VaultUi {
     }
     private char[] askPassword(String title,boolean creating) {
         Dialog<char[]> dialog=new Dialog<>(); dialog.initOwner(owner); dialog.setTitle(title); dialog.setHeaderText(title);
-        PasswordField first=new PasswordField(),second=new PasswordField();
+        PasswordRevealField first=new PasswordRevealField(),second=new PasswordRevealField();
         first.setPromptText("Password principale"); second.setPromptText("Ripeti la password");
         Label help=new Label(creating?"Almeno 12 caratteri. Non viene salvata: se la perdi, non è recuperabile. Nessun dato viene inviato a servizi cloud.":"La password sblocca soltanto l'archivio locale selezionato.");
         help.setWrapText(true);help.setMaxWidth(460);Label validation=new Label();

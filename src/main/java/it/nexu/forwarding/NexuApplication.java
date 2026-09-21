@@ -258,7 +258,7 @@ public final class NexuApplication extends Application {
         });
         state.setEditable(false); mode.setEditable(false); name.setEditable(false); hostname.setEditable(false); ip.setEditable(false); sshPort.setEditable(false);
         bind.setEditable(false); destination.setEditable(false); actions.setEditable(false);
-        table.getColumns().addAll(state, mode, installation, name, hostname, ip, sshPort, bind, destination, actions);
+        table.getColumns().addAll(actions, state, mode, installation, name, hostname, ip, sshPort, bind, destination);
         Label emptyTitle = new Label("Nessun tunnel da mostrare"); emptyTitle.getStyleClass().add("empty-title");
         Label emptyHelp = new Label("Attivi: solo tunnel connessi. Custom: + Nuovo tunnel. Tabby/MobaXterm: usa i pulsanti Importa."); emptyHelp.getStyleClass().add("muted");
         VBox empty = new VBox(12, emptyTitle, emptyHelp); empty.setAlignment(Pos.CENTER); table.setPlaceholder(empty);
@@ -376,12 +376,12 @@ public final class NexuApplication extends Application {
     private char[] askSecret(TunnelProfile profile) {
         Dialog<char[]> dialog = new Dialog<>(); dialog.initOwner(window); dialog.setTitle(profile.name());
         dialog.setHeaderText(profile.auth() == TunnelProfile.Auth.PASSWORD ? "Password SSH per " + profile.endpoint() : "Passphrase della chiave (vuota se non cifrata)");
-        PasswordField field = new PasswordField(); field.setPromptText("Password SSH / passphrase");
+        PasswordRevealField field = new PasswordRevealField(); field.setPromptText("Password SSH / passphrase");
         CheckBox remember = new CheckBox("Salva nell’archivio locale cifrato"); remember.setSelected(true);
         dialog.getDialogPane().setContent(new VBox(12,field,remember));
         ButtonType connect = new ButtonType("Connetti", ButtonBar.ButtonData.OK_DONE); dialog.getDialogPane().getButtonTypes().addAll(connect,ButtonType.CANCEL);
         dialog.setResultConverter(b -> b == connect ? field.getText().toCharArray() : null);
-        dialog.setOnShown(e -> field.requestFocus());
+        dialog.setOnShown(e -> field.requestInputFocus());
         Optional<char[]> result = dialog.showAndWait(); field.clear();
         if (result.isPresent() && remember.isSelected()) vaultUi.remember(profile,result.get());
         return result.orElse(null);
