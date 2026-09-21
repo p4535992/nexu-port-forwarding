@@ -39,6 +39,7 @@ public final class NexuApplication extends Application {
     private final TabPane sourceTabs = new TabPane();
     private final Tab activeTab = new Tab("Attivi"), customTab = new Tab("Custom"), tabbyTab = new Tab("Tabby"), mobaTab = new Tab("MobaXterm");
     private final ComboBox<String> statusFilter = new ComboBox<>(), modeFilter = new ComboBox<>();
+    private final CheckMenuItem openSshDiagnostics = new CheckMenuItem("Diagnostica configurazione OpenSSH locale all'avvio");
     private final Label totals = new Label(), active = new Label(), errors = new Label();
     private final Label selectedInfo = new Label("Seleziona una riga per vedere i dettagli."), footer = new Label();
     private final TextArea logs = new TextArea();
@@ -136,7 +137,16 @@ public final class NexuApplication extends Application {
         dataLocation.setOnAction(e -> {
             if (!quitting && !UiWork.busy()) StorageSettingsDialog.show(window, storage, this::error);
         });
-        settings.getItems().add(dataLocation);
+        openSshDiagnostics.setSelected(false);
+        openSshDiagnostics.setOnAction(e -> {
+            if (openSshDiagnostics.isSelected() && !confirm("Diagnostica OpenSSH locale",
+                "Quando è attiva, prima di avviare un tunnel Nexu esegue «ssh -G» e lo confronta con «ssh -F NUL/-F /dev/null -G».\n\n"
+                    + "Non apre una connessione SSH, ma OpenSSH può valutare eventuali regole locali Match exec presenti nella configurazione.\n\n"
+                    + "Abilitare la diagnostica per questa sessione?")) {
+                openSshDiagnostics.setSelected(false);
+            }
+        });
+        settings.getItems().addAll(dataLocation, new SeparatorMenuItem(), openSshDiagnostics);
         FlowPane commands = new FlowPane(9, 9, add, stop, file, vaultUi.menu(), hosts, openLogs, settings, quit);
         installationFilter.setPromptText("Filtra installazione…"); installationFilter.setPrefWidth(180);
         nameFilter.setPromptText("Filtra nome…"); HBox.setHgrow(nameFilter, Priority.ALWAYS);
@@ -525,6 +535,20 @@ public final class NexuApplication extends Application {
         if (quitting || UiWork.busy() || engine.isRunning(p.id())) return;
         if (!p.isLoopbackBind() && !confirm("Ascolto non limitato al loopback",
             "Il profilo «"+p.name()+"» richiede l'ascolto su "+p.listener()+".\nPotrebbe rendere accessibile il servizio ad altri dispositivi. Continuare?")) return;
+        if (openSshDiagnostics.isSelected()) {
+            try {
+                OpenSshConfigDiagnostic.Result diagnostic = UiWork.run(window, "Analisi configurazione OpenSSH…",
+                    () -> OpenSshConfigDiagnostic.inspect(p));
+                appLog.openSshDiagnostic(p.id(), diagnostic.summary());
+                row.appendDiagnostic("OpenSSH", diagnostic.summary());
+                showSelection();
+            } catch (Exception diagnosticError) {
+                String detail = "Diagnostica OpenSSH non completata: " + safeDiagnosticText(diagnosticError.getMessage());
+                appLog.openSshDiagnostic(p.id(), detail);
+                row.appendDiagnostic("OpenSSH", detail);
+                showSelection();
+            }
+        }
         try {
             MinaTunnelBackend.preflightLocalListener(p);
         } catch (TunnelBackend.Failure preflight) {
@@ -553,6 +577,10 @@ public final class NexuApplication extends Application {
             }
             engine.start(p,secret);
         } finally { Arrays.fill(secret,'\0'); }
+    }
+    private static String safeDiagnosticText(String value) {
+        String text = value == null || value.isBlank() ? "errore non specificato" : value.replaceAll("[\\p{Cntrl}]", " ").trim();
+        return text.length() > 300 ? text.substring(0,300) : text;
     }
     private char[] askProxySecret(TunnelProfile profile) {
         Dialog<char[]> dialog = new Dialog<>(); dialog.initOwner(window); dialog.setTitle(profile.name());

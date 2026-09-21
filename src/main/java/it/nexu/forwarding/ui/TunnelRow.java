@@ -3,6 +3,7 @@ package it.nexu.forwarding.ui;
 import it.nexu.forwarding.model.TunnelProfile;
 import it.nexu.forwarding.ssh.TunnelEngine;
 import javafx.beans.property.*;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayDeque;
@@ -33,6 +34,12 @@ public final class TunnelRow {
     public void accept(TunnelEngine.Event event) {
         state.set(event.state()); detail.set(event.detail());
         logs.addLast(CLOCK.format(event.time()) + "  " + event.state().label() + "  " + event.detail());
+        while (logs.size() > 300) logs.removeFirst();
+    }
+    public void appendDiagnostic(String category,String message) {
+        String safeCategory = category == null ? "Diagnostica" : category.replaceAll("[\\p{Cntrl}]", " ").trim();
+        String safeMessage = message == null ? "" : message.replaceAll("[\\p{Cntrl}]", " ").trim();
+        logs.addLast(CLOCK.format(Instant.now()) + "  " + safeCategory + "  " + safeMessage);
         while (logs.size() > 300) logs.removeFirst();
     }
     public String logs() { return String.join("\n", logs); }

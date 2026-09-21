@@ -22,6 +22,11 @@ public final class AppLog implements AutoCloseable {
         logger.addHandler(handler); mark("application-started version=1.2.0");
     }
     public Path directory() { return directory; }
+    public void openSshDiagnostic(java.util.UUID id,String detail) {
+        String safe = detail == null ? "" : detail.replaceAll("[\\p{Cntrl}]", " ").trim();
+        if (safe.length() > 900) safe = safe.substring(0,900);
+        logger.info("tunnel="+id+" category=OPENSSH_CONFIG_DIAGNOSTIC detail=\""+escape(safe)+"\"");
+    }
     public void event(TunnelEngine.Event event) {
         Diagnostic diagnostic = diagnostic(event);
         String message = "tunnel="+event.id()+" state="+event.state().name();
