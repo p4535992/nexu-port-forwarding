@@ -199,11 +199,6 @@ public final class NexuApplication extends Application {
         state.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(TunnelEngine.State s, boolean empty) {
                 super.updateItem(s,empty); setText(null); setGraphic(null);
-                TableRow<TunnelRow> tableRow = getTableRow();
-                if (tableRow != null) {
-                    tableRow.getStyleClass().remove("row-stopped");
-                    if (!empty && s == TunnelEngine.State.STOPPED) tableRow.getStyleClass().add("row-stopped");
-                }
                 if (!empty && s != null) {
                     Label badge = new Label("●  " + s.label()); badge.getStyleClass().addAll("state-pill", "state-" + s.name().toLowerCase(Locale.ROOT));
                     TunnelRow row = getTableRow() == null ? null : getTableRow().getItem();
@@ -237,7 +232,7 @@ public final class NexuApplication extends Application {
                 setTooltip(empty || text == null || text.isBlank() ? null : new Tooltip(text.replace("\n"," · ")));
             }
         });
-        TableColumn<TunnelRow,TunnelRow> actions = new TableColumn<>("AZIONI"); actions.setPrefWidth(170); actions.setSortable(false);
+        TableColumn<TunnelRow,TunnelRow> actions = new TableColumn<>("AZIONI"); actions.setPrefWidth(185); actions.setSortable(false);
         actions.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue()));
         actions.setCellFactory(c -> new TableCell<>() {
             private Button runStop;
@@ -286,14 +281,37 @@ public final class NexuApplication extends Application {
         Label emptyTitle = new Label("Nessun tunnel da mostrare"); emptyTitle.getStyleClass().add("empty-title");
         Label emptyHelp = new Label("Attivi: solo tunnel connessi. Custom: + Nuovo tunnel. Tabby/MobaXterm: usa i pulsanti Importa."); emptyHelp.getStyleClass().add("muted");
         VBox empty = new VBox(12, emptyTitle, emptyHelp); empty.setAlignment(Pos.CENTER); table.setPlaceholder(empty);
-        table.setRowFactory(t -> { TableRow<TunnelRow> row = new TableRow<>(); row.setOnMouseClicked(e -> {
-            if (e.getClickCount() == 2 && !row.isEmpty() && table.getEditingCell() == null) {
-                javafx.scene.Node node = e.getTarget() instanceof javafx.scene.Node n ? n : null;
-                while (node != null && !(node instanceof TableCell<?,?>)) node = node.getParent();
-                if (node instanceof TableCell<?,?> cell && name.equals(cell.getTableColumn())) table.edit(row.getIndex(), name);
-                else edit(row.getItem());
-            }
-        }); return row; });
+        table.setRowFactory(t -> {
+            TableRow<TunnelRow> row = new TableRow<>() {
+                private final javafx.beans.value.ChangeListener<TunnelEngine.State> stateListener =
+                    (o, oldState, newState) -> refreshStoppedStyle();
+
+                {
+                    itemProperty().addListener((o, oldItem, newItem) -> {
+                        if (oldItem != null) oldItem.stateProperty().removeListener(stateListener);
+                        if (newItem != null) newItem.stateProperty().addListener(stateListener);
+                        refreshStoppedStyle();
+                    });
+                }
+
+                private void refreshStoppedStyle() {
+                    getStyleClass().remove("row-stopped");
+                    TunnelRow item = getItem();
+                    if (item != null && item.state() == TunnelEngine.State.STOPPED) {
+                        getStyleClass().add("row-stopped");
+                    }
+                }
+            };
+            row.setOnMouseClicked(e -> {
+                if (e.getClickCount() == 2 && !row.isEmpty() && table.getEditingCell() == null) {
+                    javafx.scene.Node node = e.getTarget() instanceof javafx.scene.Node n ? n : null;
+                    while (node != null && !(node instanceof TableCell<?,?>)) node = node.getParent();
+                    if (node instanceof TableCell<?,?> cell && name.equals(cell.getTableColumn())) table.edit(row.getIndex(), name);
+                    else edit(row.getItem());
+                }
+            });
+            return row;
+        });
     }
 
     private static final class AutoSaveTextCell extends TableCell<TunnelRow,String> {
