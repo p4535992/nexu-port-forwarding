@@ -1,4 +1,4 @@
-# Nexu Port Forwarding 1.1.0-rc.7
+# Nexu Port Forwarding 1.1.0-rc.8
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
@@ -7,6 +7,8 @@
 Fresh test rebuild of the current 1.1.0 release-candidate line, with the same application features as rc.6 and a new independently built Windows/Linux package set.
 
 ### New in this prerelease
+
+- Fixed vault/master-password dialog validation feedback after adding password reveal controls: invalid input now shows a specific persistent error message and focuses the field to correct; valid input closes the dialog normally.
 
 - Renamed rotating log files from `nexu-0.log` style names to `nexu-port-forwarding-0.log`, `nexu-port-forwarding-1.log`, etc. Existing older log files are left untouched.
 

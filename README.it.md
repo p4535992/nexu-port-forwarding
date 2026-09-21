@@ -30,9 +30,9 @@ Il verde indica che connessione SSH e forwarding sono stati stabiliti; **non** c
 
 Ogni profilo possiede una connessione SSH indipendente. Nessun tunnel parte automaticamente all'apertura dell'applicazione. Gli errori di autenticazione, chiave host o bind non vengono ritentati automaticamente. Apache MINA SSHD viene usato direttamente, quindi le password non vengono passate tramite BAT, comandi PowerShell o argomenti di processi esterni.
 
-## Release 1.1.0-rc.7
+## Release 1.1.0-rc.8
 
-Scarica **[v1.1.0-rc.7](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.7)**.
+Scarica **[v1.1.0-rc.8](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.8)**.
 
 | Piattaforma | Pacchetti |
 | --- | --- |

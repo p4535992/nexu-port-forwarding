@@ -19,6 +19,8 @@ public final class PasswordRevealField extends HBox {
         hidden.textProperty().bindBidirectional(visible.textProperty());
         visible.setVisible(false); visible.setManaged(false);
         StackPane fields = new StackPane(hidden, visible);
+        fields.setMaxWidth(Double.MAX_VALUE);
+        setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(fields, Priority.ALWAYS);
         hidden.setMaxWidth(Double.MAX_VALUE); visible.setMaxWidth(Double.MAX_VALUE);
         reveal.setFocusTraversable(false);

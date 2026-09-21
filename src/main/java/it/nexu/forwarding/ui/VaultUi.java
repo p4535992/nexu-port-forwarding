@@ -5,7 +5,7 @@ import it.nexu.forwarding.model.TunnelProfile;
 import it.nexu.forwarding.ssh.TunnelEngine;
 import javafx.event.ActionEvent;
 import javafx.scene.control.*;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.stage.*;
 import java.io.File;
 import java.nio.file.Path;
@@ -56,20 +56,35 @@ public final class VaultUi {
     }
     private char[] askPassword(String title,boolean creating) {
         Dialog<char[]> dialog=new Dialog<>(); dialog.initOwner(owner); dialog.setTitle(title); dialog.setHeaderText(title);
+        dialog.getDialogPane().getStylesheets().add(getClass().getResource("/app.css").toExternalForm());
         PasswordRevealField first=new PasswordRevealField(),second=new PasswordRevealField();
         first.setPromptText("Password principale"); second.setPromptText("Ripeti la password");
         Label help=new Label(creating?"Almeno 12 caratteri. Non viene salvata: se la perdi, non è recuperabile. Nessun dato viene inviato a servizi cloud.":"La password sblocca soltanto l'archivio locale selezionato.");
-        help.setWrapText(true);help.setMaxWidth(460);Label validation=new Label();
-        VBox content=new VBox(12,help,first);if(creating)content.getChildren().add(second);content.getChildren().add(validation);
-        dialog.getDialogPane().setContent(content);ButtonType ok=new ButtonType("Conferma",ButtonBar.ButtonData.OK_DONE);
+        help.setWrapText(true); help.setMaxWidth(500);
+        Label validation=new Label();
+        validation.getStyleClass().add("error-text"); validation.setWrapText(true);
+        validation.setMinHeight(42); validation.setMaxWidth(Double.MAX_VALUE);
+        VBox content=new VBox(12,help,first); content.setPrefWidth(520);
+        if(creating) content.getChildren().add(second);
+        content.getChildren().add(validation);
+        dialog.getDialogPane().setContent(content);
+        ButtonType ok=new ButtonType("Conferma",ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(ok,ButtonType.CANCEL);
         dialog.getDialogPane().lookupButton(ok).addEventFilter(ActionEvent.ACTION,e->{
-            if(first.getLength()>1024||first.getLength()==0||(creating&&(first.getLength()<12||!first.getText().equals(second.getText())))) {
-                validation.setText("Controllare lunghezza e conferma della password.");e.consume();
-            }
+            String problem=PasswordRules.validate(first.getText(),second.getText(),creating);
+            if(problem!=null) {
+                validation.setText(problem);
+                if(creating && problem.contains("secondo campo")) second.requestInputFocus();
+                else if(creating && problem.contains("non coincidono")) second.requestInputFocus();
+                else first.requestInputFocus();
+                e.consume();
+            } else validation.setText("");
         });
         dialog.setResultConverter(b->b==ok?first.getText().toCharArray():null);
-        Optional<char[]> result=dialog.showAndWait();first.clear();second.clear();return result.orElse(null);
+        dialog.setOnShown(e->first.requestInputFocus());
+        Optional<char[]> result=dialog.showAndWait();
+        first.clear(); second.clear();
+        return result.orElse(null);
     }
     private void changePassword() {
         if(!ensureOpen())return; char[] password=askPassword("Nuova password principale",true);if(password==null)return;

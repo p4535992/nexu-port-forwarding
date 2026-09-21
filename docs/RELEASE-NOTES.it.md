@@ -1,4 +1,4 @@
-# Nexu Port Forwarding 1.1.0-rc.7
+# Nexu Port Forwarding 1.1.0-rc.8
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
@@ -7,6 +7,8 @@
 Nuova build di test della linea 1.1.0 release-candidate, con le stesse funzionalità applicative della rc.6 e un nuovo set di pacchetti Windows/Linux compilato e verificato indipendentemente.
 
 ### Novità
+
+- Corretto il feedback di validazione del dialogo vault/password principale dopo l'aggiunta dell'occhio: gli input non validi mostrano ora un errore specifico e persistente con focus sul campo da correggere; gli input validi chiudono normalmente il dialogo.
 
 - Rinominati i file di log con rotazione da `nexu-0.log` a `nexu-port-forwarding-0.log`, `nexu-port-forwarding-1.log`, ecc. I vecchi file già esistenti restano invariati.
 
