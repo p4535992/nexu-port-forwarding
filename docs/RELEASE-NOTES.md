@@ -1,12 +1,17 @@
-# Nexu Port Forwarding 1.2.0-rc.2
+# Nexu Port Forwarding 1.2.0-rc.3
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## English
 
-Second 1.2.0 release candidate, adding direct OpenSSH comparison tools on top of the proxy support and forwarding diagnostics introduced in rc.1.
+Third 1.2.0 release candidate with clearer state coloring and a more compact, adaptive tunnel table, while retaining the proxy and OpenSSH diagnostics from rc.1/rc.2.
 
 ### New in this prerelease
+
+- **ACTIVE** tunnel rows now use a true green background, including when selected; stopped rows remain red and the contextual **■ Ferma** action remains red.
+- Removed the redundant **STATO** table column; the status filter remains available, while row color plus **Avvia/Ferma** communicate state directly.
+- Fixed wrapped **NOME** / **INSTALLAZIONE** cells so the table row recalculates its preferred height instead of clipping multiline text at the top or bottom.
+- **FORWARDING** and **HOSTNAME / INDIRIZZO IP** now wrap with dynamic row height and more adaptive column widths, reducing horizontal pressure on smaller displays.
 
 - Every **Avvia** action now writes copyable OpenSSH-equivalent commands into the tunnel activity panel for **Windows PowerShell** and **Linux/POSIX**.
 - The diagnostic commands explicitly use **`-F NUL`** on Windows and **`-F /dev/null`** on Linux so they do not read the user's OpenSSH config, matching Nexu's self-contained SSH behavior more closely.

@@ -39,6 +39,9 @@
 .table-row-cell.row-stopped { -fx-background-color: #2f1b23; }
 .table-row-cell.row-stopped:odd { -fx-background-color: #351e27; }
 .table-row-cell.row-stopped:selected { -fx-background-color: #4c2631; }
+.table-row-cell.row-active { -fx-background-color: #12352c; }
+.table-row-cell.row-active:odd { -fx-background-color: #163c31; }
+.table-row-cell.row-active:selected { -fx-background-color: #1d5a48; }
 .state-connecting, .state-reconnecting { -fx-background-color: #483c22; -fx-text-fill: #f5d074; }
 .state-stopping { -fx-background-color: #233b55; -fx-text-fill: #9bcdf5; }
 .log-area { -fx-font-family: "Consolas", "DejaVu Sans Mono", monospace; -fx-font-size: 12px; -fx-text-fill: #b5c8e4; }

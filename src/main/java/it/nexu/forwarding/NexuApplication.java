@@ -332,21 +332,24 @@ public final class NexuApplication extends Application {
         table.setRowFactory(t -> {
             TableRow<TunnelRow> row = new TableRow<>() {
                 private final javafx.beans.value.ChangeListener<TunnelEngine.State> stateListener =
-                    (o, oldState, newState) -> refreshStoppedStyle();
+                    (o, oldState, newState) -> refreshStateStyle();
 
                 {
                     itemProperty().addListener((o, oldItem, newItem) -> {
                         if (oldItem != null) oldItem.stateProperty().removeListener(stateListener);
                         if (newItem != null) newItem.stateProperty().addListener(stateListener);
-                        refreshStoppedStyle();
+                        refreshStateStyle();
                     });
                 }
 
-                private void refreshStoppedStyle() {
-                    getStyleClass().remove("row-stopped");
+                private void refreshStateStyle() {
+                    getStyleClass().removeAll("row-stopped", "row-active");
                     TunnelRow item = getItem();
-                    if (item != null && item.state() == TunnelEngine.State.STOPPED) {
+                    if (item == null) return;
+                    if (item.state() == TunnelEngine.State.STOPPED) {
                         getStyleClass().add("row-stopped");
+                    } else if (item.state() == TunnelEngine.State.ACTIVE) {
+                        getStyleClass().add("row-active");
                     }
                 }
             };

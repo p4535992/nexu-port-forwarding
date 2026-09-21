@@ -1,12 +1,17 @@
-# Nexu Port Forwarding 1.2.0-rc.2
+# Nexu Port Forwarding 1.2.0-rc.3
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## Italiano
 
-Seconda release candidate della linea 1.2.0: aggiunge strumenti di confronto diretto con OpenSSH al supporto proxy e alla diagnostica dei forwarding introdotti nella rc.1.
+Terza release candidate della linea 1.2.0: migliora la colorazione degli stati e rende la tabella dei tunnel più compatta e adattiva, mantenendo proxy e diagnostica OpenSSH introdotti nelle rc.1/rc.2.
 
 ### Novità
+
+- Le righe dei tunnel **ACTIVE** hanno ora un vero sfondo verde, anche quando sono selezionate; le righe ferme restano rosse e l'azione contestuale **■ Ferma** resta rossa.
+- Rimossa la colonna ridondante **STATO** dalla tabella; il filtro Stato resta disponibile, mentre colore della riga e pulsante **Avvia/Ferma** comunicano direttamente lo stato.
+- Corretto il wrapping di **NOME** / **INSTALLAZIONE**: la riga ricalcola davvero l'altezza necessaria e non taglia più il testo multilinea sopra o sotto.
+- **FORWARDING** e **HOSTNAME / INDIRIZZO IP** vanno a capo con altezza dinamica e larghezze più adattive, riducendo la pressione orizzontale sugli schermi più piccoli.
 
 - A ogni **Avvia** vengono ora scritti nel pannello attività del tunnel i comandi OpenSSH equivalenti e copiabili per **Windows PowerShell** e **Linux/POSIX**.
 - I comandi diagnostici usano esplicitamente **`-F NUL`** su Windows e **`-F /dev/null`** su Linux, così non leggono la configurazione OpenSSH dell'utente e riproducono più fedelmente il comportamento autosufficiente di Nexu.
