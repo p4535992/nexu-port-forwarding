@@ -1,4 +1,4 @@
-# Nexu Port Forwarding 1.1.0-rc.5
+# Nexu Port Forwarding 1.1.0-rc.6
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
@@ -7,6 +7,8 @@
 Prerelease che aggiunge importazione da applicazioni esterne e nuovi filtri operativi, lasciando invariata la release stabile 1.0.0.
 
 ### Novità
+
+- Rinominati i file di log con rotazione da `nexu-0.log` a `nexu-port-forwarding-0.log`, `nexu-port-forwarding-1.log`, ecc. I vecchi file già esistenti restano invariati.
 
 - Controllo preventivo della disponibilità del listener locale per LOCAL e DYNAMIC/SOCKS prima dell'autenticazione SSH. Le porte già occupate vengono segnalate subito indicando che un'altra applicazione di tunneling (per esempio Tabby/MobaXterm) potrebbe già usarle.
 - I log persistenti registrano ora categorie diagnostiche sanificate e contesto sicuro per gli errori riconosciuti, continuando a escludere credenziali e testo grezzo arbitrario delle eccezioni.

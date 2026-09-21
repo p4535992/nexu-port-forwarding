@@ -17,7 +17,7 @@ NexuPortForwarding/
     window.properties              Stato della finestra
     app.lock                       Blocco dati per singola istanza
   logs/
-    nexu-0.log                     Log diagnostico con rotazione
+    nexu-port-forwarding-0.log                     Log diagnostico con rotazione
 ```
 
 Le due cartelle vengono create all'avvio. I singoli file vengono creati quando servono (per esempio il vault dopo aver scelto la password principale). Un portabile nuovo non legge né importa automaticamente i profili presenti in AppData.

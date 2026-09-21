@@ -74,7 +74,7 @@ public final class StorageSelfTest {
                     "Porta locale già in uso: 127.0.0.1:8687. Un altro processo (per esempio Tabby o MobaXterm) sta probabilmente già ascoltando su questa porta.",
                     Instant.now()));
             }
-            String logText=Files.readString(home.resolve("logs/nexu-0.log"));
+            String logText=Files.readString(home.resolve("logs/nexu-port-forwarding-0.log"));
             check(logText.contains("state=ERROR")&&logText.contains("application-started"),"local diagnostic log records lifecycle and state");
             check(logText.contains("category=LOCAL_BIND_IN_USE")&&logText.contains("127.0.0.1:8687"),"persistent log records sanitized bind conflict diagnostics");
             check(!logText.contains(new String(credential)),"diagnostic log does not persist arbitrary error text or passwords");

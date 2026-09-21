@@ -69,7 +69,7 @@ public final class PortableStorageSelfTest {
                     "startup components create separate data and logs directories");
                 check(!Files.exists(windows.resolve("profiles.properties")),"profiles are never scattered in application root");
             }
-            check(Files.readString(w.logsDirectory().resolve("nexu-0.log")).contains("portable-fixture-started"),
+            check(Files.readString(w.logsDirectory().resolve("nexu-port-forwarding-0.log")).contains("portable-fixture-started"),
                 "persistent log is written to the local logs directory");
             Files.writeString(w.dataDirectory().resolve("profiles.properties"),"test-profile=local\n");
             byte[] vaultBytes={1,2,3,4,5};Files.write(w.dataDirectory().resolve("credentials.npfvault"),vaultBytes);

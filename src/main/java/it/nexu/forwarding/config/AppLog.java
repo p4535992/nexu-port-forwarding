@@ -15,7 +15,7 @@ public final class AppLog implements AutoCloseable {
     private AppLog(Path logDirectory, boolean explicitDirectory) throws IOException {
         directory=logDirectory; SafeFiles.directory(directory);
         logger.setUseParentHandlers(false); logger.setLevel(Level.INFO);
-        handler=new FileHandler(directory.resolve("nexu-%g.log").toString(),2_000_000,5,true);
+        handler=new FileHandler(directory.resolve("nexu-port-forwarding-%g.log").toString(),2_000_000,5,true);
         handler.setEncoding("UTF-8"); handler.setFormatter(new Formatter() {
             @Override public String format(LogRecord r) { return r.getInstant()+" "+r.getLevel()+" "+r.getMessage()+System.lineSeparator(); }
         });

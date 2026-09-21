@@ -30,9 +30,9 @@ Green means the SSH connection and forwarding listener were established; it does
 
 Each profile owns its own SSH connection. No tunnel starts automatically when the application opens. Authentication, host-key and bind failures are not automatically retried. Apache MINA SSHD is used directly, so passwords are not passed through BAT files, PowerShell commands or external-process arguments.
 
-## Release 1.1.0-rc.5
+## Release 1.1.0-rc.6
 
-Download **[v1.1.0-rc.5](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.5)**.
+Download **[v1.1.0-rc.6](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.6)**.
 
 | Platform | Packages |
 | --- | --- |
@@ -105,7 +105,7 @@ NexuPortForwarding/
     window.properties              Window state
     app.lock                       Single-instance data lock
   logs/
-    nexu-0.log                     Rotating diagnostic log
+    nexu-port-forwarding-0.log                     Rotating diagnostic log
 ```
 
 The two directories are created at startup. Individual data files are created when needed (for example, the vault after choosing a master password). A fresh portable folder does not automatically read or import profiles from AppData.

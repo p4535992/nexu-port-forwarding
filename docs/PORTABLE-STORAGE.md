@@ -17,7 +17,7 @@ NexuPortForwarding/
     window.properties              Window state
     app.lock                       Single-instance data lock
   logs/
-    nexu-0.log                     Rotating diagnostic log
+    nexu-port-forwarding-0.log                     Rotating diagnostic log
 ```
 
 The two directories are created at startup. Individual data files are created when needed (for example, the vault after choosing a master password). A fresh portable folder does not automatically read or import profiles from AppData.

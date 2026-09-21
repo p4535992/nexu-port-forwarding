@@ -15,7 +15,7 @@ concurrency:
 
 env:
   APP_VERSION: '1.1.0'
-  RELEASE_TAG: v1.1.0-rc.5
+  RELEASE_TAG: v1.1.0-rc.6
 
 jobs:
   prepare:
@@ -121,7 +121,7 @@ jobs:
           export NEXU_PF_HOME="$RUNNER_TEMP/nexu-smoke-$GITHUB_RUN_ID"
           timeout 45s xvfb-run -a target/package/NexuPortForwarding/bin/NexuPortForwarding --smoke-test
           grep -q 'UI_READY 1.1.0 DECORATED WINDOWED' "$NEXU_PF_HOME/ui-ready"
-          grep -q 'ui-ready' "$NEXU_PF_HOME/logs/nexu-0.log"
+          grep -q 'ui-ready' "$NEXU_PF_HOME/logs/nexu-port-forwarding-0.log"
       - name: Smoke-test packaged Windows GUI and persistent logs
         if: runner.os == 'Windows'
         shell: pwsh
@@ -131,7 +131,7 @@ jobs:
           if (-not $process.WaitForExit(45000)) { $process.Kill(); throw 'GUI smoke test timed out' }
           if ($process.ExitCode -ne 0) { throw "GUI exited with $($process.ExitCode)" }
           if (-not (Select-String -Path "$env:NEXU_PF_HOME/ui-ready" -Pattern 'UI_READY 1.1.0 DECORATED WINDOWED' -Quiet)) { throw 'UI readiness marker missing' }
-          if (-not (Select-String -Path "$env:NEXU_PF_HOME/logs/nexu-0.log" -Pattern 'ui-ready' -Quiet)) { throw 'Persistent log missing' }
+          if (-not (Select-String -Path "$env:NEXU_PF_HOME/logs/nexu-port-forwarding-0.log" -Pattern 'ui-ready' -Quiet)) { throw 'Persistent log missing' }
       - name: Upload tested packages to the draft release
         env:
           GH_TOKEN: ${{ github.token }}

@@ -30,9 +30,9 @@ Il verde indica che connessione SSH e forwarding sono stati stabiliti; **non** c
 
 Ogni profilo possiede una connessione SSH indipendente. Nessun tunnel parte automaticamente all'apertura dell'applicazione. Gli errori di autenticazione, chiave host o bind non vengono ritentati automaticamente. Apache MINA SSHD viene usato direttamente, quindi le password non vengono passate tramite BAT, comandi PowerShell o argomenti di processi esterni.
 
-## Release 1.1.0-rc.5
+## Release 1.1.0-rc.6
 
-Scarica **[v1.1.0-rc.5](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.5)**.
+Scarica **[v1.1.0-rc.6](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.6)**.
 
 | Piattaforma | Pacchetti |
 | --- | --- |
@@ -105,7 +105,7 @@ NexuPortForwarding/
     window.properties              Stato della finestra
     app.lock                       Blocco dati per singola istanza
   logs/
-    nexu-0.log                     Log diagnostico con rotazione
+    nexu-port-forwarding-0.log                     Log diagnostico con rotazione
 ```
 
 Le due cartelle vengono create all'avvio. I singoli file vengono creati quando servono (per esempio il vault dopo aver scelto la password principale). Un portabile nuovo non legge né importa automaticamente i profili presenti in AppData.
