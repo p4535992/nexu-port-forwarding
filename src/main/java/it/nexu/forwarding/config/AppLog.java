@@ -37,6 +37,13 @@ public final class AppLog implements AutoCloseable {
         if (d.startsWith("Errore runtime SSH: dipendenza Java mancante")) return new Diagnostic("RUNTIME_DEPENDENCY_MISSING", bounded(d));
         if (d.startsWith("Porta locale già in uso:")) return new Diagnostic("LOCAL_BIND_IN_USE", bounded(d));
         if (d.startsWith("Impossibile usare l'indirizzo di ascolto locale")) return new Diagnostic("LOCAL_BIND_UNAVAILABLE", bounded(d));
+        if (d.startsWith("DNS: impossibile risolvere il proxy")) return new Diagnostic("PROXY_DNS_FAILURE", bounded(d));
+        if (d.startsWith("Timeout durante la connessione al proxy")) return new Diagnostic("PROXY_TIMEOUT", bounded(d));
+        if (d.startsWith("Connessione al proxy")) return new Diagnostic("PROXY_CONNECTION_FAILED", bounded(d));
+        if (d.startsWith("Il proxy SOCKS5") || d.startsWith("Autenticazione SOCKS5")) return new Diagnostic("PROXY_SOCKS5_FAILED", bounded(d));
+        if (d.startsWith("Il proxy HTTP CONNECT") || d.startsWith("Autenticazione HTTP CONNECT")) return new Diagnostic("PROXY_HTTP_CONNECT_FAILED", bounded(d));
+        if (d.startsWith("Il proxy ") && d.contains("richiede la password")) return new Diagnostic("PROXY_AUTH_REQUIRED", bounded(d));
+        if (d.startsWith("Timeout durante la connessione SSH") && d.contains("tramite proxy")) return new Diagnostic("PROXY_SSH_TIMEOUT", bounded(d));
         if (d.startsWith("DNS:")) return new Diagnostic("DNS_FAILURE", bounded(d));
         if (d.startsWith("Timeout durante la connessione TCP/SSH diretta")) return new Diagnostic("SSH_TIMEOUT", bounded(d));
         if (d.startsWith("Connessione rifiutata da")) return new Diagnostic("SSH_CONNECTION_REFUSED", bounded(d));
