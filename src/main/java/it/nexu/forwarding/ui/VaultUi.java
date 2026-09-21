@@ -1,6 +1,7 @@
 package it.nexu.forwarding.ui;
 
 import it.nexu.forwarding.config.*;
+import it.nexu.forwarding.i18n.I18n;
 import it.nexu.forwarding.model.TunnelProfile;
 import it.nexu.forwarding.ssh.TunnelEngine;
 import javafx.event.ActionEvent;
@@ -25,44 +26,44 @@ public final class VaultUi {
         this.owner=owner;this.vault=vault;this.memory=memory;this.engine=engine;this.profilesFile=profilesFile;
         this.profiles=profiles;this.replaceRows=replaceRows;this.error=error;
         this.clearAdditionalMemory=clearAdditionalMemory==null?()->{}:clearAdditionalMemory;
-        item("Crea / sblocca archivio",()->ensureOpen());
-        item("Blocca e dimentica segreti in memoria",()->{
-            if(engine.runningCount()!=0) { error.accept("Ferma prima tutti i tunnel: anche le riconnessioni possono usare credenziali in memoria."); return; }
+        item(I18n.t("Create / unlock vault","Crea / sblocca archivio"),()->ensureOpen());
+        item(I18n.t("Lock and forget in-memory secrets","Blocca e dimentica segreti in memoria"),()->{
+            if(engine.runningCount()!=0) { error.accept(I18n.t("Stop all tunnels first: reconnect attempts may also use in-memory credentials.","Ferma prima tutti i tunnel: anche le riconnessioni possono usare credenziali in memoria.")); return; }
             vault.close(); memory.close(); clearAdditionalMemory.run(); refresh();
         });
-        item("Cambia password principale…",this::changePassword);
+        item(I18n.t("Change master password…","Cambia password principale…"),this::changePassword);
         menu.getItems().add(new SeparatorMenuItem());
-        item("Esporta backup cifrato…",this::exportBackup); item("Importa backup cifrato…",this::importBackup); refresh();
+        item(I18n.t("Export encrypted backup…","Esporta backup cifrato…"),this::exportBackup); item(I18n.t("Import encrypted backup…","Importa backup cifrato…"),this::importBackup); refresh();
     }
     private void item(String name,Runnable action) { MenuItem item=new MenuItem(name); item.setOnAction(e->action.run());menu.getItems().add(item); }
     public MenuButton menu() { return menu; }
-    private void refresh() { menu.setText(vault.unlocked()?"Password · sbloccate":"Password · bloccate"); }
+    private void refresh() { menu.setText(vault.unlocked()?I18n.t("Passwords · unlocked","Password · sbloccate"):I18n.t("Passwords · locked","Password · bloccate")); }
     public boolean ensureOpen() {
         if(vault.unlocked()) return true;
         boolean creating=!vault.exists();
-        char[] password=askPassword(creating?"Crea archivio locale":"Sblocca archivio locale",creating);
+        char[] password=askPassword(creating?I18n.t("Create local vault","Crea archivio locale"):I18n.t("Unlock local vault","Sblocca archivio locale"),creating);
         if(password==null) return false;
-        try { UiWork.run(owner,"Sblocco archivio cifrato…",()->{vault.unlock(password);return null;}); refresh(); return true; }
+        try { UiWork.run(owner,I18n.t("Unlocking encrypted vault…","Sblocco archivio cifrato…"),()->{vault.unlock(password);return null;}); refresh(); return true; }
         catch(Exception e) { error.accept(e.getMessage()); return false; }
         finally { Arrays.fill(password,'\0'); }
     }
     public boolean remember(TunnelProfile profile,char[] secret) {
         if(!ensureOpen()) return false;
-        try { UiWork.run(owner,"Salvataggio credenziale locale…",()->{vault.put(profile,secret);return null;}); return true; }
+        try { UiWork.run(owner,I18n.t("Saving local credential…","Salvataggio credenziale locale…"),()->{vault.put(profile,secret);return null;}); return true; }
         catch(Exception e) { error.accept("Profilo salvato, ma credenziale NON salvata su disco.\n"+e.getMessage());return false; }
     }
     public boolean forget(UUID id) {
         if(!vault.exists()) return true;
         if(!ensureOpen()) return false;
-        try { UiWork.run(owner,"Rimozione credenziale locale…",()->{vault.forget(id);return null;}); return true; }
+        try { UiWork.run(owner,I18n.t("Removing local credential…","Rimozione credenziale locale…"),()->{vault.forget(id);return null;}); return true; }
         catch(Exception e) { error.accept(e.getMessage());return false; }
     }
     private char[] askPassword(String title,boolean creating) {
         Dialog<char[]> dialog=new Dialog<>(); dialog.initOwner(owner); dialog.setTitle(title); dialog.setHeaderText(title);
         dialog.getDialogPane().getStylesheets().add(getClass().getResource("/app.css").toExternalForm());
         PasswordRevealField first=new PasswordRevealField(),second=new PasswordRevealField();
-        first.setPromptText("Password principale"); second.setPromptText("Ripeti la password");
-        Label help=new Label(creating?"Almeno 12 caratteri. Non viene salvata: se la perdi, non è recuperabile. Nessun dato viene inviato a servizi cloud.":"La password sblocca soltanto l'archivio locale selezionato.");
+        first.setPromptText(I18n.t("Master password","Password principale")); second.setPromptText(I18n.t("Repeat password","Ripeti la password"));
+        Label help=new Label(creating?I18n.t("At least 12 characters. It is not stored: if you lose it, it cannot be recovered. No data is sent to cloud services.","Almeno 12 caratteri. Non viene salvata: se la perdi, non è recuperabile. Nessun dato viene inviato a servizi cloud."):I18n.t("The password only unlocks the selected local vault.","La password sblocca soltanto l'archivio locale selezionato."));
         help.setWrapText(true); help.setMaxWidth(500);
         Label validation=new Label();
         validation.getStyleClass().add("error-text"); validation.setWrapText(true);
@@ -71,7 +72,7 @@ public final class VaultUi {
         if(creating) content.getChildren().add(second);
         content.getChildren().add(validation);
         dialog.getDialogPane().setContent(content);
-        ButtonType ok=new ButtonType("Conferma",ButtonBar.ButtonData.OK_DONE);
+        ButtonType ok=new ButtonType(I18n.t("Confirm","Conferma"),ButtonBar.ButtonData.OK_DONE);
         dialog.getDialogPane().getButtonTypes().addAll(ok,ButtonType.CANCEL);
         dialog.getDialogPane().lookupButton(ok).addEventFilter(ActionEvent.ACTION,e->{
             String problem=PasswordRules.validate(first.getText(),second.getText(),creating);
@@ -90,8 +91,8 @@ public final class VaultUi {
         return result.orElse(null);
     }
     private void changePassword() {
-        if(!ensureOpen())return; char[] password=askPassword("Nuova password principale",true);if(password==null)return;
-        try { UiWork.run(owner,"Aggiornamento cifratura…",()->{vault.changePassword(password);return null;}); }
+        if(!ensureOpen())return; char[] password=askPassword(I18n.t("New master password","Nuova password principale"),true);if(password==null)return;
+        try { UiWork.run(owner,I18n.t("Updating encryption…","Aggiornamento cifratura…"),()->{vault.changePassword(password);return null;}); }
         catch(Exception e){error.accept(e.getMessage());}finally{Arrays.fill(password,'\0');}
     }
     private FileChooser chooser(String title) {
