@@ -30,9 +30,9 @@ Green means the SSH connection and forwarding listener were established; it does
 
 Each profile owns its own SSH connection. No tunnel starts automatically when the application opens. Authentication, host-key and bind failures are not automatically retried. Apache MINA SSHD is used directly, so passwords are not passed through BAT files, PowerShell commands or external-process arguments.
 
-## Release 1.1.0-rc.8
+## Release 1.1.0-rc.9
 
-Download **[v1.1.0-rc.8](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.8)**.
+Download **[v1.1.0-rc.9](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.9)**.
 
 | Platform | Packages |
 | --- | --- |
@@ -62,6 +62,8 @@ The row menu exposes distinct **Windows PowerShell**, **Windows CMD**, and **Lin
 For LOCAL and DYNAMIC/SOCKS profiles, Nexu Port Forwarding performs a **local listener preflight before SSH authentication**. If the configured port is already occupied (for example by Tabby, MobaXterm or another tunnel manager), the row fails immediately with the listener address instead of opening an unnecessary SSH connection. REMOTE forwarding is not probed locally because its listener exists on the SSH server.
 
 Persistent logs store only sanitized diagnostic categories such as `LOCAL_BIND_IN_USE`, `SSH_TIMEOUT`, `DNS_FAILURE`, `SSH_AUTH_FAILED` and `FORWARDING_REJECTED`. Recognized safe diagnostics may include the listener/endpoint involved; arbitrary exception text and credentials are not persisted.
+
+Native release builds also run a **packaged SSH runtime smoke test** after jpackage creation. This exercises SSH initialization from the actual EXE/Linux app image, preventing a package with missing runtime classes from being published even when unit/integration tests pass on Maven's development classpath.
 
 ## Window behavior
 

@@ -44,6 +44,7 @@ Eventi diagnostici persistenti
 ------------------------------
 
 Il log con rotazione registra lo stato dei tunnel e, per gli errori riconosciuti, una categoria sanificata come:
+- RUNTIME_DEPENDENCY_MISSING
 - LOCAL_BIND_IN_USE
 - LOCAL_BIND_UNAVAILABLE
 - DNS_FAILURE

@@ -1,4 +1,4 @@
-# Nexu Port Forwarding 1.1.0-rc.8
+# Nexu Port Forwarding 1.1.0-rc.9
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
@@ -7,6 +7,11 @@
 Fresh test rebuild of the current 1.1.0 release-candidate line, with the same application features as rc.6 and a new independently built Windows/Linux package set.
 
 ### New in this prerelease
+
+- Fixed a packaged-runtime SSH startup failure that surfaced as `ClassNotFoundException` before any network connection was attempted.
+- Apache MINA SSHD now uses the NIO2 I/O backend explicitly instead of relying on runtime provider discovery inside jpackage images.
+- Added a **packaged SSH runtime smoke test** on both Windows and Linux; a native package is no longer published unless the packaged executable can initialize the SSH stack successfully.
+- Missing runtime classes are now reported as application/runtime errors, not misleading DNS/firewall/proxy failures.
 
 - Fixed vault/master-password dialog validation feedback after adding password reveal controls: invalid input now shows a specific persistent error message and focuses the field to correct; valid input closes the dialog normally.
 

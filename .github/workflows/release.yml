@@ -15,7 +15,7 @@ concurrency:
 
 env:
   APP_VERSION: '1.1.0'
-  RELEASE_TAG: v1.1.0-rc.8
+  RELEASE_TAG: v1.1.0-rc.9
 
 jobs:
   prepare:
@@ -122,6 +122,14 @@ jobs:
           timeout 45s xvfb-run -a target/package/NexuPortForwarding/bin/NexuPortForwarding --smoke-test
           grep -q 'UI_READY 1.1.0 DECORATED WINDOWED' "$NEXU_PF_HOME/ui-ready"
           grep -q 'ui-ready' "$NEXU_PF_HOME/logs/nexu-port-forwarding-0.log"
+      - name: Smoke-test packaged Linux SSH runtime
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f "$NEXU_PF_HOME/ssh-runtime-ready"
+          timeout 30s target/package/NexuPortForwarding/bin/NexuPortForwarding --ssh-runtime-smoke-test
+          grep -q 'SSH_RUNTIME_READY 1.1.0' "$NEXU_PF_HOME/ssh-runtime-ready"
       - name: Smoke-test packaged Windows GUI and persistent logs
         if: runner.os == 'Windows'
         shell: pwsh
@@ -132,6 +140,16 @@ jobs:
           if ($process.ExitCode -ne 0) { throw "GUI exited with $($process.ExitCode)" }
           if (-not (Select-String -Path "$env:NEXU_PF_HOME/ui-ready" -Pattern 'UI_READY 1.1.0 DECORATED WINDOWED' -Quiet)) { throw 'UI readiness marker missing' }
           if (-not (Select-String -Path "$env:NEXU_PF_HOME/logs/nexu-port-forwarding-0.log" -Pattern 'ui-ready' -Quiet)) { throw 'Persistent log missing' }
+      - name: Smoke-test packaged Windows SSH runtime
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $marker = Join-Path $env:NEXU_PF_HOME 'ssh-runtime-ready'
+          Remove-Item $marker -ErrorAction SilentlyContinue
+          $process = Start-Process target/package/NexuPortForwarding/NexuPortForwarding.exe -ArgumentList '--ssh-runtime-smoke-test' -PassThru
+          if (-not $process.WaitForExit(30000)) { $process.Kill(); throw 'SSH runtime smoke test timed out' }
+          if ($process.ExitCode -ne 0) { throw "SSH runtime smoke test exited with $($process.ExitCode)" }
+          if (-not (Select-String -Path $marker -Pattern 'SSH_RUNTIME_READY 1.1.0' -Quiet)) { throw 'SSH runtime readiness marker missing' }
       - name: Upload tested packages to the draft release
         env:
           GH_TOKEN: ${{ github.token }}

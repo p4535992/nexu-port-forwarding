@@ -44,6 +44,7 @@ Persistent diagnostic events
 ----------------------------
 
 The rotating log records tunnel state and, for recognized failures, a sanitized category such as:
+- RUNTIME_DEPENDENCY_MISSING
 - LOCAL_BIND_IN_USE
 - LOCAL_BIND_UNAVAILABLE
 - DNS_FAILURE
