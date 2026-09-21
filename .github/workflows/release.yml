@@ -14,8 +14,8 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  APP_VERSION: '1.1.0'
-  RELEASE_TAG: v1.1.0
+  APP_VERSION: '1.2.0'
+  RELEASE_TAG: v1.2.0-rc.1
 
 jobs:
   prepare:
@@ -39,14 +39,14 @@ jobs:
           set -euo pipefail
           if gh release view "$RELEASE_TAG" --json isDraft,targetCommitish > existing.json 2>/dev/null; then
             if [ "$(jq -r '.isDraft' existing.json)" != "true" ]; then
-              echo 'This release is already published; no assets will be changed.'
+              echo 'This prerelease is already published; no assets will be changed.'
               echo 'build=false' >> "$GITHUB_OUTPUT"
               exit 0
             fi
             gh release edit "$RELEASE_TAG" --target "$GITHUB_SHA" \
               --notes "Windows and Linux builds are being validated. Source: $GITHUB_SHA"
           else
-            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --draft \
+            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --draft --prerelease \
               --title "Nexu Port Forwarding $RELEASE_TAG" \
               --notes "Windows and Linux builds are being validated. Source: $GITHUB_SHA"
           fi
@@ -120,7 +120,7 @@ jobs:
           set -euo pipefail
           export NEXU_PF_HOME="$RUNNER_TEMP/nexu-smoke-$GITHUB_RUN_ID"
           timeout 45s xvfb-run -a target/package/NexuPortForwarding/bin/NexuPortForwarding --smoke-test
-          grep -q 'UI_READY 1.1.0 DECORATED WINDOWED' "$NEXU_PF_HOME/ui-ready"
+          grep -q 'UI_READY 1.2.0 DECORATED WINDOWED' "$NEXU_PF_HOME/ui-ready"
           grep -q 'ui-ready' "$NEXU_PF_HOME/logs/nexu-port-forwarding-0.log"
       - name: Smoke-test packaged Linux SSH runtime
         if: runner.os == 'Linux'
@@ -131,7 +131,7 @@ jobs:
           rm -rf "$NEXU_PF_HOME"
           mkdir -p "$NEXU_PF_HOME"
           timeout 30s target/package/NexuPortForwarding/bin/NexuPortForwarding --ssh-runtime-smoke-test
-          grep -q 'SSH_RUNTIME_READY 1.1.0' "$NEXU_PF_HOME/ssh-runtime-ready"
+          grep -q 'SSH_RUNTIME_READY 1.2.0' "$NEXU_PF_HOME/ssh-runtime-ready"
       - name: Smoke-test packaged Windows GUI and persistent logs
         if: runner.os == 'Windows'
         shell: pwsh
@@ -140,7 +140,7 @@ jobs:
           $process = Start-Process target/package/NexuPortForwarding/NexuPortForwarding.exe -ArgumentList '--smoke-test' -PassThru
           if (-not $process.WaitForExit(45000)) { $process.Kill(); throw 'GUI smoke test timed out' }
           if ($process.ExitCode -ne 0) { throw "GUI exited with $($process.ExitCode)" }
-          if (-not (Select-String -Path "$env:NEXU_PF_HOME/ui-ready" -Pattern 'UI_READY 1.1.0 DECORATED WINDOWED' -Quiet)) { throw 'UI readiness marker missing' }
+          if (-not (Select-String -Path "$env:NEXU_PF_HOME/ui-ready" -Pattern 'UI_READY 1.2.0 DECORATED WINDOWED' -Quiet)) { throw 'UI readiness marker missing' }
           if (-not (Select-String -Path "$env:NEXU_PF_HOME/logs/nexu-port-forwarding-0.log" -Pattern 'ui-ready' -Quiet)) { throw 'Persistent log missing' }
       - name: Smoke-test packaged Windows SSH runtime
         if: runner.os == 'Windows'
@@ -153,7 +153,7 @@ jobs:
           $process = Start-Process target/package/NexuPortForwarding/NexuPortForwarding.exe -ArgumentList '--ssh-runtime-smoke-test' -PassThru
           if (-not $process.WaitForExit(30000)) { $process.Kill(); throw 'SSH runtime smoke test timed out' }
           if ($process.ExitCode -ne 0) { throw "SSH runtime smoke test exited with $($process.ExitCode)" }
-          if (-not (Select-String -Path $marker -Pattern 'SSH_RUNTIME_READY 1.1.0' -Quiet)) { throw 'SSH runtime readiness marker missing' }
+          if (-not (Select-String -Path $marker -Pattern 'SSH_RUNTIME_READY 1.2.0' -Quiet)) { throw 'SSH runtime readiness marker missing' }
       - name: Upload tested packages to the draft release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -224,5 +224,5 @@ jobs:
           PYCODE
           printf '\nSource commit: `%s`\nWorkflow run: `%s`\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" >> release-notes.md
           gh release edit "$RELEASE_TAG" --target "$GITHUB_SHA" \
-            --draft=false --latest --title "Nexu Port Forwarding $RELEASE_TAG" --notes-file release-notes.md
+            --draft=false --prerelease --latest=false --title "Nexu Port Forwarding $RELEASE_TAG" --notes-file release-notes.md
           printf 'Published [%s](https://github.com/%s/releases/tag/%s)\n' "$RELEASE_TAG" "$GITHUB_REPOSITORY" "$RELEASE_TAG" >> "$GITHUB_STEP_SUMMARY"

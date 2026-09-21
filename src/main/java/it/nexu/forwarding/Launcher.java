@@ -13,7 +13,7 @@ public final class Launcher {
     private Launcher() { }
     public static void main(String[] args) {
         List<String> values=Arrays.asList(args);
-        if(values.contains("--version")) { System.out.println("Nexu Port Forwarding 1.1.0"); return; }
+        if(values.contains("--version")) { System.out.println("Nexu Port Forwarding 1.2.0"); return; }
         if(values.contains("--ssh-runtime-smoke-test")) { sshRuntimeSmokeTest(); return; }
         if(values.contains("--smoke-test")) System.setProperty("nexu.smokeTest","true");
         javafx.application.Application.launch(NexuApplication.class,args);
@@ -46,9 +46,9 @@ public final class Launcher {
             if(home!=null&&!home.isBlank()) {
                 Path dir=Path.of(home).toAbsolutePath().normalize();
                 Files.createDirectories(dir);
-                Files.writeString(dir.resolve("ssh-runtime-ready"),"SSH_RUNTIME_READY 1.1.0\n",StandardCharsets.UTF_8);
+                Files.writeString(dir.resolve("ssh-runtime-ready"),"SSH_RUNTIME_READY 1.2.0\n",StandardCharsets.UTF_8);
             }
-            System.out.println("SSH_RUNTIME_READY 1.1.0");
+            System.out.println("SSH_RUNTIME_READY 1.2.0");
         } catch(Throwable error) {
             error.printStackTrace();
             System.exit(2);

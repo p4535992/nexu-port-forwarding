@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>it.nexu</groupId>
   <artifactId>nexu-port-forwarding</artifactId>
-  <version>1.1.0</version>
+  <version>1.2.0</version>
   <name>Nexu Port Forwarding</name>
   <description>Desktop SSH TCP tunnel manager for Windows and Linux.</description>
   <licenses>

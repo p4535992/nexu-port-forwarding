@@ -95,7 +95,7 @@ public final class NexuApplication extends Application {
                 if (window.getStyle() != StageStyle.DECORATED || window.isFullScreen()
                     || Screen.getScreensForRectangle(window.getX(), window.getY(), Math.max(1, window.getWidth()), Math.max(1, window.getHeight())).isEmpty())
                     throw new IllegalStateException("Window smoke check failed: native decorated window is not visible.");
-                SafeFiles.writeBytes(home.resolve("ui-ready"), "UI_READY 1.1.0 DECORATED WINDOWED".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                SafeFiles.writeBytes(home.resolve("ui-ready"), "UI_READY 1.2.0 DECORATED WINDOWED".getBytes(java.nio.charset.StandardCharsets.UTF_8));
                 javafx.animation.PauseTransition exit = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(2));
                 exit.setOnFinished(e -> requestExit()); exit.play();
             }
@@ -201,7 +201,7 @@ public final class NexuApplication extends Application {
         StackPane.setMargin(logToggle, new Insets(0, 6, 0, 0));
         root = new BorderPane(workspaceShell, top, null, null, null); BorderPane.setMargin(workspaceShell, new Insets(0,26,20,26));
         Scene scene = new Scene(root, 1320, 760); scene.getStylesheets().add(getClass().getResource("/app.css").toExternalForm());
-        window.setScene(scene); window.setTitle("Nexu Port Forwarding 1.1.0");
+        window.setScene(scene); window.setTitle("Nexu Port Forwarding 1.2.0");
         window.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/app-icon.png"))));
         window.xProperty().addListener((o,a,b) -> captureNormalBounds());
         window.yProperty().addListener((o,a,b) -> captureNormalBounds());
