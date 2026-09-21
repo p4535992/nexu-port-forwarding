@@ -1,12 +1,18 @@
-# Nexu Port Forwarding 1.2.0-rc.1
+# Nexu Port Forwarding 1.2.0-rc.2
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## English
 
-First 1.2.0 release candidate focused on explicit SSH proxy support and clearer forwarding diagnostics.
+Second 1.2.0 release candidate, adding direct OpenSSH comparison tools on top of the proxy support and forwarding diagnostics introduced in rc.1.
 
 ### New in this prerelease
+
+- Every **Avvia** action now writes copyable OpenSSH-equivalent commands into the tunnel activity panel for **Windows PowerShell** and **Linux/POSIX**.
+- The diagnostic commands explicitly use **`-F NUL`** on Windows and **`-F /dev/null`** on Linux so they do not read the user's OpenSSH config, matching Nexu's self-contained SSH behavior more closely.
+- The log explicitly states that Nexu uses **Apache MINA SSHD** and does not actually launch `ssh.exe`; the printed command is a parameter/forwarding comparison tool.
+- When a Nexu SOCKS5/HTTP CONNECT proxy is configured, the panel logs that transport separately because it is implemented internally and is not represented by an external OpenSSH `ProxyCommand`.
+- Includes the optional **OpenSSH local configuration diagnostic** from after rc.1, which compares `ssh -G` with `ssh -F NUL/-F /dev/null -G` and highlights ProxyJump, ProxyCommand, IdentityFile, HostName, User and Port differences.
 
 - Added per-profile connection routing: **Direct**, **SOCKS5**, or **HTTP CONNECT**.
 - Proxy host, port and optional username are stored with the profile; proxy passwords are requested when the tunnel starts and kept only in memory.

@@ -26,6 +26,14 @@ public final class OpenSshCommand {
     public static String cmd(TunnelProfile p) {
         return "ssh.exe " + arguments(p).stream().map(OpenSshCommand::cmdQuote).collect(Collectors.joining(" "));
     }
+    public static String diagnosticPowershell(TunnelProfile p) {
+        return "& \"$env:WINDIR\\System32\\OpenSSH\\ssh.exe\" '-F' 'NUL' "
+            + arguments(p).stream().map(OpenSshCommand::psQuote).collect(Collectors.joining(" "));
+    }
+    public static String diagnosticPosix(TunnelProfile p) {
+        return "ssh '-F' '/dev/null' "
+            + arguments(p).stream().map(s -> "'" + s.replace("'", "'\"'\"'") + "'").collect(Collectors.joining(" "));
+    }
     public static String posix(TunnelProfile p) {
         return "ssh " + arguments(p).stream().map(s -> "'" + s.replace("'", "'\"'\"'") + "'").collect(Collectors.joining(" "));
     }

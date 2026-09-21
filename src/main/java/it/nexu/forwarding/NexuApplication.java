@@ -535,6 +535,7 @@ public final class NexuApplication extends Application {
         if (quitting || UiWork.busy() || engine.isRunning(p.id())) return;
         if (!p.isLoopbackBind() && !confirm("Ascolto non limitato al loopback",
             "Il profilo «"+p.name()+"» richiede l'ascolto su "+p.listener()+".\nPotrebbe rendere accessibile il servizio ad altri dispositivi. Continuare?")) return;
+        appendEquivalentOpenSshCommands(row,p);
         if (openSshDiagnostics.isSelected()) {
             try {
                 OpenSshConfigDiagnostic.Result diagnostic = UiWork.run(window, "Analisi configurazione OpenSSH…",
@@ -577,6 +578,21 @@ public final class NexuApplication extends Application {
             }
             engine.start(p,secret);
         } finally { Arrays.fill(secret,'\0'); }
+    }
+    private void appendEquivalentOpenSshCommands(TunnelRow row,TunnelProfile profile) {
+        row.appendDiagnostic("OpenSSH equivalente",
+            "Nexu NON esegue ssh.exe: usa Apache MINA SSHD. I comandi seguenti riproducono i parametri SSH/forwarding del profilo senza leggere ~/.ssh/config.");
+        row.appendDiagnostic("PowerShell", OpenSshCommand.diagnosticPowershell(profile));
+        row.appendDiagnostic("Linux/POSIX", OpenSshCommand.diagnosticPosix(profile));
+        if (profile.usesProxy()) {
+            row.appendDiagnostic("Trasporto proxy Nexu",
+                profile.proxyLabel()+" "+profile.proxyEndpoint()
+                    + (profile.proxyUsername().isBlank() ? "" : " · utente="+profile.proxyUsername())
+                    + ". Il proxy è gestito internamente da Nexu e non è rappresentato dai comandi OpenSSH sopra.");
+        } else {
+            row.appendDiagnostic("Trasporto Nexu","Diretto · nessun proxy configurato nel profilo.");
+        }
+        showSelection();
     }
     private static String safeDiagnosticText(String value) {
         String text = value == null || value.isBlank() ? "errore non specificato" : value.replaceAll("[\\p{Cntrl}]", " ").trim();

@@ -50,6 +50,14 @@ public final class CoreSelfTest {
             test("PowerShell single quotes escaped", () -> check(OpenSshCommand.powershell(change("username","O'Brien")).contains("'O''Brien'")));
             test("CMD export has no PowerShell call operator or single-quoted options", () -> { String s=OpenSshCommand.cmd(TunnelProfile.example()); check(s.startsWith("ssh.exe \"-N\" \"-T\"")); check(!s.startsWith("&")); check(!s.contains("'-N'")); });
             test("POSIX single quotes escaped", () -> check(OpenSshCommand.posix(change("username","O'Brien")).contains("'O'\"'\"'Brien'")));
+            test("diagnostic PowerShell disables user ssh config", () -> {
+                String s=OpenSshCommand.diagnosticPowershell(TunnelProfile.example());
+                check(s.contains("'NUL'")); check(s.contains("'-F'")); check(s.contains("System32\\OpenSSH\\ssh.exe"));
+            });
+            test("diagnostic POSIX disables user ssh config", () -> {
+                String s=OpenSshCommand.diagnosticPosix(TunnelProfile.example());
+                check(s.contains("'-F' '/dev/null'"));
+            });
             test("forwarding summary includes SSH port and remote listener side", () -> check(TunnelProfile.example().forwardingSummary().equals("R · SSH:22 · SERVER[127.0.0.1:8989] → PC → maven.example.com:8081")));
             test("forwarding summary includes SSH port and local listener side", () -> check(change("mode",TunnelProfile.Mode.LOCAL).forwardingSummary().startsWith("L · SSH:22 · PC[127.0.0.1:8989] → SERVER → ")));
             test("inline rename preserves profile identity", () -> { TunnelProfile p=TunnelProfile.example(), renamed=p.withName("Nuovo nome"); eq(renamed.id(),p.id()); eq(renamed.name(),"Nuovo nome"); });
