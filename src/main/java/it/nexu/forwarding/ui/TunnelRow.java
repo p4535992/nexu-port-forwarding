@@ -1,5 +1,6 @@
 package it.nexu.forwarding.ui;
 
+import it.nexu.forwarding.i18n.I18n;
 import it.nexu.forwarding.model.TunnelProfile;
 import it.nexu.forwarding.ssh.TunnelEngine;
 import javafx.beans.property.*;
@@ -11,7 +12,7 @@ import java.util.ArrayDeque;
 public final class TunnelRow {
     private TunnelProfile profile;
     private final ObjectProperty<TunnelEngine.State> state = new SimpleObjectProperty<>(TunnelEngine.State.STOPPED);
-    private final StringProperty detail = new SimpleStringProperty("Pronto. Nessuna connessione avviata.");
+    private final StringProperty detail = new SimpleStringProperty(I18n.t("Ready. No connection started.","Pronto. Nessuna connessione avviata."));
     private final StringProperty resolvedIp = new SimpleStringProperty("");
     private final ArrayDeque<String> logs = new ArrayDeque<>();
     private static final DateTimeFormatter CLOCK = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault());

@@ -78,8 +78,8 @@ public final class VaultUi {
             String problem=PasswordRules.validate(first.getText(),second.getText(),creating);
             if(problem!=null) {
                 validation.setText(problem);
-                if(creating && problem.contains("secondo campo")) second.requestInputFocus();
-                else if(creating && problem.contains("non coincidono")) second.requestInputFocus();
+                if(creating && (problem.contains("second field") || problem.contains("secondo campo"))) second.requestInputFocus();
+                else if(creating && (problem.contains("do not match") || problem.contains("non coincidono"))) second.requestInputFocus();
                 else first.requestInputFocus();
                 e.consume();
             } else validation.setText("");
