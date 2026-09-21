@@ -127,7 +127,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          rm -f "$NEXU_PF_HOME/ssh-runtime-ready"
+          export NEXU_PF_HOME="$RUNNER_TEMP/nexu-ssh-runtime-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          rm -rf "$NEXU_PF_HOME"
+          mkdir -p "$NEXU_PF_HOME"
           timeout 30s target/package/NexuPortForwarding/bin/NexuPortForwarding --ssh-runtime-smoke-test
           grep -q 'SSH_RUNTIME_READY 1.1.0' "$NEXU_PF_HOME/ssh-runtime-ready"
       - name: Smoke-test packaged Windows GUI and persistent logs
@@ -144,8 +146,10 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
+          $env:NEXU_PF_HOME = Join-Path $env:RUNNER_TEMP "nexu-ssh-runtime-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          Remove-Item $env:NEXU_PF_HOME -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Force $env:NEXU_PF_HOME | Out-Null
           $marker = Join-Path $env:NEXU_PF_HOME 'ssh-runtime-ready'
-          Remove-Item $marker -ErrorAction SilentlyContinue
           $process = Start-Process target/package/NexuPortForwarding/NexuPortForwarding.exe -ArgumentList '--ssh-runtime-smoke-test' -PassThru
           if (-not $process.WaitForExit(30000)) { $process.Kill(); throw 'SSH runtime smoke test timed out' }
           if ($process.ExitCode -ne 0) { throw "SSH runtime smoke test exited with $($process.ExitCode)" }
