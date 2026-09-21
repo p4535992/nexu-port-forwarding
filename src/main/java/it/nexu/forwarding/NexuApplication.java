@@ -199,6 +199,11 @@ public final class NexuApplication extends Application {
         state.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(TunnelEngine.State s, boolean empty) {
                 super.updateItem(s,empty); setText(null); setGraphic(null);
+                TableRow<TunnelRow> tableRow = getTableRow();
+                if (tableRow != null) {
+                    tableRow.getStyleClass().remove("row-stopped");
+                    if (!empty && s == TunnelEngine.State.STOPPED) tableRow.getStyleClass().add("row-stopped");
+                }
                 if (!empty && s != null) {
                     Label badge = new Label("●  " + s.label()); badge.getStyleClass().addAll("state-pill", "state-" + s.name().toLowerCase(Locale.ROOT));
                     TunnelRow row = getTableRow() == null ? null : getTableRow().getItem();
@@ -232,7 +237,7 @@ public final class NexuApplication extends Application {
                 setTooltip(empty || text == null || text.isBlank() ? null : new Tooltip(text.replace("\n"," · ")));
             }
         });
-        TableColumn<TunnelRow,TunnelRow> actions = new TableColumn<>("AZIONI"); actions.setPrefWidth(145); actions.setSortable(false);
+        TableColumn<TunnelRow,TunnelRow> actions = new TableColumn<>("AZIONI"); actions.setPrefWidth(170); actions.setSortable(false);
         actions.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue()));
         actions.setCellFactory(c -> new TableCell<>() {
             private Button runStop;
