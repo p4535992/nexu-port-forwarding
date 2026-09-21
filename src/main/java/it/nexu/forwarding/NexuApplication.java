@@ -213,8 +213,22 @@ public final class NexuApplication extends Application {
                 }
             }
         });
-        TableColumn<TunnelRow,String> installation = textColumn("INSTALLAZIONE", 170,
-            r -> r.profile().installation().isBlank() ? "—" : r.profile().installation());
+        TableColumn<TunnelRow,String> installation = textColumn("INSTALLAZIONE", 170, r -> r.profile().installation());
+        installation.setEditable(true);
+        installation.setCellFactory(c -> new AutoSaveTextCell("—"));
+        installation.setOnEditCommit(e -> {
+            TunnelRow row = e.getRowValue();
+            if (UiWork.busy() || engine.isRunning(row.profile().id())) { table.refresh(); error("Ferma il tunnel prima di modificare l’installazione."); return; }
+            try {
+                TunnelProfile changed = row.profile().withInstallation(e.getNewValue());
+                List<TunnelProfile> next = new ArrayList<>(profiles());
+                int index = next.indexOf(row.profile());
+                if (index < 0) throw new IllegalStateException("Profilo non trovato.");
+                next.set(index, changed);
+                if (persist(next)) { row.setProfile(changed); updateFilter(); showSelection(); }
+            } catch (RuntimeException ex) { error(ex.getMessage()); }
+            table.refresh();
+        });
         TableColumn<TunnelRow,String> name = textColumn("NOME", 200, r -> r.profile().name());
         name.setEditable(true);
         name.setCellFactory(c -> new AutoSaveTextCell());
@@ -235,6 +249,10 @@ public final class NexuApplication extends Application {
         TableColumn<TunnelRow,String> hostAddress = new TableColumn<>("HOSTNAME / INDIRIZZO IP"); hostAddress.setPrefWidth(235);
         hostAddress.setCellValueFactory(c -> Bindings.createStringBinding(c.getValue()::hostAddressDisplay, c.getValue().resolvedIpProperty()));
         hostAddress.setCellFactory(c -> new TableCell<>() {
+            {
+                setWrapText(true);
+                setTextOverrun(OverrunStyle.CLIP);
+            }
             @Override protected void updateItem(String text, boolean empty) {
                 super.updateItem(text,empty); setGraphic(null);
                 setText(empty ? null : text);
@@ -284,7 +302,7 @@ public final class NexuApplication extends Application {
                 HBox box = new HBox(6, runStop, menu); box.setAlignment(Pos.CENTER_LEFT); setGraphic(box);
             }
         });
-        state.setEditable(false); installation.setEditable(false); forwarding.setEditable(false); hostAddress.setEditable(false);
+        state.setEditable(false); forwarding.setEditable(false); hostAddress.setEditable(false);
         actions.setEditable(false);
         table.getColumns().addAll(actions, state, installation, name, forwarding, hostAddress);
         Label emptyTitle = new Label("Nessun tunnel da mostrare"); emptyTitle.getStyleClass().add("empty-title");
@@ -316,7 +334,8 @@ public final class NexuApplication extends Application {
                 if (e.getClickCount() == 2 && !row.isEmpty() && table.getEditingCell() == null) {
                     javafx.scene.Node node = e.getTarget() instanceof javafx.scene.Node n ? n : null;
                     while (node != null && !(node instanceof TableCell<?,?>)) node = node.getParent();
-                    if (node instanceof TableCell<?,?> cell && name.equals(cell.getTableColumn())) table.edit(row.getIndex(), name);
+                    if (node instanceof TableCell<?,?> cell && installation.equals(cell.getTableColumn())) table.edit(row.getIndex(), installation);
+                    else if (node instanceof TableCell<?,?> cell && name.equals(cell.getTableColumn())) table.edit(row.getIndex(), name);
                     else edit(row.getItem());
                 }
             });
@@ -325,8 +344,11 @@ public final class NexuApplication extends Application {
     }
 
     private static final class AutoSaveTextCell extends TableCell<TunnelRow,String> {
+        private final String emptyPlaceholder;
         private TextField editor;
-        private AutoSaveTextCell() {
+        private AutoSaveTextCell() { this(""); }
+        private AutoSaveTextCell(String emptyPlaceholder) {
+            this.emptyPlaceholder = emptyPlaceholder == null ? "" : emptyPlaceholder;
             setWrapText(true);
             setTextOverrun(OverrunStyle.CLIP);
         }
@@ -351,7 +373,11 @@ public final class NexuApplication extends Application {
         @Override protected void updateItem(String value, boolean empty) {
             super.updateItem(value,empty);
             if (empty) { setText(null); setGraphic(null); setTooltip(null); }
-            else if (!isEditing()) { setText(value); setGraphic(null); setTooltip(new Tooltip(value)); }
+            else if (!isEditing()) {
+                String shown = value == null || value.isBlank() ? emptyPlaceholder : value;
+                setText(shown); setGraphic(null);
+                setTooltip(value == null || value.isBlank() ? null : new Tooltip(value));
+            }
         }
     }
 
