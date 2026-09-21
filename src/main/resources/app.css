@@ -62,3 +62,17 @@
     -fx-border-color: #283951;
     -fx-border-radius: 8px;
 }
+
+
+.log-toggle {
+    -fx-min-width: 28px;
+    -fx-pref-width: 28px;
+    -fx-max-width: 28px;
+    -fx-padding: 8px 5px;
+    -fx-background-radius: 14px;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-background-color: #24324b;
+    -fx-text-fill: #dce5f3;
+}
+.log-toggle:hover { -fx-background-color: #334763; }
