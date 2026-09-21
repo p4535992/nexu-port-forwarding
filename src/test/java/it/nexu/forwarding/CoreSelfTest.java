@@ -48,7 +48,11 @@ public final class CoreSelfTest {
             test("remote command export correct", () -> { List<String> a=OpenSshCommand.arguments(TunnelProfile.example()); check(a.contains("-R")); check(a.contains("127.0.0.1:8989:maven.example.com:8081")); });
             test("local command export correct", () -> { List<String> a=OpenSshCommand.arguments(change("mode",TunnelProfile.Mode.LOCAL)); check(a.contains("-L")); check(!a.contains("-R")); });
             test("PowerShell single quotes escaped", () -> check(OpenSshCommand.powershell(change("username","O'Brien")).contains("'O''Brien'")));
+            test("CMD export has no PowerShell call operator or single-quoted options", () -> { String s=OpenSshCommand.cmd(TunnelProfile.example()); check(s.startsWith("ssh.exe \"-N\" \"-T\"")); check(!s.startsWith("&")); check(!s.contains("'-N'")); });
             test("POSIX single quotes escaped", () -> check(OpenSshCommand.posix(change("username","O'Brien")).contains("'O'\"'\"'Brien'")));
+            test("forwarding summary identifies remote listener side", () -> check(TunnelProfile.example().forwardingSummary().equals("R · SSH[127.0.0.1:8989] → PC → maven.example.com:8081")));
+            test("forwarding summary identifies local listener side", () -> check(change("mode",TunnelProfile.Mode.LOCAL).forwardingSummary().startsWith("L · PC[127.0.0.1:8989] → SSH → ")));
+            test("inline rename preserves profile identity", () -> { TunnelProfile p=TunnelProfile.example(), renamed=p.withName("Nuovo nome"); eq(renamed.id(),p.id()); eq(renamed.name(),"Nuovo nome"); });
             test("config round trip", () -> { Path f=temp.resolve("roundtrip.properties"); List<TunnelProfile> p=List.of(TunnelProfile.example(),change("mode",TunnelProfile.Mode.LOCAL)); ProfileStore.save(f,p); eq(ProfileStore.load(f),p); });
             test("empty config round trip", () -> { Path f=temp.resolve("empty.properties"); ProfileStore.save(f,List.of()); check(ProfileStore.load(f).isEmpty()); });
             test("missing config loads as empty", () -> check(ProfileStore.load(temp.resolve("missing.properties")).isEmpty()));

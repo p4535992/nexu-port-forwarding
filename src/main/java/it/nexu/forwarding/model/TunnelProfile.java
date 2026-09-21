@@ -98,6 +98,18 @@ public record TunnelProfile(
             auth,privateKey,connectTimeoutSeconds,keepAliveSeconds,keepAliveMisses,reconnect,
             reconnectAttempts,reconnectDelaySeconds,notes,label,origin,sourceKey);
     }
+    public TunnelProfile withName(String value) {
+        return new TunnelProfile(id,value,mode,sshHost,sshPort,username,bindHost,bindPort,targetHost,targetPort,
+            auth,privateKey,connectTimeoutSeconds,keepAliveSeconds,keepAliveMisses,reconnect,
+            reconnectAttempts,reconnectDelaySeconds,notes,installation,origin,sourceKey);
+    }
+    public String forwardingSummary() {
+        return switch (mode) {
+            case REMOTE -> "R · SSH[" + listener() + "] → PC → " + destination();
+            case LOCAL -> "L · PC[" + listener() + "] → SSH → " + destination();
+            case DYNAMIC -> "D · PC[" + listener() + "] → SOCKS → SSH";
+        };
+    }
     public String endpoint() { return username + "@" + address(sshHost, sshPort); }
     public String listener() { return address(bindHost, bindPort); }
     public String destination() { return mode == Mode.DYNAMIC ? "SOCKS · destinazione scelta dal client" : address(targetHost, targetPort); }
@@ -105,7 +117,7 @@ public record TunnelProfile(
     public boolean isLoopbackBind() {
         return bindHost.equals("127.0.0.1") || bindHost.equals("::1") || bindHost.equalsIgnoreCase("localhost");
     }
-    public String searchable() { return (installation + " " + origin + " " + name + " " + mode + " " + endpoint() + " " + listener() + " " + destination() + " " + notes).toLowerCase(Locale.ROOT); }
+    public String searchable() { return (origin + " " + name + " " + mode + " " + endpoint() + " " + listener() + " " + destination() + " " + notes).toLowerCase(Locale.ROOT); }
     public static String address(String host, int port) { return bracket(host) + ":" + port; }
     public static String bracket(String host) { return host.contains(":") ? "[" + host + "]" : host; }
 }

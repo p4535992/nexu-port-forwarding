@@ -23,8 +23,15 @@ public final class OpenSshCommand {
     public static String powershell(TunnelProfile p) {
         return "& ssh.exe " + arguments(p).stream().map(OpenSshCommand::psQuote).collect(Collectors.joining(" "));
     }
+    public static String cmd(TunnelProfile p) {
+        return "ssh.exe " + arguments(p).stream().map(OpenSshCommand::cmdQuote).collect(Collectors.joining(" "));
+    }
     public static String posix(TunnelProfile p) {
         return "ssh " + arguments(p).stream().map(s -> "'" + s.replace("'", "'\"'\"'") + "'").collect(Collectors.joining(" "));
     }
     private static String psQuote(String value) { return "'" + value.replace("'", "''") + "'"; }
+    private static String cmdQuote(String value) {
+        String escaped = value.replace("%", "%%").replace("\"", "\\\"");
+        return "\"" + escaped + "\"";
+    }
 }

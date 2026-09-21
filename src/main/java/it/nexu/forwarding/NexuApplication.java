@@ -3,7 +3,6 @@ package it.nexu.forwarding;
 import it.nexu.forwarding.config.*;
 import it.nexu.forwarding.importer.TabbyImport;
 import it.nexu.forwarding.importer.MobaXtermImport;
-import javafx.scene.control.cell.TextFieldTableCell;
 import it.nexu.forwarding.model.*;
 import it.nexu.forwarding.ssh.*;
 import it.nexu.forwarding.ui.*;
@@ -138,7 +137,7 @@ public final class NexuApplication extends Application {
         Button importTabby = new Button("Importa Tabby…"); importTabby.setOnAction(e -> importTabby());
         Button importMoba = new Button("Importa MobaXterm…"); importMoba.setOnAction(e -> importMobaXterm());
         FlowPane commands = new FlowPane(9, 9, add, importTabby, importMoba, start, stop, file, vaultUi.menu(), hosts, openLogs, settings, quit);
-        search.setPromptText("Cerca installazione, nome, hostname, utente, porta o destinazione…"); HBox.setHgrow(search, Priority.ALWAYS);
+        search.setPromptText("Cerca nome, hostname, utente, porta o destinazione…"); HBox.setHgrow(search, Priority.ALWAYS);
         ipFilter.setPromptText("Filtra indirizzo IP…"); ipFilter.setPrefWidth(190);
         statusFilter.getItems().add("Tutti gli stati");
         for (TunnelEngine.State state : TunnelEngine.State.values()) statusFilter.getItems().add(state.label());
@@ -202,27 +201,27 @@ public final class NexuApplication extends Application {
                 }
             }
         });
-        TableColumn<TunnelRow,String> mode = textColumn("TIPO", 90, r -> switch(r.profile().mode()) { case REMOTE -> "R ←"; case LOCAL -> "L →"; case DYNAMIC -> "D SOCKS"; });
-        TableColumn<TunnelRow,String> name = textColumn("NOME", 175, r -> r.profile().name());
-        TableColumn<TunnelRow,String> installation = textColumn("INSTALLAZIONE", 180, r -> r.profile().installation());
-        installation.setEditable(true);
-        installation.setCellFactory(TextFieldTableCell.forTableColumn());
-        installation.setOnEditCommit(e -> {
+        TableColumn<TunnelRow,String> name = textColumn("NOME", 200, r -> r.profile().name());
+        name.setEditable(true);
+        name.setCellFactory(c -> new AutoSaveTextCell());
+        name.setOnEditCommit(e -> {
             TunnelRow row = e.getRowValue();
-            if (UiWork.busy() || engine.isRunning(row.profile().id())) { table.refresh(); error("Ferma il tunnel prima di modificare l'installazione."); return; }
+            if (UiWork.busy() || engine.isRunning(row.profile().id())) { table.refresh(); error("Ferma il tunnel prima di rinominarlo."); return; }
             try {
-                TunnelProfile changed = row.profile().withInstallation(e.getNewValue());
-                List<TunnelProfile> next = new ArrayList<>(profiles()); next.set(next.indexOf(row.profile()),changed);
+                TunnelProfile changed = row.profile().withName(e.getNewValue());
+                List<TunnelProfile> next = new ArrayList<>(profiles());
+                int index = next.indexOf(row.profile());
+                if (index < 0) throw new IllegalStateException("Profilo non trovato.");
+                next.set(index, changed);
                 if (persist(next)) { row.setProfile(changed); updateFilter(); showSelection(); }
             } catch (RuntimeException ex) { error(ex.getMessage()); }
             table.refresh();
         });
+        TableColumn<TunnelRow,String> forwarding = textColumn("FORWARDING", 430, r -> r.profile().forwardingSummary());
         TableColumn<TunnelRow,String> hostname = textColumn("HOSTNAME", 190, r -> r.profile().sshHost());
         TableColumn<TunnelRow,String> ip = new TableColumn<>("INDIRIZZO IP"); ip.setPrefWidth(155); ip.setCellValueFactory(c -> c.getValue().resolvedIpProperty());
         ip.setCellFactory(c -> new TableCell<>() { @Override protected void updateItem(String text, boolean empty) { super.updateItem(text,empty); setText(empty ? null : (text == null || text.isBlank() ? "—" : text)); setTooltip(empty || text == null || text.isBlank() ? null : new Tooltip(text)); } });
         TableColumn<TunnelRow,String> sshPort = textColumn("PORTA SSH", 85, r -> Integer.toString(r.profile().sshPort()));
-        TableColumn<TunnelRow,String> bind = textColumn("ASCOLTO", 165, r -> r.profile().listener());
-        TableColumn<TunnelRow,String> destination = textColumn("DESTINAZIONE", 210, r -> r.profile().destination());
         TableColumn<TunnelRow,TunnelRow> actions = new TableColumn<>("AZIONI"); actions.setPrefWidth(210); actions.setSortable(false);
         actions.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue()));
         actions.setCellFactory(c -> new TableCell<>() {
@@ -241,8 +240,9 @@ public final class NexuApplication extends Application {
                     try { addProfile(row.profile().duplicate()); } catch (RuntimeException ex) { error(ex.getMessage()); }
                 });
                 MenuItem log = new MenuItem("Mostra log"); log.setOnAction(e -> table.getSelectionModel().select(row));
-                MenuItem copyPs = new MenuItem("Copia comando PowerShell"); copyPs.setOnAction(e -> copy(OpenSshCommand.powershell(row.profile())));
-                MenuItem copySh = new MenuItem("Copia comando Linux"); copySh.setOnAction(e -> copy(OpenSshCommand.posix(row.profile())));
+                MenuItem copyPs = new MenuItem("Copia comando Windows PowerShell"); copyPs.setOnAction(e -> copy(OpenSshCommand.powershell(row.profile())));
+                MenuItem copyCmd = new MenuItem("Copia comando Windows CMD"); copyCmd.setOnAction(e -> copy(OpenSshCommand.cmd(row.profile())));
+                MenuItem copySh = new MenuItem("Copia comando Linux / POSIX"); copySh.setOnAction(e -> copy(OpenSshCommand.posix(row.profile())));
                 MenuItem forget = new MenuItem("Dimentica password in memoria"); forget.setOnAction(e -> {
                     if (engine.isRunning(row.profile().id())) { error("Ferma il tunnel prima di dimenticare la password."); return; }
                     secrets.forget(row.profile().id());
@@ -252,13 +252,13 @@ public final class NexuApplication extends Application {
                     if (confirm("Rimuovi credenziale", "Rimuovere la password salvata per questo profilo?") && vaultUi.forget(row.profile().id())) secrets.forget(row.profile().id());
                 });
                 MenuItem delete = new MenuItem("Elimina…"); delete.setOnAction(e -> delete(row));
-                menu.getItems().addAll(edit, duplicate, log, new SeparatorMenuItem(), copyPs, copySh, forget, forgetSaved, new SeparatorMenuItem(), delete);
+                menu.getItems().addAll(edit, duplicate, log, new SeparatorMenuItem(), copyPs, copyCmd, copySh, forget, forgetSaved, new SeparatorMenuItem(), delete);
                 HBox box = new HBox(6, launch, halt, menu); box.setAlignment(Pos.CENTER_LEFT); setGraphic(box);
             }
         });
-        state.setEditable(false); mode.setEditable(false); name.setEditable(false); hostname.setEditable(false); ip.setEditable(false); sshPort.setEditable(false);
-        bind.setEditable(false); destination.setEditable(false); actions.setEditable(false);
-        table.getColumns().addAll(actions, state, mode, installation, name, hostname, ip, sshPort, bind, destination);
+        state.setEditable(false); forwarding.setEditable(false); hostname.setEditable(false); ip.setEditable(false); sshPort.setEditable(false);
+        actions.setEditable(false);
+        table.getColumns().addAll(actions, state, name, forwarding, hostname, ip, sshPort);
         Label emptyTitle = new Label("Nessun tunnel da mostrare"); emptyTitle.getStyleClass().add("empty-title");
         Label emptyHelp = new Label("Attivi: solo tunnel connessi. Custom: + Nuovo tunnel. Tabby/MobaXterm: usa i pulsanti Importa."); emptyHelp.getStyleClass().add("muted");
         VBox empty = new VBox(12, emptyTitle, emptyHelp); empty.setAlignment(Pos.CENTER); table.setPlaceholder(empty);
@@ -266,10 +266,39 @@ public final class NexuApplication extends Application {
             if (e.getClickCount() == 2 && !row.isEmpty() && table.getEditingCell() == null) {
                 javafx.scene.Node node = e.getTarget() instanceof javafx.scene.Node n ? n : null;
                 while (node != null && !(node instanceof TableCell<?,?>)) node = node.getParent();
-                if (!(node instanceof TableCell<?,?> cell) || !installation.equals(cell.getTableColumn())) edit(row.getItem());
+                if (node instanceof TableCell<?,?> cell && name.equals(cell.getTableColumn())) table.edit(row.getIndex(), name);
+                else edit(row.getItem());
             }
         }); return row; });
     }
+
+    private static final class AutoSaveTextCell extends TableCell<TunnelRow,String> {
+        private TextField editor;
+        @Override public void startEdit() {
+            if (!isEditable() || !getTableView().isEditable() || !getTableColumn().isEditable()) return;
+            super.startEdit();
+            if (editor == null) {
+                editor = new TextField();
+                editor.setOnAction(e -> commitEditor());
+                editor.focusedProperty().addListener((o,was,focused) -> { if (!focused && isEditing()) commitEditor(); });
+            }
+            editor.setText(getItem() == null ? "" : getItem());
+            setText(null); setGraphic(editor);
+            editor.selectAll(); editor.requestFocus();
+        }
+        private void commitEditor() {
+            if (editor != null && isEditing()) commitEdit(editor.getText());
+        }
+        @Override public void cancelEdit() {
+            super.cancelEdit(); setGraphic(null); setText(getItem());
+        }
+        @Override protected void updateItem(String value, boolean empty) {
+            super.updateItem(value,empty);
+            if (empty) { setText(null); setGraphic(null); setTooltip(null); }
+            else if (!isEditing()) { setText(value); setGraphic(null); setTooltip(new Tooltip(value)); }
+        }
+    }
+
     private TableColumn<TunnelRow,String> textColumn(String label, double width, Function<TunnelRow,String> value) {
         TableColumn<TunnelRow,String> column = new TableColumn<>(label); column.setPrefWidth(width);
         column.setCellValueFactory(c -> new ReadOnlyStringWrapper(value.apply(c.getValue())));
