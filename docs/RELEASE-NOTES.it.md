@@ -1,12 +1,17 @@
-# Nexu Port Forwarding 1.2.0-rc.3
+# Nexu Port Forwarding 1.2.0-rc.4
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## Italiano
 
-Terza release candidate della linea 1.2.0: migliora la colorazione degli stati e rende la tabella dei tunnel più compatta e adattiva, mantenendo proxy e diagnostica OpenSSH introdotti nelle rc.1/rc.2.
+Quarta release candidate della linea 1.2.0: aggiunge la selezione persistente della lingua Inglese/Italiano con inglese predefinito, mantenendo proxy, diagnostica OpenSSH e miglioramenti della tabella delle release candidate precedenti.
 
 ### Novità
+
+- Aggiunto **Settings / Impostazioni → Language / Lingua → English / Italiano**, con **English come default** quando non esiste ancora una preferenza.
+- La lingua scelta viene salvata nella cartella dati locale e applicata al successivo avvio dell'applicazione.
+- Finestra principale, filtri, intestazioni della tabella, stati dei tunnel, dialoghi profilo/proxy, password/vault, cartella dati e menu tray seguono ora la lingua selezionata.
+- Il cambio lingua richiede intenzionalmente il riavvio, così la UI non viene ricostruita mentre potrebbero essere attivi tunnel SSH.
 
 - Le righe dei tunnel **ACTIVE** hanno ora un vero sfondo verde, anche quando sono selezionate; le righe ferme restano rosse e l'azione contestuale **■ Ferma** resta rossa.
 - Rimossa la colonna ridondante **STATO** dalla tabella; il filtro Stato resta disponibile, mentre colore della riga e pulsante **Avvia/Ferma** comunicano direttamente lo stato.

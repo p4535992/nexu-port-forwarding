@@ -1,12 +1,17 @@
-# Nexu Port Forwarding 1.2.0-rc.3
+# Nexu Port Forwarding 1.2.0-rc.4
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## English
 
-Third 1.2.0 release candidate with clearer state coloring and a more compact, adaptive tunnel table, while retaining the proxy and OpenSSH diagnostics from rc.1/rc.2.
+Fourth 1.2.0 release candidate adding persistent English/Italian UI language selection, with English as the default, while retaining the proxy, OpenSSH diagnostics and adaptive table improvements from earlier release candidates.
 
 ### New in this prerelease
+
+- Added **Settings → Language → English / Italiano** with **English as the default** when no preference exists.
+- The selected language is persisted in the local data directory and is applied on the next application start.
+- Main window controls, filters, table labels, tunnel state labels, profile/proxy dialogs, vault/password dialogs, data-folder settings and tray actions now follow the selected language.
+- Language switching is intentionally restart-based so the application does not rebuild the UI while SSH tunnels may be active.
 
 - **ACTIVE** tunnel rows now use a true green background, including when selected; stopped rows remain red and the contextual **■ Ferma** action remains red.
 - Removed the redundant **STATO** table column; the status filter remains available, while row color plus **Avvia/Ferma** communicate state directly.
