@@ -1,4 +1,4 @@
-param([ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version = '1.0.0')
+param([ValidatePattern('^\d+\.\d+\.\d+$')][string]$Version = '1.1.0')
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location $root
@@ -31,10 +31,12 @@ foreach ($type in @('exe','msi')) {
     if (-not $package) { throw "Missing $type package" }
     Copy-Item $package.FullName "$assets\nexu-port-forwarding-$Version-windows-x64.$type"
 }
+# Add the marker after installer creation, before archiving the portable image.
+Copy-Item scripts/portable.properties "$image\portable.properties"
 @'
 @echo off
 setlocal
-set "NEXU_PF_HOME=%~dp0data"
+REM The application reads portable.properties; do not override the saved preference.
 start "" "%~dp0NexuPortForwarding.exe" %*
 '@ | Set-Content "$image\start-portable.bat" -Encoding ascii
 Compress-Archive -Path $image -DestinationPath "$assets\nexu-port-forwarding-$Version-windows-x64.zip"

@@ -2,7 +2,7 @@
 
 The Nexu Port Forwarding application code and documentation are licensed under the MIT License in [LICENSE](LICENSE). Third-party components are not relicensed by that grant. The application PNG/ICO was created for this project; no signing-engine code, signing assets or font files are supplied as project sources.
 
-Direct runtime dependencies declared in `pom.xml`: OpenJFX Controls 21.0.11; Dorkbox SystemTray 4.2.1; Apache MINA SSHD core 2.19.0; Bouncy Castle bcpkix-jdk18on 1.84; EdDSA 0.3.0; SLF4J API and Simple 2.0.17. JUnit Jupiter 5.12.2 is test-only. Maven resolves additional transitive libraries.
+Direct runtime dependencies declared in `pom.xml`: SnakeYAML 2.4; OpenJFX Controls 21.0.11; Dorkbox SystemTray 4.2.1; Apache MINA SSHD core 2.19.0; Bouncy Castle bcpkix-jdk18on 1.84; EdDSA 0.3.0; SLF4J API and Simple 2.0.17. JUnit Jupiter 5.12.2 is test-only. Maven resolves additional transitive libraries.
 
 Every distribution keeps its dependency JARs intact, including their embedded license, copyright and NOTICE resources. `dependency-inventory.json` records the actual distributed JAR names, sizes, SHA-256 digests and embedded legal-resource paths. Those legal resources are also copied under `legal/dependencies/` for convenience. An empty embedded-resource list is not a declaration that an artifact has no license.
 
@@ -21,3 +21,11 @@ Sources and license information for the main components:
 ## Italiano
 
 Codice applicativo e documentazione di Nexu Port Forwarding sono MIT; dipendenze, componenti nativi e runtime Java mantengono le proprie licenze. I JAR restano intatti, con gli avvisi inclusi, copiati anche in `legal/dependencies/`. `dependency-inventory.json` elenca i JAR effettivamente distribuiti e i relativi checksum. La directory legale del runtime è conservata. Una lista vuota di avvisi incorporati non significa assenza di licenza. Questo inventario non è un audit esaustivo di licenze o sicurezza.
+
+## YAML import dependency
+
+The Tabby config importer adds `org.yaml:snakeyaml:2.4`, licensed under Apache-2.0. Its original JAR and embedded notices must remain intact in packaged distributions; the existing distribution inventory collects it automatically when Maven resolves dependencies. The importer was independently implemented using the public Tabby data schema; no Tabby application code or assets are bundled. The application code remains MIT. See [Tabby import documentation](docs/TABBY-IMPORT.md).
+
+## MobaXterm import
+
+The MobaXterm importer is independently implemented from documented/configuration examples of the `[PortForwarding]` section. No MobaXterm code, binaries, assets, credentials or configuration files are bundled. MobaXterm remains third-party software under its own terms.

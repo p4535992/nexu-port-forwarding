@@ -1,0 +1,40 @@
+# Nexu Port Forwarding — salvataggio portabile
+
+[English](PORTABLE-STORAGE.md) | [Italiano](PORTABLE-STORAGE.it.md)
+
+## Dati locali, log e aggiornamenti
+
+**Archivi portabili nativi (ZIP / TAR.GZ):** l'avvio normale, incluso il doppio clic sull'eseguibile Windows, crea `data/` e `logs/` accanto al programma. I profili non vengono salvati come file sparsi accanto all'eseguibile.
+
+```text
+NexuPortForwarding/
+  NexuPortForwarding.exe           Windows; su Linux: bin/NexuPortForwarding
+  portable.properties              Preferenza di salvataggio, senza credenziali
+  data/
+    profiles.properties            Profili, senza password
+    credentials.npfvault           Password/passphrase cifrate
+    host-keys.properties           Impronte host SSH accettate
+    window.properties              Stato della finestra
+    app.lock                       Blocco dati per singola istanza
+  logs/
+    nexu-0.log                     Log diagnostico con rotazione
+```
+
+Le due cartelle vengono create all'avvio. I singoli file vengono creati quando servono (per esempio il vault dopo aver scelto la password principale). Un portabile nuovo non legge né importa automaticamente i profili presenti in AppData.
+
+**Impostazioni → Cartella dati…** permette di scegliere il salvataggio locale portabile oppure la cartella dati dell'utente. La preferenza è in `portable.properties`, si applica al riavvio e non copia, elimina o sposta profili, credenziali o log. La cartella scelta può contenere profili già salvati. Per un trasferimento esplicito usa l'esportazione/importazione del backup cifrato.
+
+**Installer e archivi solo Java** mantengono per impostazione predefinita la cartella dati dell'utente:
+
+```text
+Windows: %LOCALAPPDATA%\nexu-port-forwarding\data\
+         %LOCALAPPDATA%\nexu-port-forwarding\logs\
+Linux:   ${XDG_DATA_HOME:-$HOME/.local/share}/nexu-port-forwarding/data/
+         ${XDG_DATA_HOME:-$HOME/.local/share}/nexu-port-forwarding/logs/
+```
+
+In modalità utente i log restano nella sottocartella `logs/` della directory dati scelta. Un'impostazione esplicita `-Dnexu.home` o `NEXU_PF_HOME` ha precedenza sulla preferenza e mantiene lo stesso schema dati/log. Il dialogo mostra i percorsi dati e log effettivamente in uso.
+
+Launcher portabili e avvio diretto rispettano la stessa preferenza. Aggiornando il portabile, conserva `data/`, `logs/` e il tuo `portable.properties`. Non unire alla cieca dati esistenti e pacchetti nuovi. I vecchi log in `data/logs/` non vengono modificati; i nuovi log portabili vanno nella cartella `logs/` adiacente.
+
+I log ruotano su cinque file da circa 2 MB e non registrano password, chiavi private o traffico. Il salvataggio portabile richiede una cartella locale scrivibile e controllata dal proprietario. Gli errori vengono segnalati senza passare silenziosamente ad AppData. Dettagli in [salvataggio portabile](PORTABLE-STORAGE.it.md).

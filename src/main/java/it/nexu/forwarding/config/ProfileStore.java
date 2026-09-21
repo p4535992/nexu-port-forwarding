@@ -14,7 +14,8 @@ public final class ProfileStore {
     }
     public static List<TunnelProfile> decode(byte[] bytes) throws IOException {
         Properties props = SafeFiles.decode(bytes);
-        if (!"1".equals(props.getProperty("format.version"))) throw new IOException("Versione della configurazione assente o non supportata.");
+        String version = props.getProperty("format.version");
+        if (!"1".equals(version) && !"2".equals(version)) throw new IOException("Versione della configurazione assente o non supportata.");
         try {
             int count = Integer.parseInt(props.getProperty("profile.count"));
             if (count < 0 || count > 1000) throw new IllegalArgumentException("Numero profili non valido (massimo 1000).");
@@ -28,7 +29,12 @@ public final class ProfileStore {
                     required(props,b+"targetHost"), number(props,b+"targetPort"), TunnelProfile.Auth.valueOf(required(props,b+"auth")),
                     props.getProperty(b+"privateKey", ""), number(props,b+"connectTimeoutSeconds"), number(props,b+"keepAliveSeconds"),
                     number(props,b+"keepAliveMisses"), bool(props,b+"reconnect"), number(props,b+"reconnectAttempts"),
-                    number(props,b+"reconnectDelaySeconds"), props.getProperty(b+"notes", ""));
+                    number(props,b+"reconnectDelaySeconds"), props.getProperty(b+"notes", ""),
+                    "2".equals(version) ? props.getProperty(b+"installation", "") : "",
+                    "2".equals(version) ? TunnelProfile.Origin.valueOf(required(props,b+"origin")) : TunnelProfile.Origin.CUSTOM,
+                    "2".equals(version) ? props.getProperty(b+"sourceKey", "") : "");
+                if ("1".equals(version) && p.mode() == TunnelProfile.Mode.DYNAMIC)
+                    throw new IllegalArgumentException("DYNAMIC richiede il formato 2.");
                 if (!ids.add(p.id())) throw new IllegalArgumentException("ID profilo duplicato.");
                 result.add(p);
             }
@@ -49,7 +55,7 @@ public final class ProfileStore {
         if (profiles.size() > 1000) throw new IOException("Massimo 1000 profili.");
         Set<UUID> ids = new HashSet<>();
         Properties props = new Properties();
-        props.setProperty("format.version", "1");
+        props.setProperty("format.version", "2");
         props.setProperty("profile.count", Integer.toString(profiles.size()));
         for (int i = 0; i < profiles.size(); i++) {
             TunnelProfile p = profiles.get(i);
@@ -64,9 +70,12 @@ public final class ProfileStore {
             values.put("connectTimeoutSeconds", p.connectTimeoutSeconds()); values.put("keepAliveSeconds", p.keepAliveSeconds());
             values.put("keepAliveMisses", p.keepAliveMisses()); values.put("reconnect", p.reconnect());
             values.put("reconnectAttempts", p.reconnectAttempts()); values.put("reconnectDelaySeconds", p.reconnectDelaySeconds());
-            values.put("notes", p.notes());
+            values.put("notes", p.notes()); values.put("installation",p.installation());
+            values.put("origin",p.origin()); values.put("sourceKey",p.sourceKey());
             values.forEach((k, v) -> props.setProperty(b+k, String.valueOf(v)));
         }
-        return SafeFiles.encode(props, "NexU Port Forwarding - configuration without passwords");
+        byte[] encoded = SafeFiles.encode(props, "Nexu Port Forwarding - configuration without passwords");
+        if (encoded.length > 2_000_000) throw new IOException("Configurazione oltre il limite di 2 MB. Nessuna modifica salvata.");
+        return encoded;
     }
 }

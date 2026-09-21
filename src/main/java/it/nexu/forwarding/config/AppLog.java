@@ -10,14 +10,16 @@ public final class AppLog implements AutoCloseable {
     private final Logger logger=Logger.getLogger("it.nexu.forwarding.events");
     private final FileHandler handler;
     private final Path directory;
-    public AppLog(Path home) throws IOException {
-        directory=home.resolve("logs"); SafeFiles.directory(directory);
+    public AppLog(Path home) throws IOException { this(home.resolve("logs"), true); }
+    public static AppLog inDirectory(Path directory) throws IOException { return new AppLog(directory, true); }
+    private AppLog(Path logDirectory, boolean explicitDirectory) throws IOException {
+        directory=logDirectory; SafeFiles.directory(directory);
         logger.setUseParentHandlers(false); logger.setLevel(Level.INFO);
         handler=new FileHandler(directory.resolve("nexu-%g.log").toString(),2_000_000,5,true);
         handler.setEncoding("UTF-8"); handler.setFormatter(new Formatter() {
             @Override public String format(LogRecord r) { return r.getInstant()+" "+r.getLevel()+" "+r.getMessage()+System.lineSeparator(); }
         });
-        logger.addHandler(handler); mark("application-started version=1.0.0");
+        logger.addHandler(handler); mark("application-started version=1.1.0");
     }
     public Path directory() { return directory; }
     public void event(TunnelEngine.Event event) {

@@ -1,27 +1,25 @@
-# Nexu Port Forwarding 1.0.0
+# Nexu Port Forwarding 1.1.0-rc.1
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## English
 
-First stable release of Nexu Port Forwarding from the recreated public repository.
+Prerelease adding external-profile import and operational filtering while keeping the 1.0.0 stable release unchanged.
 
-### Included
+### New in this prerelease
 
-SSH local (`-L`) and remote (`-R`) TCP forwarding; independent tunnel profiles; searchable and sortable grid; start/stop controls; status indicators; password or private-key authentication; explicit host-key verification; keepalive and optional bounded reconnects.
+- Main views ordered **Active → Custom → Tabby → MobaXterm**. Active contains only tunnels whose SSH forwarding state is ACTIVE.
+- Read-only **Tabby** import from `config.yaml`, with preview and Local/Remote/Dynamic forwarding conversion.
+- Read-only **MobaXterm** import from `[PortForwarding]` in `MobaXterm.ini`/`.mobaconf`; password sections and unrelated settings are ignored.
+- Imported rows become ordinary local Nexu Port Forwarding profiles. Reopening Tabby or MobaXterm is not required after import, and imports never auto-start tunnels.
+- Search filters for forwarding type and resolved SSH-server IP, in addition to free text and state.
+- Separate **HOSTNAME** and **INDIRIZZO IP** columns. IP literals are copied immediately; hostnames are resolved asynchronously through the operating-system DNS resolver (no ICMP ping).
+- Editable/searchable **INSTALLAZIONE** column for site/customer/environment labels.
+- DYNAMIC (`-D`) SOCKS forwarding supported by the Apache MINA SSHD backend.
+- Storage layout: portable packages use sibling `data/` and `logs/`; installed builds use the user parent `nexu-port-forwarding/data/` and `nexu-port-forwarding/logs/`. Recognized 1.0.0 user-data files are copied once into `data/` without deleting originals.
 
-Native decorated Windows/Linux window with minimize and maximize/restore controls. The close dialog offers minimization, exit or cancellation and warns that exit stops active tunnels. Without a tray, minimization remains a normal desktop operation. Normal window bounds and maximized state are saved locally.
+### Safety
 
-Local AES-256-GCM credential vault protected by a master password, encrypted backup import/export, separate credential-free profile exports, rotating local logs and a version-independent data directory. There is no cloud synchronization and no automatic tunnel startup.
+Importers do not copy Tabby/MobaXterm passwords, host trust, scripts or unrelated configuration. Unsupported connection proxies/jump-host behavior is skipped instead of silently becoming a direct connection. All imported tunnels start stopped.
 
-### Downloads
-
-Windows x64: portable ZIP, EXE installer and MSI installer. Linux x64: portable TAR.GZ, DEB and RPM. Native packages include Java 21. Java-only archives include the application JAR and its `lib/` directory and require Java 21. Extract portable archives completely.
-
-Source ZIP, SHA-256 checksums, platform diagnostics and the resolved runtime JAR inventory are attached. MIT covers the application code; dependencies and Java retain their own licenses and notices.
-
-### Verification and limitations
-
-Publication requires both platform builds, all Maven tests, SSH loopback integration tests, packaged GUI startup/exit, local log checks, retired-endpoint checks and package completeness checks to pass. The documentation now uses the full name **Nexu Port Forwarding**, with English primary and Italian in parallel.
-
-Binaries are not code-signed. The UI currently uses Italian labels. Tray availability depends on the Linux desktop. Installer upgrade/uninstall, real server policies, sleep/resume and every interactive workflow are not exhaustively tested. Green indicates an established tunnel, not destination-service health. A lost vault/backup password cannot be recovered. This release is not a security audit.
+This is an unsigned prerelease. Validate imports against your own configuration before production use.

@@ -49,7 +49,7 @@ public final class BackupService {
         List<TunnelProfile> next=new ArrayList<>(existing); Map<UUID,VaultStore.Entry> added=new LinkedHashMap<>();
         // Always allocate fresh UUIDs, including when the local vault contains deleted/orphaned entries.
         for(TunnelProfile p:backup.profiles()) {
-            TunnelProfile imported=p.duplicate(); next.add(imported);
+            TunnelProfile imported=p.copyWithNewId(); next.add(imported);
             VaultStore.Entry e=backup.secrets().get(p.id()); if(e!=null) added.put(imported.id(),e.copy());
         }
         byte[] encoded=ProfileStore.encode(next); // Validate ALL profiles before any local write.

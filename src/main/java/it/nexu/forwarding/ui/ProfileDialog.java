@@ -24,6 +24,9 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
     private final TextField attempts = new TextField(), delay = new TextField(), notes = new TextField();
     private final Label validation = new Label();
     private final UUID id;
+    private final TextField installation = new TextField();
+    private final TunnelProfile.Origin origin;
+    private final String sourceKey;
     private TunnelProfile valid;
 
     public ProfileDialog(Window owner, TunnelProfile existing, boolean hasSecret) {
@@ -33,6 +36,10 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
         setResizable(true);
         TunnelProfile p = existing == null ? TunnelProfile.example() : existing;
         id = existing == null ? UUID.randomUUID() : existing.id();
+        origin = existing == null ? TunnelProfile.Origin.CUSTOM : existing.origin();
+        sourceKey = existing == null ? "" : existing.sourceKey();
+        installation.setText(p.installation());
+        installation.setPromptText("Nome libero: cliente, sede, ambiente… (ricercabile)");
         name.setText(existing == null ? "" : p.name()); host.setText(existing == null ? "" : p.sshHost());
         port.setText(""+p.sshPort()); user.setText(existing == null ? "" : p.username());
         auth.getItems().setAll(TunnelProfile.Auth.values()); auth.setValue(p.auth());
@@ -47,7 +54,14 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
         host.setPromptText("server.example.org oppure indirizzo IP"); user.setPromptText("utente");
         target.setPromptText("Host raggiungibile dal lato di destinazione");
         mode.setConverter(new javafx.util.StringConverter<>() {
-            public String toString(TunnelProfile.Mode m) { return m == TunnelProfile.Mode.REMOTE ? "REMOTE · -R · ascolto sul server SSH" : "LOCAL · -L · ascolto su questo PC"; }
+            public String toString(TunnelProfile.Mode m) {
+                if (m == null) return "";
+                return switch (m) {
+                    case REMOTE -> "REMOTE · -R · ascolto sul server SSH";
+                    case LOCAL -> "LOCAL · -L · ascolto su questo PC";
+                    case DYNAMIC -> "DYNAMIC · -D · proxy SOCKS su questo PC";
+                };
+            }
             public TunnelProfile.Mode fromString(String s) { throw new UnsupportedOperationException(); }
         });
         auth.setConverter(new javafx.util.StringConverter<>() {
@@ -67,12 +81,17 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
         connection.add(remember,0,7,2,1);
         Label privacy = help("Se selezionato, il salvataggio richiede la password principale. Altrimenti la nuova credenziale resta solo in memoria. Un campo vuoto non modifica la credenziale esistente. L’export profili non include password.");
         connection.add(privacy, 0, 8, 2, 1);
+        row(connection,9,"Installazione",installation);
         GridPane forwarding = grid();
         row(forwarding, 0, "Tipo di inoltro", mode); row(forwarding, 1, "Indirizzo di ascolto", bind);
         row(forwarding, 2, "Porta di ascolto", bindPort); row(forwarding, 3, "Host destinazione", target);
         row(forwarding, 4, "Porta destinazione", targetPort);
+        target.disableProperty().bind(mode.valueProperty().isEqualTo(TunnelProfile.Mode.DYNAMIC));
+        targetPort.disableProperty().bind(target.disableProperty());
         Label direction = help("");
-        Runnable directionText = () -> direction.setText(mode.getValue() == TunnelProfile.Mode.REMOTE
+        Runnable directionText = () -> direction.setText(mode.getValue() == TunnelProfile.Mode.DYNAMIC
+            ? "DYNAMIC (-D): proxy SOCKS locale. Il client sceglie host e porta; il server SSH raggiunge la destinazione. Nessuna destinazione fissa. SOCKS non autenticato: lascia il bind su 127.0.0.1."
+            : mode.getValue() == TunnelProfile.Mode.REMOTE
             ? "REMOTE (-R): la porta di ascolto viene aperta sul server SSH. Il tuo PC risolve e raggiunge l'host destinazione."
             : "LOCAL (-L): la porta di ascolto viene aperta sul tuo PC. Il server SSH risolve e raggiunge l'host destinazione.");
         mode.valueProperty().addListener((o,a,b) -> directionText.run()); directionText.run();
@@ -100,9 +119,9 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
     }
     private TunnelProfile collect() {
         return new TunnelProfile(id, name.getText(), mode.getValue(), host.getText(), num(port,"Porta SSH"), user.getText(),
-            bind.getText(), num(bindPort,"Porta ascolto"), target.getText(), num(targetPort,"Porta destinazione"), auth.getValue(), key.getText(),
+            bind.getText(), num(bindPort,"Porta ascolto"), target.getText(), mode.getValue() == TunnelProfile.Mode.DYNAMIC ? 0 : num(targetPort,"Porta destinazione"), auth.getValue(), key.getText(),
             num(timeout,"Timeout"), num(interval,"Keepalive"), num(misses,"Soglia keepalive"), reconnect.isSelected(), num(attempts,"Riconnessioni"),
-            num(delay,"Attesa"), notes.getText());
+            num(delay,"Attesa"), notes.getText(), installation.getText(), origin, sourceKey);
     }
     private static int num(TextField field, String name) {
         try { return Integer.parseInt(field.getText().trim()); }

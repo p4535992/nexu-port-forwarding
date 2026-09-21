@@ -23,6 +23,50 @@ final class MinaIntegrationTest {
     @Test void remoteForwardingTransfersTcpBothWays() throws Exception { echoThrough(TunnelProfile.Mode.REMOTE); }
     @Test void localForwardingTransfersTcpBothWays() throws Exception { echoThrough(TunnelProfile.Mode.LOCAL); }
 
+    @Test void dynamicSocks5TransfersTcpAndClosesListener() throws Exception { echoThroughSocks(5, false); }
+    @Test void dynamicSocks5AcceptsClientChosenHostnames() throws Exception { echoThroughSocks(5, true); }
+    @Test void dynamicSocks4TransfersTcp() throws Exception { echoThroughSocks(4, false); }
+
+    private void echoThroughSocks(int version, boolean domain) throws Exception {
+        try (Fixture fixture = new Fixture(directory); Echo first = new Echo(); Echo second = new Echo()) {
+            int port = freePort();
+            TunnelProfile p = profile(fixture.server.getPort(),port,first.port(),TunnelProfile.Mode.DYNAMIC);
+            try (TunnelBackend.Connection tunnel = backend(HostTrustPrompt.Decision.REMEMBER).open(p,"test-password".toCharArray(),new Cancellation())) {
+                assertTrue(tunnel.isOpen());
+                // One SOCKS listener must route to two independently chosen targets, not a fixed -L destination.
+                for (int targetPort : new int[]{first.port(),second.port()}) {
+                    try (Socket socket = new Socket("127.0.0.1",port)) {
+                        socket.setSoTimeout(5000);
+                        java.io.DataOutputStream out = new java.io.DataOutputStream(socket.getOutputStream());
+                        java.io.DataInputStream in = new java.io.DataInputStream(socket.getInputStream());
+                        if (version == 5) {
+                            out.write(new byte[]{5,1,0}); out.flush();
+                            assertArrayEquals(new byte[]{5,0},in.readNBytes(2));
+                            out.write(new byte[]{5,1,0});
+                            if (domain) {
+                                byte[] host="localhost".getBytes(StandardCharsets.US_ASCII);
+                                out.writeByte(3); out.writeByte(host.length); out.write(host);
+                            } else { out.writeByte(1); out.write(new byte[]{127,0,0,1}); }
+                            out.writeShort(targetPort); out.flush();
+                            assertEquals(5,in.readUnsignedByte()); assertEquals(0,in.readUnsignedByte());
+                            assertEquals(0,in.readUnsignedByte());
+                            int atyp=in.readUnsignedByte();
+                            int length=switch(atyp){case 1 -> 4; case 4 -> 16; case 3 -> in.readUnsignedByte(); default -> throw new IOException("Invalid SOCKS reply");};
+                            assertEquals(length,in.readNBytes(length).length); in.readUnsignedShort();
+                        } else {
+                            out.writeByte(4); out.writeByte(1); out.writeShort(targetPort);
+                            out.write(new byte[]{127,0,0,1,0}); out.flush();
+                            byte[] reply=in.readNBytes(8); assertEquals(8,reply.length); assertEquals(90,reply[1]&255);
+                        }
+                        byte[] payload="SOCKS TCP loopback test\n".repeat(200).getBytes(StandardCharsets.UTF_8);
+                        out.write(payload); out.flush(); assertArrayEquals(payload,in.readNBytes(payload.length));
+                    }
+                }
+            }
+            assertPortEventuallyClosed(port);
+        }
+    }
+
     private void echoThrough(TunnelProfile.Mode mode) throws Exception {
         try (Fixture fixture = new Fixture(directory); Echo echo = new Echo()) {
             int bindPort = freePort();

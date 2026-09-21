@@ -10,13 +10,8 @@ import java.util.*;
 public final class SafeFiles {
     private SafeFiles() { }
     public static Path appDirectory() {
-        String override=System.getProperty("nexu.home",System.getenv("NEXU_PF_HOME"));
-        if(override!=null&&!override.isBlank()) return Path.of(override).toAbsolutePath();
-        boolean windows=System.getProperty("os.name","").toLowerCase(Locale.ROOT).startsWith("windows");
-        String base=System.getenv(windows?"LOCALAPPDATA":"XDG_DATA_HOME");
-        if(base!=null&&!base.isBlank()&&Path.of(base).isAbsolute()) return Path.of(base,"nexu-port-forwarding");
-        return windows ? Path.of(System.getProperty("user.home"),"AppData","Local","nexu-port-forwarding")
-            : Path.of(System.getProperty("user.home"),".local","share","nexu-port-forwarding");
+        try { return StorageLocations.current().dataDirectory(); }
+        catch (IOException e) { throw new java.io.UncheckedIOException(e); }
     }
     public static void directory(Path dir) throws IOException {
         Files.createDirectories(dir);

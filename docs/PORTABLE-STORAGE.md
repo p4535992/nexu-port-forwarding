@@ -1,0 +1,40 @@
+# Nexu Port Forwarding — portable storage
+
+[English](PORTABLE-STORAGE.md) | [Italiano](PORTABLE-STORAGE.it.md)
+
+## Local data, logs and upgrades
+
+**Native portable archives (ZIP / TAR.GZ):** a normal launch, including a direct double-click on the Windows executable, creates `data/` and `logs/` next to the application. Profiles are not stored loose beside the executable.
+
+```text
+NexuPortForwarding/
+  NexuPortForwarding.exe           Windows; Linux uses bin/NexuPortForwarding
+  portable.properties              Storage preference, no credentials
+  data/
+    profiles.properties            Profiles, without passwords
+    credentials.npfvault           Encrypted passwords/passphrases
+    host-keys.properties           Accepted SSH host-key fingerprints
+    window.properties              Window state
+    app.lock                       Single-instance data lock
+  logs/
+    nexu-0.log                     Rotating diagnostic log
+```
+
+The two directories are created at startup. Individual data files are created when needed (for example, the vault after choosing a master password). A fresh portable folder does not automatically read or import profiles from AppData.
+
+**Impostazioni → Cartella dati…** (Settings → Data folder) selects either local portable storage or the user-data directory. The setting is stored in `portable.properties`, applies after restarting, and never copies, deletes or moves profiles, credentials or logs. The selected directory may already contain profiles. Use encrypted backup export/import for an intentional transfer.
+
+**Installers and Java-only archives** continue to use the user-data directory by default:
+
+```text
+Windows: %LOCALAPPDATA%\nexu-port-forwarding\data\
+         %LOCALAPPDATA%\nexu-port-forwarding\logs\
+Linux:   ${XDG_DATA_HOME:-$HOME/.local/share}/nexu-port-forwarding/data/
+         ${XDG_DATA_HOME:-$HOME/.local/share}/nexu-port-forwarding/logs/
+```
+
+In user mode, `data/` and `logs/` are siblings under the `nexu-port-forwarding` parent. An explicit `-Dnexu.home` or `NEXU_PF_HOME` overrides the preference and retains this same data/logs layout. The settings dialog displays the actual data and log paths.
+
+Portable launchers and direct executable launches respect the same preference. When updating a portable bundle, preserve `data/`, `logs/` and your `portable.properties`. Never merge an existing data directory blindly with an empty package. Old logs under `data/logs/` are left untouched; new default portable logs go to the adjacent `logs/` directory.
+
+Logs rotate across five files of about 2 MB and do not record passwords, private keys or traffic payloads. Portable storage requires a writable, owner-controlled local directory. Failure to create it is reported; the program does not silently switch to AppData. See [portable storage](PORTABLE-STORAGE.md) for details.

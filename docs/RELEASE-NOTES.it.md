@@ -1,27 +1,25 @@
-# Nexu Port Forwarding 1.0.0
+# Nexu Port Forwarding 1.1.0-rc.1
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## Italiano
 
-Prima release stabile di Nexu Port Forwarding dal repository pubblico ricreato.
+Prerelease che aggiunge importazione da applicazioni esterne e nuovi filtri operativi, lasciando invariata la release stabile 1.0.0.
 
-### Funzioni incluse
+### Novità
 
-Forwarding TCP SSH locale (`-L`) e remoto (`-R`); profili indipendenti; griglia ricercabile e ordinabile; comandi avvia/ferma; indicatori di stato; autenticazione con password o chiave privata; verifica esplicita delle chiavi host; keepalive e riconnessione opzionale con tentativi limitati.
+- Tab nell'ordine **Attivi → Custom → Tabby → MobaXterm**. Attivi contiene soltanto i tunnel nello stato SSH/forwarding ACTIVE.
+- Importazione **Tabby** in sola lettura da `config.yaml`, con anteprima e conversione Local/Remote/Dynamic.
+- Importazione **MobaXterm** in sola lettura della sezione `[PortForwarding]` da `MobaXterm.ini`/`.mobaconf`; sezioni password e impostazioni non pertinenti vengono ignorate.
+- Dopo l'importazione le righe diventano normali profili locali di Nexu Port Forwarding. Non è necessario mantenere aperto Tabby/MobaXterm e nessun tunnel parte automaticamente.
+- Filtri per tipologia di forwarding e IP risolto del server SSH, oltre a testo libero e stato.
+- Colonne separate **HOSTNAME** e **INDIRIZZO IP**. Se l'host è già un IP viene copiato subito; gli hostname vengono risolti in background tramite il resolver DNS del sistema (senza ping ICMP).
+- Colonna **INSTALLAZIONE** modificabile e ricercabile per cliente/sede/ambiente.
+- Supporto DYNAMIC (`-D`) SOCKS tramite Apache MINA SSHD.
+- Salvataggio: i portabili usano `data/` e `logs/` affiancate; le installazioni usano `nexu-port-forwarding/data/` e `nexu-port-forwarding/logs/` nella cartella utente. I file dati 1.0.0 riconosciuti vengono copiati una sola volta in `data/` senza eliminare gli originali.
 
-Finestra nativa Windows/Linux con minimizza e massimizza/ripristina. Il dialogo di chiusura offre riduzione, uscita o annullamento e avverte che l’uscita ferma i tunnel attivi. Senza tray viene usata la normale minimizzazione. Dimensioni e posizione normali e stato massimizzato sono salvati localmente.
+### Sicurezza
 
-Vault locale AES-256-GCM protetto da password principale, import/export di backup cifrati, esportazione separata dei profili senza credenziali, log locali con rotazione e directory dati indipendente dalla versione. Non ci sono sincronizzazione cloud o avvio automatico dei tunnel.
+Gli importatori non copiano password, trust host, script o configurazioni non pertinenti di Tabby/MobaXterm. Proxy/jump-host non supportati vengono saltati invece di trasformarsi silenziosamente in connessioni dirette. Tutti i tunnel importati partono fermi.
 
-### Download
-
-Windows x64: ZIP portabile, installer EXE e MSI. Linux x64: TAR.GZ portabile, DEB e RPM. I pacchetti nativi includono Java 21. Gli archivi solo Java includono JAR e directory `lib/` e richiedono Java 21. Estrarre interamente gli archivi portabili.
-
-Sono allegati ZIP sorgenti, checksum SHA-256, diagnostica per piattaforma e inventario dei JAR runtime risolti. MIT copre il codice applicativo; dipendenze e Java mantengono licenze e avvisi propri.
-
-### Verifica e limiti
-
-La pubblicazione richiede il successo di entrambe le build, test Maven, integrazione SSH loopback, avvio/uscita GUI pacchettizzata, log locali, controlli degli endpoint ritirati e completezza dei pacchetti. La documentazione usa il nome completo **Nexu Port Forwarding**, con inglese primario e italiano in parallelo.
-
-I binari non sono firmati digitalmente. L’interfaccia usa attualmente etichette italiane. La tray dipende dal desktop Linux. Upgrade/disinstallazione degli installer, policy dei server reali, sleep/resume e tutti i flussi interattivi non sono testati esaustivamente. Il verde indica un tunnel stabilito, non lo stato del servizio di destinazione. Le password perse di vault/backup non sono recuperabili. Questa release non costituisce un audit di sicurezza.
+È una prerelease non firmata: verificare l'importazione sulla propria configurazione prima dell'uso in produzione.

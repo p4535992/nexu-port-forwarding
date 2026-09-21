@@ -108,9 +108,13 @@ public final class MinaTunnelBackend implements TunnelBackend {
             token.check();
             try {
                 SshdSocketAddress bind = new SshdSocketAddress(p.bindHost(), p.bindPort());
-                SshdSocketAddress target = new SshdSocketAddress(p.targetHost(), p.targetPort());
-                if (p.mode() == TunnelProfile.Mode.REMOTE) session.startRemotePortForwarding(bind, target);
-                else session.startLocalPortForwarding(bind, target);
+                // Dynamic forwarding is a local SOCKS listener, not a fixed-target -L tunnel.
+                // The existing client policy still rejects unsolicited server-initiated channels.
+                switch (p.mode()) {
+                    case REMOTE -> session.startRemotePortForwarding(bind, new SshdSocketAddress(p.targetHost(),p.targetPort()));
+                    case LOCAL -> session.startLocalPortForwarding(bind, new SshdSocketAddress(p.targetHost(),p.targetPort()));
+                    case DYNAMIC -> session.startDynamicPortForwarding(bind);
+                }
             } catch (Exception e) {
                 token.check();
                 throw new Failure("Forwarding rifiutato: porta occupata, bind non disponibile o policy SSH (AllowTcpForwarding / PermitListen / GatewayPorts).", false, e);

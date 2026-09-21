@@ -2,19 +2,25 @@
 
 [English](GETTING-STARTED.md) | [Italiano](GETTING-STARTED.it.md)
 
-Download [v1.0.0](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.0.0). This is a stable release with unsigned binaries for Windows x64 and Linux x64; native packages include Java.
+This guide covers the **v1.1.0-rc.1 prerelease**. The stable 1.0.0 release remains available and unchanged.
 
 ## Windows
 
-Download `nexu-port-forwarding-1.0.0-windows-x64.zip`, extract the entire directory and start `NexuPortForwarding.exe`. EXE and MSI installers are available in the same release. Normal launch stores data and logs under `%LOCALAPPDATA%\nexu-port-forwarding`, separately from the installation.
-
-The application starts as a normal desktop window inside the visible screen area. Native **minimize**, **maximize/restore** and **X** controls are supplied by Windows. **X** asks whether to minimize to the notification area or exit; when tunnels are active it explains that exiting will stop them.
+In portable archives built from these sources, extract the entire folder and open `NexuPortForwarding.exe`: adjacent `data/` and `logs/` directories are created. The optional BAT respects the same preference. EXE/MSI installers use `%LOCALAPPDATA%\nexu-port-forwarding\data\` for profiles/settings and the sibling `logs\` directory for logs.
 
 ## Linux
 
-Download `nexu-port-forwarding-1.0.0-linux-x64.tar.gz`, extract it and start `NexuPortForwarding/bin/NexuPortForwarding`. DEB and RPM packages are also available. Normal launch uses `${XDG_DATA_HOME:-$HOME/.local/share}/nexu-port-forwarding`.
+In the portable TAR.GZ built from these sources, start `NexuPortForwarding/bin/NexuPortForwarding` or `start-portable.sh`: data lives in `NexuPortForwarding/data/` and logs in `NexuPortForwarding/logs/`, not under `bin/`. DEB/RPM packages use `${XDG_DATA_HOME:-$HOME/.local/share}/nexu-port-forwarding/data/` and the sibling `logs/` directory.
 
-The window uses native window-manager decorations. When a tray is available, **X** can minimize the application to the notification area. When a tray is not available, the same choice falls back to normal minimization.
+## Choose a data location
+
+Open **Impostazioni → Cartella dati…** (Settings → Data folder), choose **Portabile** or **Cartella utente**, and restart. No data is moved automatically. The dialog shows the active paths; external `NEXU_PF_HOME` / `-Dnexu.home` overrides take precedence. You may also edit `portable.properties`, setting `storage=portable` or `storage=appdata` with `version=1`.
+
+## Main views and import
+
+The main tab order is **Attivi → Custom → Tabby → MobaXterm**. **Attivi** shows only currently ACTIVE tunnels. Tabby and MobaXterm are import sources only: after pressing the corresponding import button, selected forwarding rules are copied into Nexu Port Forwarding's local `profiles.properties`; no live dependency on the external program remains and nothing is started automatically.
+
+The filter bar combines free text, forwarding type (all / LOCAL / REMOTE / DYNAMIC), resolved SSH-server IP and state. `HOSTNAME` shows the configured SSH host and `INDIRIZZO IP` is resolved in the background. If the configured host is already an IP literal, the same value is shown immediately.
 
 ## Window and monitor state
 
@@ -48,6 +54,4 @@ Private-key files, host-key trust and logs are not part of the backup. When movi
 
 ## Future releases
 
-With normal launch, replacing or upgrading application binaries keeps using the same data directory. Export/import is therefore not required for every upgrade. Profiles, encrypted vault, host keys, logs and window state stay separate from the installation. Keep a backup before upgrading anyway.
-
-For self-contained portable storage, explicitly start `start-portable.bat` or `start-portable.sh`. Portable mode uses `data/`, including `data/logs/`, next to the launcher. Preserve the entire `data/` directory when moving to a newer portable release, or restore from an encrypted backup.
+Preserve `data/`, `logs/` and `portable.properties` when updating the portable bundle. Profiles in the user-data directory remain separate and are never imported automatically. Use encrypted backups to transfer them. Existing logs under `data/logs/` remain untouched; new portable logs go to `logs/`.

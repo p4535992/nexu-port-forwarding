@@ -10,9 +10,20 @@ public record TunnelProfile(
     String bindHost, int bindPort, String targetHost, int targetPort,
     Auth auth, String privateKey, int connectTimeoutSeconds, int keepAliveSeconds,
     int keepAliveMisses, boolean reconnect, int reconnectAttempts,
-    int reconnectDelaySeconds, String notes) {
+    int reconnectDelaySeconds, String notes, String installation, Origin origin, String sourceKey) {
 
-    public enum Mode { REMOTE, LOCAL }
+    public enum Mode { REMOTE, LOCAL, DYNAMIC }
+    public enum Origin { CUSTOM, TABBY, MOBAXTERM }
+
+    /** Reads existing v1 profiles without inventing provenance. */
+    public TunnelProfile(UUID id, String name, Mode mode, String sshHost, int sshPort, String username,
+        String bindHost, int bindPort, String targetHost, int targetPort, Auth auth, String privateKey,
+        int connectTimeoutSeconds, int keepAliveSeconds, int keepAliveMisses, boolean reconnect,
+        int reconnectAttempts, int reconnectDelaySeconds, String notes) {
+        this(id,name,mode,sshHost,sshPort,username,bindHost,bindPort,targetHost,targetPort,auth,privateKey,
+            connectTimeoutSeconds,keepAliveSeconds,keepAliveMisses,reconnect,reconnectAttempts,
+            reconnectDelaySeconds,notes,"",Origin.CUSTOM,"");
+    }
     public enum Auth { PASSWORD, PRIVATE_KEY }
 
     public TunnelProfile {
@@ -22,8 +33,15 @@ public record TunnelProfile(
         username = text(username, "Utente SSH", 128, false);
         if (username.chars().anyMatch(Character::isWhitespace)) throw new IllegalArgumentException("L'utente SSH non può contenere spazi.");
         bindHost = host(bindHost, "Indirizzo di ascolto", true);
-        targetHost = host(targetHost, "Destinazione", false);
-        port(sshPort); port(bindPort); port(targetPort);
+        port(sshPort); port(bindPort);
+        if (mode == Mode.DYNAMIC) { targetHost = ""; targetPort = 0; }
+        else { targetHost = host(targetHost, "Destinazione", false); port(targetPort); }
+        installation = text(installation, "Installazione", 120, true);
+        if (origin == null) throw new IllegalArgumentException("Origine obbligatoria.");
+        sourceKey = text(sourceKey, "Identificativo importazione", 64, true);
+        if (!sourceKey.isEmpty() && !sourceKey.matches("[a-f0-9]{64}"))
+            throw new IllegalArgumentException("Identificativo importazione non valido.");
+        if (origin == Origin.CUSTOM) sourceKey = "";
         privateKey = text(privateKey, "Chiave privata", 4096, true);
         notes = text(notes, "Note", 2000, true);
         if (auth == Auth.PRIVATE_KEY) {
@@ -67,16 +85,27 @@ public record TunnelProfile(
         return new TunnelProfile(UUID.randomUUID(), name.substring(0, Math.min(name.length(), 112)) + " (copia)", mode, sshHost, sshPort,
             username, bindHost, bindPort, targetHost, targetPort, auth, privateKey,
             connectTimeoutSeconds, keepAliveSeconds, keepAliveMisses, reconnect,
-            reconnectAttempts, reconnectDelaySeconds, notes);
+            reconnectAttempts, reconnectDelaySeconds, notes, installation, Origin.CUSTOM, "");
+    }
+    /** Backup restore preserves the tab and provenance while allocating a new credential identity. */
+    public TunnelProfile copyWithNewId() {
+        return new TunnelProfile(UUID.randomUUID(),name,mode,sshHost,sshPort,username,bindHost,bindPort,
+            targetHost,targetPort,auth,privateKey,connectTimeoutSeconds,keepAliveSeconds,keepAliveMisses,
+            reconnect,reconnectAttempts,reconnectDelaySeconds,notes,installation,origin,sourceKey);
+    }
+    public TunnelProfile withInstallation(String label) {
+        return new TunnelProfile(id,name,mode,sshHost,sshPort,username,bindHost,bindPort,targetHost,targetPort,
+            auth,privateKey,connectTimeoutSeconds,keepAliveSeconds,keepAliveMisses,reconnect,
+            reconnectAttempts,reconnectDelaySeconds,notes,label,origin,sourceKey);
     }
     public String endpoint() { return username + "@" + address(sshHost, sshPort); }
     public String listener() { return address(bindHost, bindPort); }
-    public String destination() { return address(targetHost, targetPort); }
+    public String destination() { return mode == Mode.DYNAMIC ? "SOCKS · destinazione scelta dal client" : address(targetHost, targetPort); }
     public String hostKeyId() { return address(sshHost.toLowerCase(Locale.ROOT), sshPort); }
     public boolean isLoopbackBind() {
         return bindHost.equals("127.0.0.1") || bindHost.equals("::1") || bindHost.equalsIgnoreCase("localhost");
     }
-    public String searchable() { return (name + " " + mode + " " + endpoint() + " " + listener() + " " + destination() + " " + notes).toLowerCase(Locale.ROOT); }
+    public String searchable() { return (installation + " " + origin + " " + name + " " + mode + " " + endpoint() + " " + listener() + " " + destination() + " " + notes).toLowerCase(Locale.ROOT); }
     public static String address(String host, int port) { return bracket(host) + ":" + port; }
     public static String bracket(String host) { return host.contains(":") ? "[" + host + "]" : host; }
 }

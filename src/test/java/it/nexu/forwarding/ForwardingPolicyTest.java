@@ -9,6 +9,16 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 final class ForwardingPolicyTest {
+    @Test void dynamicDoesNotPermitUnsolicitedServerChannels() {
+        TunnelProfile p = new TunnelProfile(java.util.UUID.randomUUID(),"SOCKS",TunnelProfile.Mode.DYNAMIC,
+            "ssh.example.com",22,"demo","127.0.0.1",1080,"",0,TunnelProfile.Auth.PASSWORD,"",15,15,3,false,5,3,"");
+        ProfileForwardingFilter filter = new ProfileForwardingFilter(p,new Cancellation());
+        SshdSocketAddress target = new SshdSocketAddress("127.0.0.1",8080);
+        assertFalse(filter.canConnect(Type.Direct,target,null));
+        assertFalse(filter.canConnect(Type.Forwarded,target,null));
+        assertFalse(filter.canListen(target,null));
+    }
+
     @Test void remotePolicyAllowsOnlyConfiguredDestinationUntilStopped() {
         TunnelProfile p = TunnelProfile.example();
         Cancellation cancellation = new Cancellation();

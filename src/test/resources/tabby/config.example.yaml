@@ -1,0 +1,38 @@
+# Synthetic example only. No real endpoints or credentials.
+version: 7
+profiles:
+  - type: ssh
+    id: ssh:custom:documentation-example
+    name: Example SSH
+    group: office
+    options:
+      host: ssh.example.com
+      port: 2222
+      user: demo
+      auth: password
+      forwardedPorts:
+        - type: Local
+          host: 127.0.0.1
+          port: 15432
+          targetAddress: database.example.com
+          targetPort: 5432
+          description: Database local
+        - type: Remote
+          host: 127.0.0.1
+          port: 8989
+          targetAddress: service.example.com
+          targetPort: 8081
+          description: Service remote
+        - type: Dynamic
+          host: 127.0.0.1
+          port: 1080
+          description: SOCKS proxy
+          # Dynamic forwarding intentionally has no fixed target.
+groups:
+  - id: office
+    name: Example installation
+profileDefaults:
+  ssh:
+    options:
+      keepaliveInterval: 5000
+      keepaliveCountMax: 3

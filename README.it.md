@@ -6,11 +6,19 @@ Gestore desktop di tunnel SSH TCP per **Windows e Linux**, sviluppato con Java 2
 
 L'inglese è la lingua primaria della documentazione; le traduzioni italiane vengono mantenute in parallelo. L'interfaccia grafica attuale usa etichette italiane.
 
+## Sorgenti importati: Tabby e MobaXterm
+
+Le viste principali sono **Attivi → Custom → Tabby → MobaXterm**. **Attivi** contiene soltanto i tunnel nello stato ACTIVE. I profili Custom vengono creati manualmente; Tabby e MobaXterm sono sorgenti di importazione. Dopo l’import le righe sono salvate localmente da Nexu Port Forwarding e non dipendono più in tempo reale dalle applicazioni esterne.
+
+**Importa Tabby…** legge un `config.yaml`; **Importa MobaXterm…** legge soltanto `[PortForwarding]` dal `MobaXterm.ini` selezionato. Entrambi mostrano un’anteprima e importano i forwarding Local, Remote e Dynamic/SOCKS supportati senza avviarli. La colonna **INSTALLAZIONE** è modificabile/ricercabile e resta nei backup cifrati. Le reimportazioni aggiungono nuove definizioni e ignorano i fingerprint identici senza sovrascrivere modifiche locali o credenziali.
+
+Consulta [importazione Tabby](docs/TABBY-IMPORT.it.md) e [importazione MobaXterm](docs/MOBAXTERM-IMPORT.it.md).
+
 ## Funzioni
 
 - Tabella dei tunnel ricercabile, ordinabile e scorrevole.
 - Profili SSH con hostname/IP, porta SSH personalizzata, utente, password o autenticazione con chiave privata.
-- Forwarding TCP **REMOTE (-R)** e **LOCAL (-L)**.
+- Forwarding TCP **REMOTE (-R)**, **LOCAL (-L)** e **DYNAMIC (-D / SOCKS)**.
 - Avvio e arresto indipendenti per ogni riga.
 - Duplicazione, modifica, eliminazione, attività per tunnel ed esportazione del comando OpenSSH.
 - Verifica esplicita delle chiavi host SSH.
@@ -22,9 +30,9 @@ Il verde indica che connessione SSH e forwarding sono stati stabiliti; **non** c
 
 Ogni profilo possiede una connessione SSH indipendente. Nessun tunnel parte automaticamente all'apertura dell'applicazione. Gli errori di autenticazione, chiave host o bind non vengono ritentati automaticamente. Apache MINA SSHD viene usato direttamente, quindi le password non vengono passate tramite BAT, comandi PowerShell o argomenti di processi esterni.
 
-## Release 1.0.0
+## Release 1.1.0-rc.1
 
-Scarica **[v1.0.0](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.0.0)**.
+Scarica **[v1.1.0-rc.1](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.1)**.
 
 | Piattaforma | Pacchetti |
 | --- | --- |
@@ -38,7 +46,7 @@ Avvio:
 - Windows: `NexuPortForwarding.exe`
 - Linux: `bin/NexuPortForwarding`
 
-La release è pubblicata come versione stabile, ma i binari non sono firmati digitalmente. Windows SmartScreen o gli strumenti di gestione pacchetti Linux possono quindi mostrare un avviso di autore sconosciuto.
+Il tag è pubblicato come prerelease, ma i binari non sono firmati digitalmente. Windows SmartScreen o gli strumenti di gestione pacchetti Linux possono quindi mostrare un avviso di autore sconosciuto.
 
 ## Comportamento della finestra
 
@@ -69,27 +77,42 @@ La cifratura a riposo non protegge un processo già sbloccato da malware o ammin
 
 ## Dati locali, log e aggiornamenti
 
-L'avvio normale usa una cartella dati indipendente dalla versione:
+**Archivi portabili nativi (ZIP / TAR.GZ):** l'avvio normale, incluso il doppio clic sull'eseguibile Windows, crea `data/` e `logs/` accanto al programma. I profili non vengono salvati come file sparsi accanto all'eseguibile.
 
 ```text
-Windows: %LOCALAPPDATA%\nexu-port-forwarding\
-Linux:   ${XDG_DATA_HOME:-$HOME/.local/share}/nexu-port-forwarding/
-
-profiles.properties      Profili dei tunnel, senza password
-credentials.npfvault     Password/passphrase cifrate
-host-keys.properties     Impronte host SSH accettate
-window.properties        Posizione, dimensione e stato massimizzato
-logs/nexu-0.log          Log diagnostico corrente con rotazione
-app.lock                 Blocco della directory dati per singola istanza
+NexuPortForwarding/
+  NexuPortForwarding.exe           Windows; su Linux: bin/NexuPortForwarding
+  portable.properties              Preferenza di salvataggio, senza credenziali
+  data/
+    profiles.properties            Profili, senza password
+    credentials.npfvault           Password/passphrase cifrate
+    host-keys.properties           Impronte host SSH accettate
+    window.properties              Stato della finestra
+    app.lock                       Blocco dati per singola istanza
+  logs/
+    nexu-0.log                     Log diagnostico con rotazione
 ```
 
-I log ruotano su cinque file da circa 2 MB. Registrano ciclo di vita dell'applicazione e UUID/stato dei tunnel, non password, chiavi private, contenuti del traffico o messaggi SSH arbitrari.
+Le due cartelle vengono create all'avvio. I singoli file vengono creati quando servono (per esempio il vault dopo aver scelto la password principale). Un portabile nuovo non legge né importa automaticamente i profili presenti in AppData.
 
-Poiché i dati sono separati dall'installazione, gli aggiornamenti normali riutilizzano profili, vault, chiavi host, log e stato della finestra.
+**Impostazioni → Cartella dati…** permette di scegliere il salvataggio locale portabile oppure la cartella dati dell'utente. La preferenza è in `portable.properties`, si applica al riavvio e non copia, elimina o sposta profili, credenziali o log. La cartella scelta può contenere profili già salvati. Per un trasferimento esplicito usa l'esportazione/importazione del backup cifrato.
 
-I launcher portabili `start-portable.bat` e `start-portable.sh` usano invece una directory `data/` accanto al launcher. Va conservata interamente quando si sostituisce una release portabile.
+**Installer e archivi solo Java** usano per default una cartella padre dell’utente con `data/` e `logs/` separate:
 
-`NEXU_PF_HOME` o `-Dnexu.home` permettono di usare una directory dati personalizzata.
+```text
+Windows:
+  %LOCALAPPDATA%\nexu-port-forwarding\data\
+  %LOCALAPPDATA%\nexu-port-forwarding\logs\
+Linux:
+  ${XDG_DATA_HOME:-$HOME/.local/share}/nexu-port-forwarding/data/
+  ${XDG_DATA_HOME:-$HOME/.local/share}/nexu-port-forwarding/logs/
+```
+
+Aggiornando dalla 1.0.0, i file legacy riconosciuti direttamente nella cartella padre vengono copiati in `data/` solo se la destinazione non esiste; gli originali restano intatti. Un override esplicito `-Dnexu.home` o `NEXU_PF_HOME` continua a usare il proprio percorso esplicito. Il dialogo mostra i percorsi dati e log effettivamente in uso.
+
+Launcher portabili e avvio diretto rispettano la stessa preferenza. Aggiornando il portabile, conserva `data/`, `logs/` e il tuo `portable.properties`. Non unire alla cieca dati esistenti e pacchetti nuovi. I vecchi log in `data/logs/` non vengono modificati; i nuovi log portabili vanno nella cartella `logs/` adiacente.
+
+I log ruotano su cinque file da circa 2 MB e non registrano password, chiavi private o traffico. Il salvataggio portabile richiede una cartella locale scrivibile e controllata dal proprietario. Gli errori vengono segnalati senza passare silenziosamente ad AppData. Dettagli in [salvataggio portabile](docs/PORTABLE-STORAGE.it.md).
 
 ## Backup e migrazione
 
@@ -135,11 +158,11 @@ python scripts/prepare-distribution.py
 Poi crea i pacchetti sul sistema operativo di destinazione:
 
 ```powershell
-./scripts/package-windows.ps1 -Version 1.0.0
+./scripts/package-windows.ps1 -Version 1.1.0
 ```
 
 ```bash
-bash scripts/package-linux.sh 1.0.0
+bash scripts/package-linux.sh 1.1.0
 ```
 
 Il packaging Windows richiede WiX 3.x. Quello Linux richiede gli strumenti DEB/RPM e le librerie desktop installate dalla pipeline di release.

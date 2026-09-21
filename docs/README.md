@@ -14,3 +14,9 @@ English is the canonical project documentation. Italian translations are maintai
 | Local data and logs | [DATA-AND-LOGS.txt](DATA-AND-LOGS.txt) | [DATA-AND-LOGS.it.txt](DATA-AND-LOGS.it.txt) |
 
 When technical behavior changes, update the English document first and then keep the Italian translation semantically aligned.
+
+[Portable storage and user-data preference](PORTABLE-STORAGE.md)
+
+Tabby import: [English](TABBY-IMPORT.md) | [Italiano](TABBY-IMPORT.it.md).
+
+- [MobaXterm import](MOBAXTERM-IMPORT.md) / [Importazione MobaXterm](MOBAXTERM-IMPORT.it.md)

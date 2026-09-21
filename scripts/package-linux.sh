@@ -2,7 +2,7 @@
 set -euo pipefail
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
-VERSION="${1:-1.0.0}"
+VERSION="${1:-1.1.0}"
 [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid numeric app version' >&2; exit 1; }
 [[ -f target/app/nexu-port-forwarding.jar ]] || { echo 'Run mvn clean verify first.' >&2; exit 1; }
 OUT=target/package
@@ -26,11 +26,13 @@ for type in deb rpm; do
   [[ -n "$package" ]] || exit 1
   cp "$package" "target/release-assets/nexu-port-forwarding-$VERSION-linux-x64.$type"
 done
+# Only native portable archives contain this marker; installers keep user storage.
+cp scripts/portable.properties "$OUT/NexuPortForwarding/portable.properties"
 cat > "$OUT/NexuPortForwarding/start-portable.sh" <<'EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 HERE="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-export NEXU_PF_HOME="$HERE/data"
+# The application reads portable.properties; do not override the saved preference.
 exec "$HERE/bin/NexuPortForwarding" "$@"
 EOF
 chmod +x "$OUT/NexuPortForwarding/start-portable.sh"

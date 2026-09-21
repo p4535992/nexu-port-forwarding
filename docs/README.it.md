@@ -14,3 +14,9 @@ La documentazione inglese è quella canonica del progetto. Le traduzioni italian
 | Dati locali e log | [DATA-AND-LOGS.txt](DATA-AND-LOGS.txt) | [DATA-AND-LOGS.it.txt](DATA-AND-LOGS.it.txt) |
 
 Quando cambia un comportamento tecnico, si aggiorna prima il documento inglese e poi si mantiene allineata semanticamente la traduzione italiana.
+
+[Salvataggio portabile e AppData](PORTABLE-STORAGE.it.md)
+
+Importazione Tabby: [English](TABBY-IMPORT.md) | [Italiano](TABBY-IMPORT.it.md).
+
+- [MobaXterm import](MOBAXTERM-IMPORT.md) / [Importazione MobaXterm](MOBAXTERM-IMPORT.it.md)

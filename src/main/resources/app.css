@@ -47,3 +47,8 @@
 .tab-pane .tab-header-area .tab-header-background { -fx-background-color: #111b2d; }
 .scroll-pane, .scroll-pane > .viewport { -fx-background-color: transparent; }
 .tooltip { -fx-background-color: #edf3fb; -fx-text-fill: #142136; -fx-font-size: 12px; }
+
+/* Source tabs keep the same desktop theme; keyboard focus remains native JavaFX. */
+#source-tabs > .tab-header-area .tab { -fx-padding: 7px 22px; }
+#source-tabs > .tab-header-area .tab:selected { -fx-background-color: #213e50; }
+#source-tabs > .tab-header-area .tab .tab-label { -fx-text-fill: #e4edf9; -fx-font-weight: bold; }

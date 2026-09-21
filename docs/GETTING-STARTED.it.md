@@ -2,19 +2,25 @@
 
 [English](GETTING-STARTED.md) | [Italiano](GETTING-STARTED.it.md)
 
-Scarica [v1.0.0](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.0.0). È una release stabile con binari non firmati per Windows x64 e Linux x64; i pacchetti nativi includono Java.
+Questa guida riguarda la **prerelease v1.1.0-rc.1**. La release stabile 1.0.0 resta disponibile e invariata.
 
 ## Windows
 
-Scarica `nexu-port-forwarding-1.0.0-windows-x64.zip`, estrai l'intera cartella e apri `NexuPortForwarding.exe`. Per un'installazione normale sono disponibili anche EXE e MSI nella stessa release. L'avvio normale usa `%LOCALAPPDATA%\nexu-port-forwarding` per dati e log, separatamente dall'installazione.
-
-La finestra parte in modalità desktop normale, entro l'area visibile dello schermo. I pulsanti nativi **—**, **massimizza/ripristina** e **X** sono gestiti da Windows. La X chiede se ridurre nell'area di notifica oppure uscire; se ci sono tunnel attivi avverte che l'uscita li fermerà.
+Nei portabili generati da questa copia sorgente, estrai l'intera cartella e apri `NexuPortForwarding.exe`: `data/` e `logs/` vengono create accanto al programma. Il BAT è opzionale e rispetta la stessa preferenza. Gli installer EXE/MSI usano `%LOCALAPPDATA%\nexu-port-forwarding\data\` per profili/impostazioni e la cartella sorella `logs\` per i log.
 
 ## Linux
 
-Scarica `nexu-port-forwarding-1.0.0-linux-x64.tar.gz`, estrailo e avvia `NexuPortForwarding/bin/NexuPortForwarding`. Sono disponibili anche DEB e RPM. L'avvio normale usa `${XDG_DATA_HOME:-$HOME/.local/share}/nexu-port-forwarding`.
+Nel TAR.GZ portabile generato da questi sorgenti, avvia `NexuPortForwarding/bin/NexuPortForwarding` oppure `start-portable.sh`: i dati sono in `NexuPortForwarding/data/` e i log in `NexuPortForwarding/logs/`, non dentro `bin/`. DEB/RPM usano `${XDG_DATA_HOME:-$HOME/.local/share}/nexu-port-forwarding/data/` e la cartella sorella `logs/`.
 
-La finestra usa le decorazioni native del window manager. Quando la tray è disponibile, la X può ridurre l'applicazione nell'area di notifica; quando la tray non è disponibile, la stessa scelta esegue una normale minimizzazione.
+## Scelta della cartella dati
+
+Apri **Impostazioni → Cartella dati…**, scegli **Portabile** o **Cartella utente** e riavvia. Nessun dato viene spostato automaticamente. Il dialogo mostra i percorsi effettivi; i percorsi esterni `NEXU_PF_HOME` / `-Dnexu.home` hanno precedenza. La preferenza può anche essere modificata in `portable.properties`, con `storage=portable` oppure `storage=appdata` e `version=1`.
+
+## Viste principali e importazione
+
+L'ordine dei tab è **Attivi → Custom → Tabby → MobaXterm**. **Attivi** mostra soltanto i tunnel nello stato ACTIVE. Tabby e MobaXterm sono esclusivamente sorgenti di importazione: dopo aver premuto il relativo pulsante, gli inoltri selezionati vengono copiati nel `profiles.properties` locale di Nexu Port Forwarding; non resta una dipendenza live dall'app esterna e nessun tunnel viene avviato automaticamente.
+
+La barra filtri combina testo libero, tipologia di forwarding (tutti / LOCAL / REMOTE / DYNAMIC), IP risolto del server SSH e stato. `HOSTNAME` mostra l'host SSH configurato e `INDIRIZZO IP` viene risolto in background. Se l'host configurato è già un IP, lo stesso valore appare immediatamente.
 
 ## Finestra e monitor
 
@@ -42,6 +48,4 @@ Le chiavi private, le impronte host e i log non sono inclusi nel backup. Trasfer
 
 ## Nuove release
 
-Con l'avvio normale puoi sostituire/aggiornare i binari mantenendo la stessa cartella dati: non è necessario esportare e reimportare ogni volta. Profili, vault cifrato, chiavi host, log e stato finestra restano separati dall'installazione. Conserva comunque un backup prima dell'aggiornamento.
-
-Per usare una cartella dati accanto all'applicativo avvia esplicitamente `start-portable.bat` o `start-portable.sh`, presenti negli archivi portabili. Questa modalità usa `data/`, incluso `data/logs/`, accanto al launcher. Mantieni l'intera cartella `data/` quando passi a una nuova release portabile, oppure ripristina un backup cifrato.
+Conserva `data/`, `logs/` e `portable.properties` quando aggiorni il portabile. I profili in AppData restano separati e non vengono importati automaticamente. Per trasferimenti usa il backup cifrato. I vecchi log in `data/logs/` restano dove sono; i nuovi vengono scritti in `logs/`.

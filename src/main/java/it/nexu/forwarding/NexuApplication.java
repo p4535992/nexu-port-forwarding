@@ -1,6 +1,9 @@
 package it.nexu.forwarding;
 
 import it.nexu.forwarding.config.*;
+import it.nexu.forwarding.importer.TabbyImport;
+import it.nexu.forwarding.importer.MobaXtermImport;
+import javafx.scene.control.cell.TextFieldTableCell;
 import it.nexu.forwarding.model.*;
 import it.nexu.forwarding.ssh.*;
 import it.nexu.forwarding.ui.*;
@@ -21,6 +24,7 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.*;
 import javafx.stage.*;
 import java.io.File;
+import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.*;
@@ -28,12 +32,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 
 public final class NexuApplication extends Application {
-    private final ObservableList<TunnelRow> rows = FXCollections.observableArrayList(r -> new Observable[]{r.stateProperty()});
+    private final ObservableList<TunnelRow> rows = FXCollections.observableArrayList(r -> new Observable[]{r.stateProperty(), r.resolvedIpProperty()});
     private final SecretStore secrets = new SecretStore();
     private final TraySupport tray = new TraySupport();
     private final TableView<TunnelRow> table = new TableView<>();
-    private final TextField search = new TextField();
-    private final ComboBox<String> statusFilter = new ComboBox<>();
+    private final TextField search = new TextField(), ipFilter = new TextField();
+    private final TabPane sourceTabs = new TabPane();
+    private final Tab activeTab = new Tab("Attivi"), customTab = new Tab("Custom"), tabbyTab = new Tab("Tabby"), mobaTab = new Tab("MobaXterm");
+    private final ComboBox<String> statusFilter = new ComboBox<>(), modeFilter = new ComboBox<>();
     private final Label totals = new Label(), active = new Label(), errors = new Label();
     private final Label selectedInfo = new Label("Seleziona una riga per vedere i dettagli."), footer = new Label();
     private final TextArea logs = new TextArea();
@@ -47,6 +53,7 @@ public final class NexuApplication extends Application {
     private VaultStore vault;
     private VaultUi vaultUi;
     private AppLog appLog;
+    private StorageLocations.Selection storage;
     private WindowStateStore windowStateStore;
     private boolean trayReady, quitting, restoreMaximized;
     private double normalX = Double.NaN, normalY = Double.NaN, normalWidth = Double.NaN, normalHeight = Double.NaN;
@@ -56,18 +63,20 @@ public final class NexuApplication extends Application {
         stage.initStyle(StageStyle.DECORATED);
         stage.setFullScreen(false);
         try {
-            Path home = SafeFiles.appDirectory();
+            storage = StorageLocations.current();
+            int migrated = StorageLocations.migrateLegacyUserData(storage);
+            Path home = storage.dataDirectory();
             appLock = new AppLock(home);
-            appLog = new AppLog(home);
+            appLog = AppLog.inDirectory(storage.logsDirectory());
             windowStateStore = new WindowStateStore(home.resolve("window.properties"));
             vault = new VaultStore(home.resolve("credentials.npfvault"));
             configFile = home.resolve("profiles.properties");
             hostKeys = new HostKeyStore(home.resolve("host-keys.properties"));
-            for (TunnelProfile profile : ProfileStore.load(configFile)) rows.add(new TunnelRow(profile));
+            for (TunnelProfile profile : ProfileStore.load(configFile)) { TunnelRow row=new TunnelRow(profile); rows.add(row); resolveHost(row); }
             engine = new TunnelEngine(new MinaTunnelBackend(hostKeys, this::askHostTrust),
                 event -> { appLog.event(event); Platform.runLater(() -> onTunnelEvent(event)); });
             vaultUi = new VaultUi(window,vault,secrets,engine,configFile,this::profiles,
-                list -> { rows.setAll(list.stream().map(TunnelRow::new).toList()); refreshCounters(); },this::error);
+                list -> { rows.setAll(list.stream().map(TunnelRow::new).toList()); rows.forEach(this::resolveHost); updateFilter(); refreshCounters(); },this::error);
             buildWindow();
             restoreWindowState();
             stage.show();
@@ -81,11 +90,12 @@ public final class NexuApplication extends Application {
             refreshCounters();
             Runtime.getRuntime().addShutdownHook(new Thread(() -> { engine.close(); secrets.close(); vault.close(); }, "nexu-shutdown"));
             appLog.mark("ui-ready");
+            if (migrated > 0) appLog.mark("legacy-data-copied=" + migrated);
             if (Boolean.getBoolean("nexu.smokeTest")) {
                 if (window.getStyle() != StageStyle.DECORATED || window.isFullScreen()
                     || Screen.getScreensForRectangle(window.getX(), window.getY(), Math.max(1, window.getWidth()), Math.max(1, window.getHeight())).isEmpty())
                     throw new IllegalStateException("Window smoke check failed: native decorated window is not visible.");
-                SafeFiles.writeBytes(home.resolve("ui-ready"), "UI_READY 1.0.0 DECORATED WINDOWED".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                SafeFiles.writeBytes(home.resolve("ui-ready"), "UI_READY 1.1.0 DECORATED WINDOWED".getBytes(java.nio.charset.StandardCharsets.UTF_8));
                 javafx.animation.PauseTransition exit = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(2));
                 exit.setOnFinished(e -> requestExit()); exit.play();
             }
@@ -119,15 +129,37 @@ public final class NexuApplication extends Application {
             try { java.awt.Desktop.getDesktop().open(appLog.directory().toFile()); }
             catch (Exception ex) { error("Cartella dei log: " + appLog.directory()); }
         });
-        FlowPane commands = new FlowPane(9, 9, add, start, stop, file, vaultUi.menu(), hosts, openLogs, quit);
-        search.setPromptText("Cerca nome, server, utente, porta o destinazione…"); HBox.setHgrow(search, Priority.ALWAYS);
+        MenuButton settings = new MenuButton("Impostazioni");
+        MenuItem dataLocation = new MenuItem("Cartella dati…");
+        dataLocation.setOnAction(e -> {
+            if (!quitting && !UiWork.busy()) StorageSettingsDialog.show(window, storage, this::error);
+        });
+        settings.getItems().add(dataLocation);
+        Button importTabby = new Button("Importa Tabby…"); importTabby.setOnAction(e -> importTabby());
+        Button importMoba = new Button("Importa MobaXterm…"); importMoba.setOnAction(e -> importMobaXterm());
+        FlowPane commands = new FlowPane(9, 9, add, importTabby, importMoba, start, stop, file, vaultUi.menu(), hosts, openLogs, settings, quit);
+        search.setPromptText("Cerca installazione, nome, hostname, utente, porta o destinazione…"); HBox.setHgrow(search, Priority.ALWAYS);
+        ipFilter.setPromptText("Filtra indirizzo IP…"); ipFilter.setPrefWidth(190);
         statusFilter.getItems().add("Tutti gli stati");
         for (TunnelEngine.State state : TunnelEngine.State.values()) statusFilter.getItems().add(state.label());
-        statusFilter.getSelectionModel().selectFirst(); statusFilter.setPrefWidth(180);
-        Button clear = new Button("Azzera ricerca"); clear.setOnAction(e -> { search.clear(); statusFilter.getSelectionModel().selectFirst(); });
-        HBox filters = new HBox(10, search, statusFilter, clear);
+        statusFilter.getSelectionModel().selectFirst(); statusFilter.setPrefWidth(170);
+        modeFilter.getItems().addAll("Tutti i tipi", "LOCAL (-L)", "REMOTE (-R)", "DYNAMIC (SOCKS)");
+        modeFilter.getSelectionModel().selectFirst(); modeFilter.setPrefWidth(175);
+        Button clear = new Button("Azzera ricerca"); clear.setOnAction(e -> { search.clear(); ipFilter.clear(); statusFilter.getSelectionModel().selectFirst(); modeFilter.getSelectionModel().selectFirst(); });
+        HBox filters = new HBox(10, search, modeFilter, ipFilter, statusFilter, clear);
         VBox top = new VBox(22, heading, commands, filters); top.setPadding(new Insets(26,26,18,26));
+        activeTab.setClosable(false); customTab.setClosable(false); tabbyTab.setClosable(false); mobaTab.setClosable(false);
+        sourceTabs.getTabs().setAll(activeTab, customTab, tabbyTab, mobaTab);
+        sourceTabs.setId("source-tabs"); activeTab.setId("active-tab"); customTab.setId("custom-tab"); tabbyTab.setId("tabby-tab"); mobaTab.setId("mobaxterm-tab");
         createTable();
+        activeTab.setContent(table);
+        sourceTabs.getSelectionModel().selectedItemProperty().addListener((o,old,selected) -> {
+            table.edit(-1,null);
+            if (old != null) old.setContent(null);
+            if (selected != null) selected.setContent(table);
+            table.getSelectionModel().clearSelection(); updateFilter();
+        });
+        updateFilter();
         logs.setEditable(false); logs.setWrapText(true); logs.getStyleClass().add("log-area"); logs.setPrefRowCount(5);
         logs.setPromptText("Gli eventi del tunnel selezionato compariranno qui. Lo storico di stato viene salvato anche nella cartella logs locale; gli ultimi 300 dettagli restano in memoria.");
         selectedInfo.setWrapText(true); selectedInfo.getStyleClass().add("muted");
@@ -136,9 +168,9 @@ public final class NexuApplication extends Application {
         Label meaning = new Label("Verde = SSH + forwarding stabiliti. Non è un controllo di salute dell'applicazione finale.");
         meaning.getStyleClass().add("muted"); meaning.setWrapText(true);
         VBox bottom = new VBox(8, logTitle, selectedInfo, logs, meaning, footer); bottom.setPadding(new Insets(18,26,20,26));
-        root = new BorderPane(table, top, null, bottom, null); BorderPane.setMargin(table, new Insets(0,26,0,26));
+        root = new BorderPane(sourceTabs, top, null, bottom, null); BorderPane.setMargin(sourceTabs, new Insets(0,26,0,26));
         Scene scene = new Scene(root, 1180, 760); scene.getStylesheets().add(getClass().getResource("/app.css").toExternalForm());
-        window.setScene(scene); window.setTitle("Nexu Port Forwarding 1.0.0");
+        window.setScene(scene); window.setTitle("Nexu Port Forwarding 1.1.0");
         window.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/app-icon.png"))));
         window.xProperty().addListener((o,a,b) -> captureNormalBounds());
         window.yProperty().addListener((o,a,b) -> captureNormalBounds());
@@ -156,8 +188,8 @@ public final class NexuApplication extends Application {
     private void createTable() {
         filtered = new FilteredList<>(rows, r -> true);
         SortedList<TunnelRow> sorted = new SortedList<>(filtered); sorted.comparatorProperty().bind(table.comparatorProperty()); table.setItems(sorted);
-        search.textProperty().addListener((o,a,b) -> updateFilter()); statusFilter.valueProperty().addListener((o,a,b) -> updateFilter());
-        table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY); table.setFixedCellSize(62);
+        search.textProperty().addListener((o,a,b) -> updateFilter()); ipFilter.textProperty().addListener((o,a,b) -> updateFilter()); statusFilter.valueProperty().addListener((o,a,b) -> updateFilter()); modeFilter.valueProperty().addListener((o,a,b) -> updateFilter());
+        table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY); table.setFixedCellSize(62); table.setEditable(true);
         TableColumn<TunnelRow,TunnelEngine.State> state = new TableColumn<>("STATO"); state.setPrefWidth(145);
         state.setCellValueFactory(c -> c.getValue().stateProperty());
         state.setCellFactory(c -> new TableCell<>() {
@@ -170,9 +202,25 @@ public final class NexuApplication extends Application {
                 }
             }
         });
-        TableColumn<TunnelRow,String> mode = textColumn("TIPO", 70, r -> r.profile().mode() == TunnelProfile.Mode.REMOTE ? "R  ←" : "L  →");
+        TableColumn<TunnelRow,String> mode = textColumn("TIPO", 90, r -> switch(r.profile().mode()) { case REMOTE -> "R ←"; case LOCAL -> "L →"; case DYNAMIC -> "D SOCKS"; });
         TableColumn<TunnelRow,String> name = textColumn("NOME", 175, r -> r.profile().name());
-        TableColumn<TunnelRow,String> server = textColumn("SERVER SSH", 240, r -> r.profile().endpoint());
+        TableColumn<TunnelRow,String> installation = textColumn("INSTALLAZIONE", 180, r -> r.profile().installation());
+        installation.setEditable(true);
+        installation.setCellFactory(TextFieldTableCell.forTableColumn());
+        installation.setOnEditCommit(e -> {
+            TunnelRow row = e.getRowValue();
+            if (UiWork.busy() || engine.isRunning(row.profile().id())) { table.refresh(); error("Ferma il tunnel prima di modificare l'installazione."); return; }
+            try {
+                TunnelProfile changed = row.profile().withInstallation(e.getNewValue());
+                List<TunnelProfile> next = new ArrayList<>(profiles()); next.set(next.indexOf(row.profile()),changed);
+                if (persist(next)) { row.setProfile(changed); updateFilter(); showSelection(); }
+            } catch (RuntimeException ex) { error(ex.getMessage()); }
+            table.refresh();
+        });
+        TableColumn<TunnelRow,String> hostname = textColumn("HOSTNAME", 190, r -> r.profile().sshHost());
+        TableColumn<TunnelRow,String> ip = new TableColumn<>("INDIRIZZO IP"); ip.setPrefWidth(155); ip.setCellValueFactory(c -> c.getValue().resolvedIpProperty());
+        ip.setCellFactory(c -> new TableCell<>() { @Override protected void updateItem(String text, boolean empty) { super.updateItem(text,empty); setText(empty ? null : (text == null || text.isBlank() ? "—" : text)); setTooltip(empty || text == null || text.isBlank() ? null : new Tooltip(text)); } });
+        TableColumn<TunnelRow,String> sshPort = textColumn("PORTA SSH", 85, r -> Integer.toString(r.profile().sshPort()));
         TableColumn<TunnelRow,String> bind = textColumn("ASCOLTO", 165, r -> r.profile().listener());
         TableColumn<TunnelRow,String> destination = textColumn("DESTINAZIONE", 210, r -> r.profile().destination());
         TableColumn<TunnelRow,TunnelRow> actions = new TableColumn<>("AZIONI"); actions.setPrefWidth(210); actions.setSortable(false);
@@ -208,12 +256,18 @@ public final class NexuApplication extends Application {
                 HBox box = new HBox(6, launch, halt, menu); box.setAlignment(Pos.CENTER_LEFT); setGraphic(box);
             }
         });
-        table.getColumns().addAll(state, mode, name, server, bind, destination, actions);
+        state.setEditable(false); mode.setEditable(false); name.setEditable(false); hostname.setEditable(false); ip.setEditable(false); sshPort.setEditable(false);
+        bind.setEditable(false); destination.setEditable(false); actions.setEditable(false);
+        table.getColumns().addAll(state, mode, installation, name, hostname, ip, sshPort, bind, destination, actions);
         Label emptyTitle = new Label("Nessun tunnel da mostrare"); emptyTitle.getStyleClass().add("empty-title");
-        Label emptyHelp = new Label("Crea un profilo con + Nuovo tunnel, oppure cambia il filtro."); emptyHelp.getStyleClass().add("muted");
+        Label emptyHelp = new Label("Attivi: solo tunnel connessi. Custom: + Nuovo tunnel. Tabby/MobaXterm: usa i pulsanti Importa."); emptyHelp.getStyleClass().add("muted");
         VBox empty = new VBox(12, emptyTitle, emptyHelp); empty.setAlignment(Pos.CENTER); table.setPlaceholder(empty);
         table.setRowFactory(t -> { TableRow<TunnelRow> row = new TableRow<>(); row.setOnMouseClicked(e -> {
-            if (e.getClickCount() == 2 && !row.isEmpty()) edit(row.getItem());
+            if (e.getClickCount() == 2 && !row.isEmpty() && table.getEditingCell() == null) {
+                javafx.scene.Node node = e.getTarget() instanceof javafx.scene.Node n ? n : null;
+                while (node != null && !(node instanceof TableCell<?,?>)) node = node.getParent();
+                if (!(node instanceof TableCell<?,?> cell) || !installation.equals(cell.getTableColumn())) edit(row.getItem());
+            }
         }); return row; });
     }
     private TableColumn<TunnelRow,String> textColumn(String label, double width, Function<TunnelRow,String> value) {
@@ -226,9 +280,23 @@ public final class NexuApplication extends Application {
         }); return column;
     }
     private void updateFilter() {
-        String query = search.getText().trim().toLowerCase(Locale.ROOT), status = statusFilter.getValue();
-        filtered.setPredicate(row -> row.profile().searchable().contains(query) &&
-            (status == null || status.equals("Tutti gli stati") || row.state().label().equals(status)));
+        String query = search.getText().trim().toLowerCase(Locale.ROOT);
+        String ipQuery = ipFilter.getText().trim().toLowerCase(Locale.ROOT);
+        String status = statusFilter.getValue(), mode = modeFilter.getValue();
+        Tab selected = sourceTabs.getSelectionModel().getSelectedItem();
+        filtered.setPredicate(row -> {
+            boolean tab = selected == activeTab ? row.state() == TunnelEngine.State.ACTIVE
+                : selected == tabbyTab ? row.profile().origin() == TunnelProfile.Origin.TABBY
+                : selected == mobaTab ? row.profile().origin() == TunnelProfile.Origin.MOBAXTERM
+                : row.profile().origin() == TunnelProfile.Origin.CUSTOM;
+            boolean type = mode == null || mode.equals("Tutti i tipi")
+                || (mode.startsWith("LOCAL") && row.profile().mode() == TunnelProfile.Mode.LOCAL)
+                || (mode.startsWith("REMOTE") && row.profile().mode() == TunnelProfile.Mode.REMOTE)
+                || (mode.startsWith("DYNAMIC") && row.profile().mode() == TunnelProfile.Mode.DYNAMIC);
+            boolean ipMatch = ipQuery.isEmpty() || row.resolvedIp().toLowerCase(Locale.ROOT).contains(ipQuery);
+            return tab && type && ipMatch && row.profile().searchable().contains(query)
+                && (status == null || status.equals("Tutti gli stati") || row.state().label().equals(status));
+        });
     }
     private void refreshCounters() {
         long count = rows.stream().filter(r -> r.state() == TunnelEngine.State.ACTIVE).count();
@@ -237,12 +305,12 @@ public final class NexuApplication extends Application {
     }
     private void onTunnelEvent(TunnelEngine.Event event) {
         for (TunnelRow row : rows) if (row.profile().id().equals(event.id())) { row.accept(event); break; }
-        refreshCounters(); showSelection();
+        refreshCounters(); if (sourceTabs.getSelectionModel().getSelectedItem() == activeTab) updateFilter(); showSelection();
     }
     private void showSelection() {
         TunnelRow row = table.getSelectionModel().getSelectedItem();
         if (row == null) { selectedInfo.setText("Seleziona una riga per vedere i dettagli."); logs.clear(); return; }
-        selectedInfo.setText(row.profile().name() + " · " + row.detail()); logs.setText(row.logs()); logs.positionCaret(logs.getLength());
+        selectedInfo.setText((row.profile().installation().isBlank() ? "" : row.profile().installation() + " · ") + row.profile().name() + " · " + row.detail()); logs.setText(row.logs()); logs.positionCaret(logs.getLength());
     }
     private List<TunnelProfile> profiles() { return rows.stream().map(TunnelRow::profile).toList(); }
     private boolean persist(List<TunnelProfile> next) {
@@ -251,7 +319,7 @@ public final class NexuApplication extends Application {
     }
     private void addProfile(TunnelProfile profile) {
         List<TunnelProfile> next = new ArrayList<>(profiles()); next.add(profile);
-        if (persist(next)) { TunnelRow row = new TunnelRow(profile); rows.add(row); table.getSelectionModel().select(row); refreshCounters(); }
+        if (persist(next)) { TunnelRow row = new TunnelRow(profile); rows.add(row); resolveHost(row); sourceTabs.getSelectionModel().select(tabFor(profile.origin())); table.getSelectionModel().select(row); refreshCounters(); }
     }
     private void edit(TunnelRow row) {
         if (row != null && engine.isRunning(row.profile().id())) { error("Ferma il tunnel prima di modificarlo."); return; }
@@ -269,7 +337,8 @@ public final class NexuApplication extends Application {
                     if (result.remember()) vaultUi.remember(changed,result.newSecret());
                     else if (vault.exists() && !vaultUi.forget(changed.id())) error("La credenziale precedente resta nell'archivio; la nuova resta soltanto in memoria.");
                 }
-                if (row == null) rows.add(new TunnelRow(changed)); else row.setProfile(changed);
+                if (row == null) { TunnelRow added=new TunnelRow(changed); rows.add(added); resolveHost(added); sourceTabs.getSelectionModel().select(customTab); }
+                else { row.setProfile(changed); resolveHost(row); }
                 updateFilter(); table.refresh(); refreshCounters(); showSelection();
             } finally { Arrays.fill(result.newSecret(),'\0'); }
         });
@@ -367,10 +436,63 @@ public final class NexuApplication extends Application {
             if (!confirm("Importa configurazione", "Aggiungere " + imported.size() + " profili?\nLe password e le chiavi host non vengono importate. Nessun tunnel verrà avviato.")) return;
             List<TunnelProfile> next = new ArrayList<>(profiles()); Set<UUID> ids = new HashSet<>(); next.forEach(p -> ids.add(p.id()));
             List<TunnelProfile> added = new ArrayList<>();
-            for (TunnelProfile p : imported) { if (ids.contains(p.id())) p = p.duplicate(); ids.add(p.id()); added.add(p); next.add(p); }
-            if (persist(next)) { added.forEach(p -> rows.add(new TunnelRow(p))); refreshCounters(); }
+            for (TunnelProfile p : imported) { if (ids.contains(p.id())) p = p.copyWithNewId(); ids.add(p.id()); added.add(p); next.add(p); }
+            if (persist(next)) { added.forEach(p -> { TunnelRow row=new TunnelRow(p); rows.add(row); resolveHost(row); }); updateFilter(); refreshCounters(); }
         } catch (Exception e) { error("Importazione rifiutata. Nessuna modifica applicata.\n" + e.getMessage()); }
     }
+    private void importTabby() {
+        if (quitting || UiWork.busy()) return;
+        sourceTabs.getSelectionModel().select(tabbyTab);
+        new TabbyImportDialog(window,profiles()).showAndWait().ifPresent(selected -> {
+            if (selected.isEmpty() || quitting) return;
+            try {
+                TabbyImport.Plan plan = TabbyImport.append(profiles(),selected);
+                if (!plan.added().isEmpty() && !persist(plan.profiles())) return;
+                plan.added().forEach(p -> { TunnelRow row=new TunnelRow(p); rows.add(row); resolveHost(row); });
+                search.clear(); ipFilter.clear(); statusFilter.getSelectionModel().selectFirst(); modeFilter.getSelectionModel().selectFirst(); updateFilter(); refreshCounters();
+                appLog.mark("tabby-import-added="+plan.added().size()+" duplicates="+plan.duplicates());
+                Alert a = new Alert(Alert.AlertType.INFORMATION,
+                    "Importati "+plan.added().size()+" inoltri in Tabby. Duplicati ignorati: "+plan.duplicates()+
+                    ".\nNessun tunnel avviato. Inserisci le credenziali e verifica la chiave host prima del collegamento.",ButtonType.OK);
+                a.initOwner(window); a.setHeaderText("Importazione Tabby completata"); a.showAndWait();
+            } catch (Exception ex) { error("Importazione non salvata: "+ex.getMessage()); }
+        });
+    }
+    private void importMobaXterm() {
+        if (quitting || UiWork.busy()) return;
+        sourceTabs.getSelectionModel().select(mobaTab);
+        new MobaXtermImportDialog(window,profiles()).showAndWait().ifPresent(selected -> {
+            if (selected.isEmpty() || quitting) return;
+            try {
+                MobaXtermImport.Plan plan = MobaXtermImport.append(profiles(),selected);
+                if (!plan.added().isEmpty() && !persist(plan.profiles())) return;
+                plan.added().forEach(p -> { TunnelRow row=new TunnelRow(p); rows.add(row); resolveHost(row); });
+                search.clear(); ipFilter.clear(); statusFilter.getSelectionModel().selectFirst(); modeFilter.getSelectionModel().selectFirst(); updateFilter(); refreshCounters();
+                appLog.mark("mobaxterm-import-added="+plan.added().size()+" duplicates="+plan.duplicates());
+                Alert a = new Alert(Alert.AlertType.INFORMATION,
+                    "Importati "+plan.added().size()+" inoltri in MobaXterm. Duplicati ignorati: "+plan.duplicates()+
+                    ".\nI profili sono ora salvati localmente da Nexu Port Forwarding. Nessun tunnel è stato avviato.",ButtonType.OK);
+                a.initOwner(window); a.setHeaderText("Importazione MobaXterm completata"); a.showAndWait();
+            } catch (Exception ex) { error("Importazione non salvata: "+ex.getMessage()); }
+        });
+    }
+
+    private Tab tabFor(TunnelProfile.Origin origin) {
+        return switch(origin) { case TABBY -> tabbyTab; case MOBAXTERM -> mobaTab; default -> customTab; };
+    }
+
+    private void resolveHost(TunnelRow row) {
+        TunnelProfile profile=row.profile(); String host=profile.sshHost(); UUID id=profile.id();
+        if (HostAddressResolver.isIpLiteral(host)) { row.setResolvedIp(host.replace("[","").replace("]","")); return; }
+        row.setResolvedIp("");
+        Thread.ofVirtual().name("npf-dns-"+id).start(() -> {
+            String resolved=""; try { resolved=HostAddressResolver.resolve(host); } catch (UnknownHostException ignored) { }
+            String value=resolved; Platform.runLater(() -> {
+                if (row.profile().id().equals(id) && row.profile().sshHost().equals(host)) { row.setResolvedIp(value); if (!ipFilter.getText().isBlank()) updateFilter(); }
+            });
+        });
+    }
+
     private void showHostKeys() {
         Dialog<Void> dialog = new Dialog<>(); dialog.initOwner(window); dialog.setTitle("Chiavi host verificate"); dialog.setHeaderText("L'identità è associata a hostname + porta SSH");
         ListView<String> list = new ListView<>(); Runnable refresh = () -> list.getItems().setAll(hostKeys.entries().keySet().stream().sorted().toList()); refresh.run();
