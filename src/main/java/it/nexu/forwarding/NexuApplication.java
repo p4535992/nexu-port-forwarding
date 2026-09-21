@@ -336,6 +336,8 @@ public final class NexuApplication extends Application {
                 }
             };
             row.setMinHeight(62);
+            row.setPrefHeight(Region.USE_COMPUTED_SIZE);
+            row.setMaxHeight(Double.MAX_VALUE);
             row.setOnMouseClicked(e -> {
                 if (e.getClickCount() == 2 && !row.isEmpty() && table.getEditingCell() == null) {
                     javafx.scene.Node node = e.getTarget() instanceof javafx.scene.Node n ? n : null;
@@ -351,12 +353,17 @@ public final class NexuApplication extends Application {
 
     private static final class AutoSaveTextCell extends TableCell<TunnelRow,String> {
         private final String emptyPlaceholder;
+        private final Label display = new Label();
         private TextField editor;
         private AutoSaveTextCell() { this(""); }
         private AutoSaveTextCell(String emptyPlaceholder) {
             this.emptyPlaceholder = emptyPlaceholder == null ? "" : emptyPlaceholder;
-            setWrapText(true);
-            setTextOverrun(OverrunStyle.CLIP);
+            display.setWrapText(true);
+            display.setTextOverrun(OverrunStyle.CLIP);
+            display.setMinHeight(Region.USE_PREF_SIZE);
+            display.setMaxWidth(Double.MAX_VALUE);
+            display.prefWidthProperty().bind(Bindings.max(40, widthProperty().subtract(24)));
+            setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
         }
         @Override public void startEdit() {
             if (!isEditable() || !getTableView().isEditable() || !getTableColumn().isEditable()) return;
@@ -373,17 +380,21 @@ public final class NexuApplication extends Application {
         private void commitEditor() {
             if (editor != null && isEditing()) commitEdit(editor.getText());
         }
+        private void showDisplay(String value) {
+            String shown = value == null || value.isBlank() ? emptyPlaceholder : value;
+            display.setText(shown);
+            setText(null);
+            setGraphic(display);
+            setTooltip(value == null || value.isBlank() ? null : new Tooltip(value));
+        }
         @Override public void cancelEdit() {
-            super.cancelEdit(); setGraphic(null); setText(getItem());
+            super.cancelEdit();
+            showDisplay(getItem());
         }
         @Override protected void updateItem(String value, boolean empty) {
             super.updateItem(value,empty);
             if (empty) { setText(null); setGraphic(null); setTooltip(null); }
-            else if (!isEditing()) {
-                String shown = value == null || value.isBlank() ? emptyPlaceholder : value;
-                setText(shown); setGraphic(null);
-                setTooltip(value == null || value.isBlank() ? null : new Tooltip(value));
-            }
+            else if (!isEditing()) showDisplay(value);
         }
     }
 
