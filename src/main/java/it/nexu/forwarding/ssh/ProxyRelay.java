@@ -110,19 +110,23 @@ final class ProxyRelay implements AutoCloseable {
     private static void httpConnect(Socket socket,TunnelProfile p,char[] password) throws IOException,TunnelBackend.Failure {
         OutputStream out=socket.getOutputStream();
         String authority=TunnelProfile.address(p.sshHost(),p.sshPort());
-        StringBuilder request=new StringBuilder("CONNECT ").append(authority).append(" HTTP/1.1\r\nHost: ").append(authority).append("\r\nProxy-Connection: Keep-Alive\r\n");
-        byte[] authBytes=null;
-        if(!p.proxyUsername().isBlank()) {
-            byte[] user=(p.proxyUsername()+":").getBytes(StandardCharsets.UTF_8);
-            byte[] pass=utf8(password);
-            authBytes=new byte[user.length+pass.length];
-            System.arraycopy(user,0,authBytes,0,user.length); System.arraycopy(pass,0,authBytes,user.length,pass.length); Arrays.fill(pass,(byte)0);
-            request.append("Proxy-Authorization: Basic ").append(Base64.getEncoder().encodeToString(authBytes)).append("\r\n");
-        }
+        out.write(("CONNECT "+authority+" HTTP/1.1\r\nHost: "+authority+"\r\nProxy-Connection: Keep-Alive\r\n").getBytes(StandardCharsets.ISO_8859_1));
+        byte[] authBytes=null,basic=null;
         try {
-            request.append("\r\n");
-            out.write(request.toString().getBytes(StandardCharsets.ISO_8859_1)); out.flush();
-        } finally { if(authBytes!=null) Arrays.fill(authBytes,(byte)0); }
+            if(!p.proxyUsername().isBlank()) {
+                byte[] user=(p.proxyUsername()+":").getBytes(StandardCharsets.UTF_8);
+                byte[] pass=utf8(password);
+                authBytes=new byte[user.length+pass.length];
+                System.arraycopy(user,0,authBytes,0,user.length); System.arraycopy(pass,0,authBytes,user.length,pass.length); Arrays.fill(pass,(byte)0);
+                basic=Base64.getEncoder().encode(authBytes);
+                out.write("Proxy-Authorization: Basic ".getBytes(StandardCharsets.US_ASCII));
+                out.write(basic); out.write("\r\n".getBytes(StandardCharsets.US_ASCII));
+            }
+            out.write("\r\n".getBytes(StandardCharsets.US_ASCII)); out.flush();
+        } finally {
+            if(authBytes!=null) Arrays.fill(authBytes,(byte)0);
+            if(basic!=null) Arrays.fill(basic,(byte)0);
+        }
         String headers=readHeaders(socket.getInputStream());
         String first=headers.lines().findFirst().orElse("");
         String[] parts=first.split(" ",3);
