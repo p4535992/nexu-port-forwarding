@@ -34,6 +34,7 @@ public final class AppLog implements AutoCloseable {
         if (event.state() != TunnelEngine.State.ERROR && event.state() != TunnelEngine.State.RECONNECTING)
             return new Diagnostic(null,null);
         String d = event.detail() == null ? "" : event.detail().replaceAll("[\\p{Cntrl}]", " ").trim();
+        if (d.startsWith("Errore runtime SSH: dipendenza Java mancante")) return new Diagnostic("RUNTIME_DEPENDENCY_MISSING", bounded(d));
         if (d.startsWith("Porta locale già in uso:")) return new Diagnostic("LOCAL_BIND_IN_USE", bounded(d));
         if (d.startsWith("Impossibile usare l'indirizzo di ascolto locale")) return new Diagnostic("LOCAL_BIND_UNAVAILABLE", bounded(d));
         if (d.startsWith("DNS:")) return new Diagnostic("DNS_FAILURE", bounded(d));

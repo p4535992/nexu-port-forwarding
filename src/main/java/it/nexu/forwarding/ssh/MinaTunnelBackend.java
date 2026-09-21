@@ -11,6 +11,7 @@ import org.apache.sshd.common.config.keys.FilePasswordProvider;
 import org.apache.sshd.common.config.keys.KeyUtils;
 import org.apache.sshd.common.keyprovider.FileKeyPairProvider;
 import org.apache.sshd.common.keyprovider.KeyIdentityProvider;
+import org.apache.sshd.common.io.nio2.Nio2ServiceFactoryFactory;
 import org.apache.sshd.common.util.net.SshdSocketAddress;
 import org.apache.sshd.server.forward.ForwardingFilter;
 import java.net.BindException;
@@ -47,6 +48,8 @@ public final class MinaTunnelBackend implements TunnelBackend {
             // Profiles are self-contained: do not import ~/.ssh/config, proxy commands, or ambient identities.
             client.setHostConfigEntryResolver(HostConfigEntryResolver.EMPTY);
             client.setKeyIdentityProvider(KeyIdentityProvider.EMPTY_KEYS_PROVIDER);
+            // Avoid ServiceLoader/reflection differences in jpackage images: NIO2 is our explicit runtime backend.
+            client.setIoServiceFactoryFactory(new Nio2ServiceFactoryFactory());
             // Null agent/X11 policies deny those channels. TCP is scoped to this profile's destination.
             client.setForwardingFilter(ForwardingFilter.asForwardingFilter(null, null, new ProfileForwardingFilter(p, token)));
             client.setUserAuthFactories(p.auth() == TunnelProfile.Auth.PASSWORD
@@ -177,6 +180,8 @@ public final class MinaTunnelBackend implements TunnelBackend {
         String endpoint = p.sshHost() + ":" + p.sshPort();
         Throwable root = rootCause(error);
         String messages = causeMessages(error).toLowerCase(java.util.Locale.ROOT);
+        if (hasCause(error, ClassNotFoundException.class) || hasCause(error, NoClassDefFoundError.class))
+            return runtimeDependencyFailure(error);
         if (hasCause(error, UnknownHostException.class) || hasCause(error, UnresolvedAddressException.class))
             return new Failure("DNS: impossibile risolvere il server SSH «" + p.sshHost() + "». Verificare DNS, VPN e suffissi DNS aziendali. Nessuna connessione TCP è stata aperta.", true, error);
         if (hasCause(error, SocketTimeoutException.class) || messages.contains("timed out") || messages.contains("timeout"))
@@ -188,6 +193,27 @@ public final class MinaTunnelBackend implements TunnelBackend {
         if (messages.contains("reset") || messages.contains("closed") || messages.contains("eof"))
             return new Failure("Connessione verso " + endpoint + " aperta ma interrotta durante l'handshake SSH. Possibili cause: servizio non SSH sulla porta, firewall/proxy trasparente o chiusura dal server.", true, error);
         return new Failure("Connessione TCP/SSH diretta verso " + endpoint + " fallita (" + root.getClass().getSimpleName() + "). Il proxy HTTP/SOCKS di sistema non viene usato automaticamente. Verificare DNS, VPN, firewall, porta SSH e policy della rete aziendale.", true, error);
+    }
+
+    static Failure runtimeDependencyFailure(Throwable error) {
+        String missing = missingClassName(error);
+        String suffix = missing.isEmpty() ? "" : " (" + missing + ")";
+        return new Failure("Errore runtime SSH: dipendenza Java mancante" + suffix
+            + ". Il pacchetto dell'applicazione è incompleto o incompatibile; reinstallare/aggiornare Nexu Port Forwarding. "
+            + "Non è un errore di DNS, firewall, proxy o credenziali.", false,
+            error instanceof Exception e ? e : new Exception(error));
+    }
+
+    private static String missingClassName(Throwable error) {
+        for (Throwable t = error; t != null; t = t.getCause()) {
+            if (t instanceof ClassNotFoundException || t instanceof NoClassDefFoundError) {
+                String value = t.getMessage();
+                if (value == null) return "";
+                value = value.trim().replace('/', '.');
+                return value.matches("[A-Za-z0-9_.$-]{1,240}") ? value : "";
+            }
+        }
+        return "";
     }
 
     static Failure authenticationFailure(TunnelProfile p, Exception error) {

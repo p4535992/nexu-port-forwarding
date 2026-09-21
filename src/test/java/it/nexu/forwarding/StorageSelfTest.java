@@ -73,10 +73,14 @@ public final class StorageSelfTest {
                 log.event(new TunnelEngine.Event(profile.id(),TunnelEngine.State.ERROR,
                     "Porta locale già in uso: 127.0.0.1:8687. Un altro processo (per esempio Tabby o MobaXterm) sta probabilmente già ascoltando su questa porta.",
                     Instant.now()));
+                log.event(new TunnelEngine.Event(profile.id(),TunnelEngine.State.ERROR,
+                    "Errore runtime SSH: dipendenza Java mancante (org.example.MissingRuntimeClass). Il pacchetto dell'applicazione è incompleto o incompatibile.",
+                    Instant.now()));
             }
             String logText=Files.readString(home.resolve("logs/nexu-port-forwarding-0.log"));
             check(logText.contains("state=ERROR")&&logText.contains("application-started"),"local diagnostic log records lifecycle and state");
             check(logText.contains("category=LOCAL_BIND_IN_USE")&&logText.contains("127.0.0.1:8687"),"persistent log records sanitized bind conflict diagnostics");
+            check(logText.contains("category=RUNTIME_DEPENDENCY_MISSING")&&logText.contains("org.example.MissingRuntimeClass"),"persistent log records packaged runtime failures");
             check(!logText.contains(new String(credential)),"diagnostic log does not persist arbitrary error text or passwords");
             Path exportDir=temp.resolve("exports");Files.createDirectories(exportDir);
             if(Files.getFileStore(exportDir).supportsFileAttributeView("posix")) {

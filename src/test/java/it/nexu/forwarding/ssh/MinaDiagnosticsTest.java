@@ -17,6 +17,14 @@ final class MinaDiagnosticsTest {
         TunnelBackend.Failure f=MinaTunnelBackend.connectionFailure(profile,new SocketTimeoutException("connect timed out"));
         assertTrue(f.getMessage().contains("Timeout")); assertTrue(f.getMessage().contains("proxy HTTP/SOCKS")); assertTrue(f.retryable());
     }
+    @Test void missingRuntimeClassIsNotMisreportedAsNetwork() {
+        TunnelBackend.Failure f=MinaTunnelBackend.connectionFailure(profile,
+            new IOException("wrapper",new ClassNotFoundException("org.example.MissingRuntimeClass")));
+        assertTrue(f.getMessage().contains("dipendenza Java mancante"));
+        assertTrue(f.getMessage().contains("org.example.MissingRuntimeClass"));
+        assertTrue(f.getMessage().contains("Non è un errore di DNS"));
+        assertFalse(f.retryable());
+    }
     @Test void dnsFailureIsSpecific() {
         assertTrue(MinaTunnelBackend.connectionFailure(profile,new UnknownHostException(profile.sshHost())).getMessage().startsWith("DNS:"));
     }
