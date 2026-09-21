@@ -49,3 +49,14 @@ Le chiavi private, le impronte host e i log non sono inclusi nel backup. Trasfer
 ## Nuove release
 
 Conserva `data/`, `logs/` e `portable.properties` quando aggiorni il portabile. I profili in AppData restano separati e non vengono importati automaticamente. Per trasferimenti usa il backup cifrato. I vecchi log in `data/logs/` restano dove sono; i nuovi vengono scritti in `logs/`.
+
+
+### Modifica in griglia e notazione forwarding
+
+La prima colonna è **AZIONI**. Fai doppio clic su **NOME** per modificarlo nella riga; Invio o l'uscita dal campo salva subito il profilo. **FORWARDING** sostituisce le vecchie colonne separate tipo/ascolto/destinazione:
+
+- `R · SSH[ascolto] → PC → destinazione`: remote forwarding; il listener è sul server SSH.
+- `L · PC[ascolto] → SSH → destinazione`: local forwarding; il listener è su questo computer.
+- `D · PC[ascolto] → SOCKS → SSH`: forwarding dinamico SOCKS.
+
+Dal menu della riga copia il comando per **Windows PowerShell**, **Windows CMD** oppure **Linux/POSIX** in base alla shell che stai realmente usando.

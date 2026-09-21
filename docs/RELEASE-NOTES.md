@@ -1,4 +1,4 @@
-# Nexu Port Forwarding 1.1.0-rc.3
+# Nexu Port Forwarding 1.1.0-rc.4
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
@@ -7,6 +7,11 @@
 Prerelease adding external-profile import and operational filtering while keeping the 1.0.0 stable release unchanged.
 
 ### New in this prerelease
+
+- Inline-editable **NOME** with automatic persistence on Enter or focus loss.
+- Removed the **INSTALLAZIONE** column from the main grid.
+- **TIPO**, **ASCOLTO** and **DESTINAZIONE** are condensed into one **FORWARDING** column with explicit listener-side arrows.
+- Separate command exports for Windows PowerShell, Windows CMD and Linux/POSIX; CMD no longer receives PowerShell quoting.
 
 - Password/passphrase fields include a show/hide eye control.
 - The **AZIONI** column is now the first table column.
@@ -18,7 +23,6 @@ Prerelease adding external-profile import and operational filtering while keepin
 - Imported rows become ordinary local Nexu Port Forwarding profiles. Reopening Tabby or MobaXterm is not required after import, and imports never auto-start tunnels.
 - Search filters for forwarding type and resolved SSH-server IP, in addition to free text and state.
 - Separate **HOSTNAME** and **INDIRIZZO IP** columns. IP literals are copied immediately; hostnames are resolved asynchronously through the operating-system DNS resolver (no ICMP ping).
-- Editable/searchable **INSTALLAZIONE** column for site/customer/environment labels.
 - DYNAMIC (`-D`) SOCKS forwarding supported by the Apache MINA SSHD backend.
 - Storage layout: portable packages use sibling `data/` and `logs/`; installed builds use the user parent `nexu-port-forwarding/data/` and `nexu-port-forwarding/logs/`. Recognized 1.0.0 user-data files are copied once into `data/` without deleting originals.
 

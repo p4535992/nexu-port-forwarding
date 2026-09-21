@@ -55,3 +55,14 @@ Private-key files, host-key trust and logs are not part of the backup. When movi
 ## Future releases
 
 Preserve `data/`, `logs/` and `portable.properties` when updating the portable bundle. Profiles in the user-data directory remain separate and are never imported automatically. Use encrypted backups to transfer them. Existing logs under `data/logs/` remain untouched; new portable logs go to `logs/`.
+
+
+### Grid editing and forwarding notation
+
+The first column is **AZIONI**. Double-click **NOME** to edit it inline; Enter or leaving the field saves the profile immediately. **FORWARDING** replaces the former separate type/listener/destination columns:
+
+- `R · SSH[listen] → PC → destination`: remote forwarding; the listener is on the SSH server.
+- `L · PC[listen] → SSH → destination`: local forwarding; the listener is on this computer.
+- `D · PC[listen] → SOCKS → SSH`: dynamic SOCKS forwarding.
+
+Use the row menu to copy the command for **Windows PowerShell**, **Windows CMD**, or **Linux/POSIX** according to the shell you actually use.

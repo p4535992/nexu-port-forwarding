@@ -30,9 +30,9 @@ Il verde indica che connessione SSH e forwarding sono stati stabiliti; **non** c
 
 Ogni profilo possiede una connessione SSH indipendente. Nessun tunnel parte automaticamente all'apertura dell'applicazione. Gli errori di autenticazione, chiave host o bind non vengono ritentati automaticamente. Apache MINA SSHD viene usato direttamente, quindi le password non vengono passate tramite BAT, comandi PowerShell o argomenti di processi esterni.
 
-## Release 1.1.0-rc.3
+## Release 1.1.0-rc.4
 
-Scarica **[v1.1.0-rc.3](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.3)**.
+Scarica **[v1.1.0-rc.4](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.4)**.
 
 | Piattaforma | Pacchetti |
 | --- | --- |
@@ -54,6 +54,10 @@ Gli errori distinguono risoluzione DNS, timeout TCP, connessione rifiutata, asse
 
 I campi password/passphrase includono un pulsante a forma di occhio per mostrare o nascondere temporaneamente il valore digitato. La colonna **AZIONI** è la prima a sinistra.
 
+
+La griglia dei tunnel inizia con **AZIONI**. **NOME** è modificabile direttamente nella riga: premendo Invio o uscendo dal campo il profilo viene salvato automaticamente. Tipo, ascolto e destinazione sono riuniti nella colonna **FORWARDING**, ad esempio `R · SSH[127.0.0.1:8687] → PC → maven.example.com:8080`. Per Local compare `L · PC[...] → SSH → ...`; per Dynamic `D · PC[...] → SOCKS → SSH`.
+
+Nel menu della riga ci sono esportazioni distinte **Windows PowerShell**, **Windows CMD** e **Linux/POSIX**. Il comando CMD non contiene l'operatore PowerShell `&` né argomenti tra apici singoli.
 
 ## Comportamento della finestra
 

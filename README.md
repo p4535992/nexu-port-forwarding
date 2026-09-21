@@ -10,7 +10,7 @@ English is the primary documentation language; Italian translations are maintain
 
 The main views are **Active → Custom → Tabby → MobaXterm**. **Active** contains only currently ACTIVE tunnels. Custom profiles are created manually; Tabby and MobaXterm are import sources. After import, rows are stored locally by Nexu Port Forwarding and no live dependency on either external application remains.
 
-**Importa Tabby…** reads a selected `config.yaml`; **Importa MobaXterm…** reads only `[PortForwarding]` from a selected `MobaXterm.ini`. Both show a preview and import supported Local, Remote and Dynamic/SOCKS forwards without starting them. The **INSTALLAZIONE** column is editable/searchable and survives encrypted backups. Repeated imports append new definitions and skip identical source fingerprints without overwriting local edits or credentials.
+**Importa Tabby…** reads a selected `config.yaml`; **Importa MobaXterm…** reads only `[PortForwarding]` from a selected `MobaXterm.ini`. Both show a preview and import supported Local, Remote and Dynamic/SOCKS forwards without starting them. Repeated imports append new definitions and skip identical source fingerprints without overwriting local edits or credentials.
 
 See [Tabby import](docs/TABBY-IMPORT.md) and [MobaXterm import](docs/MOBAXTERM-IMPORT.md).
 
@@ -30,9 +30,9 @@ Green means the SSH connection and forwarding listener were established; it does
 
 Each profile owns its own SSH connection. No tunnel starts automatically when the application opens. Authentication, host-key and bind failures are not automatically retried. Apache MINA SSHD is used directly, so passwords are not passed through BAT files, PowerShell commands or external-process arguments.
 
-## Release 1.1.0-rc.3
+## Release 1.1.0-rc.4
 
-Download **[v1.1.0-rc.3](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.3)**.
+Download **[v1.1.0-rc.4](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.4)**.
 
 | Platform | Packages |
 | --- | --- |
@@ -54,6 +54,10 @@ Connection errors distinguish DNS resolution, TCP timeout, connection refusal, m
 
 Password and passphrase inputs include an eye button to temporarily show/hide the value being typed. The **AZIONI** column is the first column on the left.
 
+
+The tunnel grid starts with **AZIONI**. **NOME** can be edited directly in the row; pressing Enter or leaving the editor writes the profile automatically. Type, listener and destination are condensed into **FORWARDING**, for example `R · SSH[127.0.0.1:8687] → PC → maven.example.com:8080`. The equivalent Local form is `L · PC[...] → SSH → ...`; Dynamic uses `D · PC[...] → SOCKS → SSH`.
+
+The row menu exposes distinct **Windows PowerShell**, **Windows CMD**, and **Linux/POSIX** command exports. CMD output does not contain the PowerShell `&` call operator or single-quoted arguments.
 
 ## Window behavior
 
