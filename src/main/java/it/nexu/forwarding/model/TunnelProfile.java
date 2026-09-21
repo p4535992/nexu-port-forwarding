@@ -105,9 +105,9 @@ public record TunnelProfile(
     }
     public String forwardingSummary() {
         return switch (mode) {
-            case REMOTE -> "R · SSH[" + listener() + "] → PC → " + destination();
-            case LOCAL -> "L · PC[" + listener() + "] → SSH → " + destination();
-            case DYNAMIC -> "D · PC[" + listener() + "] → SOCKS → SSH";
+            case REMOTE -> "R · SSH:" + sshPort + " · SERVER[" + listener() + "] → PC → " + destination();
+            case LOCAL -> "L · SSH:" + sshPort + " · PC[" + listener() + "] → SERVER → " + destination();
+            case DYNAMIC -> "D · SSH:" + sshPort + " · PC[" + listener() + "] → SOCKS → SERVER";
         };
     }
     public String endpoint() { return username + "@" + address(sshHost, sshPort); }

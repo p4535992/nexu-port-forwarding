@@ -159,16 +159,21 @@ public final class NexuApplication extends Application {
             table.getSelectionModel().clearSelection(); updateFilter();
         });
         updateFilter();
-        logs.setEditable(false); logs.setWrapText(true); logs.getStyleClass().add("log-area"); logs.setPrefRowCount(5);
+        logs.setEditable(false); logs.setWrapText(true); logs.getStyleClass().add("log-area");
         logs.setPromptText("Gli eventi del tunnel selezionato compariranno qui. Lo storico di stato viene salvato anche nella cartella logs locale; gli ultimi 300 dettagli restano in memoria.");
+        logs.setMinHeight(0); logs.setMaxHeight(Double.MAX_VALUE); VBox.setVgrow(logs, Priority.ALWAYS);
         selectedInfo.setWrapText(true); selectedInfo.getStyleClass().add("muted");
         Label logTitle = new Label("ATTIVITÀ DEL TUNNEL"); logTitle.getStyleClass().add("section-title");
         footer.getStyleClass().add("muted"); footer.setWrapText(true);
         Label meaning = new Label("Verde = SSH + forwarding stabiliti. Non è un controllo di salute dell'applicazione finale.");
         meaning.getStyleClass().add("muted"); meaning.setWrapText(true);
-        VBox bottom = new VBox(8, logTitle, selectedInfo, logs, meaning, footer); bottom.setPadding(new Insets(18,26,20,26));
-        root = new BorderPane(sourceTabs, top, null, bottom, null); BorderPane.setMargin(sourceTabs, new Insets(0,26,0,26));
-        Scene scene = new Scene(root, 1180, 760); scene.getStylesheets().add(getClass().getResource("/app.css").toExternalForm());
+        VBox logPanel = new VBox(10, logTitle, selectedInfo, logs, meaning, footer);
+        logPanel.getStyleClass().add("log-side-panel"); logPanel.setPadding(new Insets(16));
+        logPanel.setMinWidth(300); logPanel.setPrefWidth(380);
+        SplitPane workspace = new SplitPane(sourceTabs, logPanel);
+        workspace.setOrientation(Orientation.HORIZONTAL); workspace.setDividerPositions(0.72);
+        root = new BorderPane(workspace, top, null, null, null); BorderPane.setMargin(workspace, new Insets(0,26,20,26));
+        Scene scene = new Scene(root, 1320, 760); scene.getStylesheets().add(getClass().getResource("/app.css").toExternalForm());
         window.setScene(scene); window.setTitle("Nexu Port Forwarding 1.1.0");
         window.getIcons().add(new Image(Objects.requireNonNull(getClass().getResourceAsStream("/app-icon.png"))));
         window.xProperty().addListener((o,a,b) -> captureNormalBounds());
@@ -217,29 +222,43 @@ public final class NexuApplication extends Application {
             } catch (RuntimeException ex) { error(ex.getMessage()); }
             table.refresh();
         });
-        TableColumn<TunnelRow,String> forwarding = textColumn("FORWARDING", 430, r -> r.profile().forwardingSummary());
-        TableColumn<TunnelRow,String> hostname = textColumn("HOSTNAME", 190, r -> r.profile().sshHost());
-        TableColumn<TunnelRow,String> ip = new TableColumn<>("INDIRIZZO IP"); ip.setPrefWidth(155); ip.setCellValueFactory(c -> c.getValue().resolvedIpProperty());
-        ip.setCellFactory(c -> new TableCell<>() { @Override protected void updateItem(String text, boolean empty) { super.updateItem(text,empty); setText(empty ? null : (text == null || text.isBlank() ? "—" : text)); setTooltip(empty || text == null || text.isBlank() ? null : new Tooltip(text)); } });
-        TableColumn<TunnelRow,String> sshPort = textColumn("PORTA SSH", 85, r -> Integer.toString(r.profile().sshPort()));
-        TableColumn<TunnelRow,TunnelRow> actions = new TableColumn<>("AZIONI"); actions.setPrefWidth(210); actions.setSortable(false);
+        TableColumn<TunnelRow,String> forwarding = textColumn("FORWARDING", 470, r -> r.profile().forwardingSummary());
+        TableColumn<TunnelRow,String> hostAddress = new TableColumn<>("HOSTNAME / INDIRIZZO IP"); hostAddress.setPrefWidth(235);
+        hostAddress.setCellValueFactory(c -> Bindings.createStringBinding(c.getValue()::hostAddressDisplay, c.getValue().resolvedIpProperty()));
+        hostAddress.setCellFactory(c -> new TableCell<>() {
+            @Override protected void updateItem(String text, boolean empty) {
+                super.updateItem(text,empty); setGraphic(null);
+                setText(empty ? null : text);
+                setTooltip(empty || text == null || text.isBlank() ? null : new Tooltip(text.replace("\n"," · ")));
+            }
+        });
+        TableColumn<TunnelRow,TunnelRow> actions = new TableColumn<>("AZIONI"); actions.setPrefWidth(145); actions.setSortable(false);
         actions.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue()));
         actions.setCellFactory(c -> new TableCell<>() {
-            private Button launch, halt;
+            private Button runStop;
             @Override protected void updateItem(TunnelRow row, boolean empty) {
-                if (launch != null) launch.disableProperty().unbind(); if (halt != null) halt.disableProperty().unbind();
+                if (runStop != null) {
+                    runStop.textProperty().unbind();
+                    runStop.disableProperty().unbind();
+                }
                 super.updateItem(row,empty); setGraphic(null); setText(null);
                 if (empty || row == null) return;
-                launch = new Button("Avvia"); launch.getStyleClass().add("small-primary"); launch.setOnAction(e -> startOne(row));
-                halt = new Button("Ferma"); halt.setOnAction(e -> engine.stop(row.profile().id()));
-                launch.disableProperty().bind(Bindings.createBooleanBinding(() -> row.state().busy(), row.stateProperty()));
-                halt.disableProperty().bind(Bindings.createBooleanBinding(() -> !row.state().busy() || row.state() == TunnelEngine.State.STOPPING, row.stateProperty()));
+                runStop = new Button(); runStop.getStyleClass().add("small-primary");
+                runStop.textProperty().bind(Bindings.createStringBinding(
+                    () -> row.state().busy() ? "■ Ferma" : "▶ Avvia", row.stateProperty()));
+                runStop.disableProperty().bind(Bindings.createBooleanBinding(
+                    () -> row.state() == TunnelEngine.State.STOPPING, row.stateProperty()));
+                runStop.setOnAction(e -> {
+                    showLogsFor(row);
+                    if (row.state().busy()) engine.stop(row.profile().id());
+                    else startOne(row);
+                });
                 MenuButton menu = new MenuButton("⋯");
                 MenuItem edit = new MenuItem("Modifica…"); edit.setOnAction(e -> edit(row));
                 MenuItem duplicate = new MenuItem("Duplica (senza password)"); duplicate.setOnAction(e -> {
                     try { addProfile(row.profile().duplicate()); } catch (RuntimeException ex) { error(ex.getMessage()); }
                 });
-                MenuItem log = new MenuItem("Mostra log"); log.setOnAction(e -> table.getSelectionModel().select(row));
+                MenuItem log = new MenuItem("Mostra log"); log.setOnAction(e -> showLogsFor(row));
                 MenuItem copyPs = new MenuItem("Copia comando Windows PowerShell"); copyPs.setOnAction(e -> copy(OpenSshCommand.powershell(row.profile())));
                 MenuItem copyCmd = new MenuItem("Copia comando Windows CMD"); copyCmd.setOnAction(e -> copy(OpenSshCommand.cmd(row.profile())));
                 MenuItem copySh = new MenuItem("Copia comando Linux / POSIX"); copySh.setOnAction(e -> copy(OpenSshCommand.posix(row.profile())));
@@ -253,12 +272,12 @@ public final class NexuApplication extends Application {
                 });
                 MenuItem delete = new MenuItem("Elimina…"); delete.setOnAction(e -> delete(row));
                 menu.getItems().addAll(edit, duplicate, log, new SeparatorMenuItem(), copyPs, copyCmd, copySh, forget, forgetSaved, new SeparatorMenuItem(), delete);
-                HBox box = new HBox(6, launch, halt, menu); box.setAlignment(Pos.CENTER_LEFT); setGraphic(box);
+                HBox box = new HBox(6, runStop, menu); box.setAlignment(Pos.CENTER_LEFT); setGraphic(box);
             }
         });
-        state.setEditable(false); forwarding.setEditable(false); hostname.setEditable(false); ip.setEditable(false); sshPort.setEditable(false);
+        state.setEditable(false); forwarding.setEditable(false); hostAddress.setEditable(false);
         actions.setEditable(false);
-        table.getColumns().addAll(actions, state, name, forwarding, hostname, ip, sshPort);
+        table.getColumns().addAll(actions, state, name, forwarding, hostAddress);
         Label emptyTitle = new Label("Nessun tunnel da mostrare"); emptyTitle.getStyleClass().add("empty-title");
         Label emptyHelp = new Label("Attivi: solo tunnel connessi. Custom: + Nuovo tunnel. Tabby/MobaXterm: usa i pulsanti Importa."); emptyHelp.getStyleClass().add("muted");
         VBox empty = new VBox(12, emptyTitle, emptyHelp); empty.setAlignment(Pos.CENTER); table.setPlaceholder(empty);
@@ -339,7 +358,14 @@ public final class NexuApplication extends Application {
     private void showSelection() {
         TunnelRow row = table.getSelectionModel().getSelectedItem();
         if (row == null) { selectedInfo.setText("Seleziona una riga per vedere i dettagli."); logs.clear(); return; }
-        selectedInfo.setText((row.profile().installation().isBlank() ? "" : row.profile().installation() + " · ") + row.profile().name() + " · " + row.detail()); logs.setText(row.logs()); logs.positionCaret(logs.getLength());
+        selectedInfo.setText((row.profile().installation().isBlank() ? "" : row.profile().installation() + " · ") + row.profile().name() + " · " + row.detail());
+        logs.setText(row.logs()); logs.positionCaret(logs.getLength());
+    }
+    private void showLogsFor(TunnelRow row) {
+        if (row == null) return;
+        table.getSelectionModel().select(row);
+        table.scrollTo(row);
+        showSelection();
     }
     private List<TunnelProfile> profiles() { return rows.stream().map(TunnelRow::profile).toList(); }
     private boolean persist(List<TunnelProfile> next) {
@@ -556,7 +582,7 @@ public final class NexuApplication extends Application {
         double minHeight = Math.min(bounds.getHeight() * 0.92, Math.min(620, Math.max(480, bounds.getHeight() * 0.55)));
         double maxWidth = Math.max(minWidth, bounds.getWidth() * 0.92);
         double maxHeight = Math.max(minHeight, bounds.getHeight() * 0.88);
-        double defaultWidth = Math.max(minWidth, Math.min(1180, maxWidth));
+        double defaultWidth = Math.max(minWidth, Math.min(1320, maxWidth));
         double defaultHeight = Math.max(minHeight, Math.min(760, maxHeight));
 
         normalWidth = savedVisible ? clamp(saved.width(), minWidth, maxWidth) : defaultWidth;

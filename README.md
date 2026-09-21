@@ -30,9 +30,9 @@ Green means the SSH connection and forwarding listener were established; it does
 
 Each profile owns its own SSH connection. No tunnel starts automatically when the application opens. Authentication, host-key and bind failures are not automatically retried. Apache MINA SSHD is used directly, so passwords are not passed through BAT files, PowerShell commands or external-process arguments.
 
-## Release 1.1.0-rc.9
+## Release 1.1.0-rc.10
 
-Download **[v1.1.0-rc.9](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.9)**.
+Download **[v1.1.0-rc.10](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.10)**.
 
 | Platform | Packages |
 | --- | --- |
@@ -55,7 +55,7 @@ Connection errors distinguish DNS resolution, TCP timeout, connection refusal, m
 Password and passphrase inputs include an eye button to temporarily show/hide the value being typed. The **AZIONI** column is the first column on the left.
 
 
-The tunnel grid starts with **AZIONI**. **NOME** can be edited directly in the row; pressing Enter or leaving the editor writes the profile automatically. Type, listener and destination are condensed into **FORWARDING**, for example `R · SSH[127.0.0.1:8687] → PC → maven.example.com:8080`. The equivalent Local form is `L · PC[...] → SSH → ...`; Dynamic uses `D · PC[...] → SOCKS → SSH`.
+The tunnel grid starts with **AZIONI**. Avvia/Ferma is a single compact state-aware control that also selects the row and reveals its log in the right-side vertical panel. **HOSTNAME / INDIRIZZO IP** combines the SSH hostname and resolved IP; literal IP profiles show one value only. The SSH port is included inside **FORWARDING**.  **NOME** can be edited directly in the row; pressing Enter or leaving the editor writes the profile automatically. Type, listener and destination are condensed into **FORWARDING**, for example `R · SSH[127.0.0.1:8687] → PC → maven.example.com:8080`. The equivalent Local form is `L · PC[...] → SSH → ...`; Dynamic uses `D · PC[...] → SOCKS → SSH`.
 
 The row menu exposes distinct **Windows PowerShell**, **Windows CMD**, and **Linux/POSIX** command exports. CMD output does not contain the PowerShell `&` call operator or single-quoted arguments.
 

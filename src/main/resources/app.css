@@ -52,3 +52,10 @@
 #source-tabs > .tab-header-area .tab { -fx-padding: 7px 22px; }
 #source-tabs > .tab-header-area .tab:selected { -fx-background-color: #213e50; }
 #source-tabs > .tab-header-area .tab .tab-label { -fx-text-fill: #e4edf9; -fx-font-weight: bold; }
+
+.log-side-panel {
+    -fx-background-color: #111b2d;
+    -fx-background-radius: 8px;
+    -fx-border-color: #283951;
+    -fx-border-radius: 8px;
+}

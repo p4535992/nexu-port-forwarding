@@ -1,4 +1,4 @@
-# Nexu Port Forwarding 1.1.0-rc.9
+# Nexu Port Forwarding 1.1.0-rc.10
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
@@ -7,6 +7,11 @@
 Fresh test rebuild of the current 1.1.0 release-candidate line, with the same application features as rc.6 and a new independently built Windows/Linux package set.
 
 ### New in this prerelease
+
+- Row **Avvia/Ferma** controls are now one compact state-aware button; pressing it automatically selects the row and shows its tunnel log.
+- The activity/log area is now a **right-side vertical panel** beside the tunnel grid.
+- **PORTA SSH** is folded into the compact **FORWARDING** text (for example `R · SSH:22 · SERVER[...] → PC → destination`).
+- **HOSTNAME** and resolved **INDIRIZZO IP** are combined into one **HOSTNAME / INDIRIZZO IP** column; literal IP profiles show the IP only.
 
 - Fixed a packaged-runtime SSH startup failure that surfaced as `ClassNotFoundException` before any network connection was attempted.
 - Apache MINA SSHD now uses the NIO2 I/O backend explicitly instead of relying on runtime provider discovery inside jpackage images.
@@ -34,7 +39,6 @@ Fresh test rebuild of the current 1.1.0 release-candidate line, with the same ap
 - Read-only **MobaXterm** import from `[PortForwarding]` in `MobaXterm.ini`/`.mobaconf`; password sections and unrelated settings are ignored.
 - Imported rows become ordinary local Nexu Port Forwarding profiles. Reopening Tabby or MobaXterm is not required after import, and imports never auto-start tunnels.
 - Search filters for forwarding type and resolved SSH-server IP, in addition to free text and state.
-- Separate **HOSTNAME** and **INDIRIZZO IP** columns. IP literals are copied immediately; hostnames are resolved asynchronously through the operating-system DNS resolver (no ICMP ping).
 - DYNAMIC (`-D`) SOCKS forwarding supported by the Apache MINA SSHD backend.
 - Storage layout: portable packages use sibling `data/` and `logs/`; installed builds use the user parent `nexu-port-forwarding/data/` and `nexu-port-forwarding/logs/`. Recognized 1.0.0 user-data files are copied once into `data/` without deleting originals.
 

@@ -1,4 +1,4 @@
-# Nexu Port Forwarding 1.1.0-rc.9
+# Nexu Port Forwarding 1.1.0-rc.10
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
@@ -7,6 +7,11 @@
 Nuova build di test della linea 1.1.0 release-candidate, con le stesse funzionalità applicative della rc.6 e un nuovo set di pacchetti Windows/Linux compilato e verificato indipendentemente.
 
 ### Novità
+
+- I controlli **Avvia/Ferma** della riga sono ora un solo pulsante compatto e contestuale; premendolo la riga viene selezionata automaticamente e vengono mostrati i suoi log.
+- L'area attività/log è ora un **pannello verticale a destra** della griglia.
+- **PORTA SSH** è incorporata nella stringa compatta **FORWARDING** (per esempio `R · SSH:22 · SERVER[...] → PC → destinazione`).
+- **HOSTNAME** e **INDIRIZZO IP** risolto sono unificati nella colonna **HOSTNAME / INDIRIZZO IP**; se il profilo usa già un IP viene mostrato solo l'IP.
 
 - Corretto un errore di avvio SSH nel runtime pacchettizzato che compariva come `ClassNotFoundException` prima ancora di tentare la rete.
 - Apache MINA SSHD usa ora esplicitamente il backend I/O NIO2 invece di affidarsi alla scoperta dinamica dei provider dentro le immagini jpackage.
@@ -34,7 +39,6 @@ Nuova build di test della linea 1.1.0 release-candidate, con le stesse funzional
 - Importazione **MobaXterm** in sola lettura della sezione `[PortForwarding]` da `MobaXterm.ini`/`.mobaconf`; sezioni password e impostazioni non pertinenti vengono ignorate.
 - Dopo l'importazione le righe diventano normali profili locali di Nexu Port Forwarding. Non è necessario mantenere aperto Tabby/MobaXterm e nessun tunnel parte automaticamente.
 - Filtri per tipologia di forwarding e IP risolto del server SSH, oltre a testo libero e stato.
-- Colonne separate **HOSTNAME** e **INDIRIZZO IP**. Se l'host è già un IP viene copiato subito; gli hostname vengono risolti in background tramite il resolver DNS del sistema (senza ping ICMP).
 - Supporto DYNAMIC (`-D`) SOCKS tramite Apache MINA SSHD.
 - Salvataggio: i portabili usano `data/` e `logs/` affiancate; le installazioni usano `nexu-port-forwarding/data/` e `nexu-port-forwarding/logs/` nella cartella utente. I file dati 1.0.0 riconosciuti vengono copiati una sola volta in `data/` senza eliminare gli originali.
 

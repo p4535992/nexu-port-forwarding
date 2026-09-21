@@ -22,6 +22,12 @@ public final class TunnelRow {
     public StringProperty detailProperty() { return detail; }
     public StringProperty resolvedIpProperty() { return resolvedIp; }
     public String resolvedIp() { return resolvedIp.get(); }
+    public String hostAddressDisplay() {
+        String host = profile.sshHost();
+        String ip = resolvedIp();
+        if (ip == null || ip.isBlank() || host.equalsIgnoreCase(ip)) return host;
+        return host + "\n" + ip;
+    }
     public void setResolvedIp(String value) { resolvedIp.set(value == null ? "" : value); }
     public String detail() { return detail.get(); }
     public void accept(TunnelEngine.Event event) {
