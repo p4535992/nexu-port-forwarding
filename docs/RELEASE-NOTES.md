@@ -1,10 +1,10 @@
-# Nexu Port Forwarding 1.1.0-rc.6
+# Nexu Port Forwarding 1.1.0-rc.7
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## English
 
-Prerelease adding external-profile import and operational filtering while keeping the 1.0.0 stable release unchanged.
+Fresh test rebuild of the current 1.1.0 release-candidate line, with the same application features as rc.6 and a new independently built Windows/Linux package set.
 
 ### New in this prerelease
 
