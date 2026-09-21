@@ -15,7 +15,7 @@ concurrency:
 
 env:
   APP_VERSION: '1.1.0'
-  RELEASE_TAG: v1.1.0-rc.13
+  RELEASE_TAG: v1.1.0
 
 jobs:
   prepare:
@@ -39,14 +39,14 @@ jobs:
           set -euo pipefail
           if gh release view "$RELEASE_TAG" --json isDraft,targetCommitish > existing.json 2>/dev/null; then
             if [ "$(jq -r '.isDraft' existing.json)" != "true" ]; then
-              echo 'This prerelease is already published; no assets will be changed.'
+              echo 'This release is already published; no assets will be changed.'
               echo 'build=false' >> "$GITHUB_OUTPUT"
               exit 0
             fi
             gh release edit "$RELEASE_TAG" --target "$GITHUB_SHA" \
               --notes "Windows and Linux builds are being validated. Source: $GITHUB_SHA"
           else
-            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --draft --prerelease \
+            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --draft \
               --title "Nexu Port Forwarding $RELEASE_TAG" \
               --notes "Windows and Linux builds are being validated. Source: $GITHUB_SHA"
           fi
@@ -224,5 +224,5 @@ jobs:
           PYCODE
           printf '\nSource commit: `%s`\nWorkflow run: `%s`\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" >> release-notes.md
           gh release edit "$RELEASE_TAG" --target "$GITHUB_SHA" \
-            --draft=false --prerelease --latest=false --title "Nexu Port Forwarding $RELEASE_TAG" --notes-file release-notes.md
+            --draft=false --latest --title "Nexu Port Forwarding $RELEASE_TAG" --notes-file release-notes.md
           printf 'Published [%s](https://github.com/%s/releases/tag/%s)\n' "$RELEASE_TAG" "$GITHUB_REPOSITORY" "$RELEASE_TAG" >> "$GITHUB_STEP_SUMMARY"

@@ -1,16 +1,19 @@
-# Nexu Port Forwarding 1.1.0-rc.13
+# Nexu Port Forwarding 1.1.0
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## Italiano
 
-Release candidate 1.1.0 aggiornata con azioni principali più sicure e un menu Profili più ordinato, più un nuovo set di pacchetti Windows/Linux compilato e verificato indipendentemente.
+Release stabile 1.1.0 con il set di pacchetti Windows/Linux verificato e con i miglioramenti a interfaccia, importazione, diagnostica, packaging e runtime SSH validati durante il ciclo delle release candidate.
 
-### Novità
+### Principali novità della 1.1.0
 
 - Rimosso il pulsante globale **Avvia visibili** dalla barra principale per evitare avvii multipli accidentali.
 - **Importa Tabby…** e **Importa MobaXterm…** sono stati spostati nel menu **Profili**, insieme alle altre operazioni sui profili.
 - **Ferma tutti** resta disponibile direttamente nella barra principale per arrestare rapidamente i tunnel attivi.
+- L'azione della riga segue visivamente lo stato: **▶ Avvia** è verde sulle righe ferme/rosse, mentre **■ Ferma** diventa rosso quando il tunnel è in esecuzione.
+- I valori lunghi nella colonna **NOME** aumentano dinamicamente l'altezza della riga, così il testo multilinea resta completamente visibile.
+- Il pannello verticale attività/log a destra può essere nascosto e riaperto tramite un controllo compatto sul bordo, lasciando più spazio alla griglia sugli schermi piccoli.
 - **INSTALLAZIONE**, **NOME** e **HOSTNAME / INDIRIZZO IP** vanno automaticamente a capo su più righe; **INSTALLAZIONE** e **NOME** sono modificabili direttamente nella griglia con salvataggio automatico.
 
 - Le celle **NOME** vanno ora a capo su più righe invece di troncare le etichette lunghe con "..."; l'altezza della riga cresce quando serve mantenendo un minimo di 62 px.
@@ -58,4 +61,4 @@ Release candidate 1.1.0 aggiornata con azioni principali più sicure e un menu P
 
 Gli importatori non copiano password, trust host, script o configurazioni non pertinenti di Tabby/MobaXterm. Proxy/jump-host non supportati vengono saltati invece di trasformarsi silenziosamente in connessioni dirette. Tutti i tunnel importati partono fermi.
 
-È una prerelease non firmata: verificare l'importazione sulla propria configurazione prima dell'uso in produzione.
+La release non è firmata: verificare importazioni, configurazione e ambiente di distribuzione prima dell'uso in produzione.

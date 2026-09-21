@@ -1,16 +1,19 @@
-# Nexu Port Forwarding 1.1.0-rc.13
+# Nexu Port Forwarding 1.1.0
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## English
 
-Updated 1.1.0 release candidate with safer main-toolbar actions and a cleaner profile menu, plus a new independently built Windows/Linux package set.
+Stable 1.1.0 release with the tested Windows/Linux package set and the UI, import, diagnostics, packaging and SSH runtime improvements validated through the release-candidate cycle.
 
-### New in this prerelease
+### Highlights in 1.1.0
 
 - Removed the global **Avvia visibili** button from the main toolbar to avoid accidental bulk starts.
 - Moved **Importa Tabby…** and **Importa MobaXterm…** into the **Profili** menu, keeping import operations grouped with profile management.
 - **Ferma tutti** remains directly available in the toolbar for fast shutdown of active tunnels.
+- The row action is visually state-aware: **▶ Avvia** is green on stopped/red rows, while **■ Ferma** is red when a tunnel is running.
+- Long **NOME** values now expand the table row dynamically so wrapped text remains fully visible.
+- The right-side activity/log panel can be collapsed and reopened with a compact edge control, making the grid more usable on smaller screens.
 - **INSTALLAZIONE**, **NOME**, and **HOSTNAME / INDIRIZZO IP** now wrap automatically across multiple lines; **INSTALLAZIONE** and **NOME** can be edited directly in the grid with automatic persistence.
 
 - **NOME** cells now wrap onto multiple lines instead of truncating long labels with an ellipsis; table rows grow as needed while keeping a 62 px minimum height.
@@ -58,4 +61,4 @@ Updated 1.1.0 release candidate with safer main-toolbar actions and a cleaner pr
 
 Importers do not copy Tabby/MobaXterm passwords, host trust, scripts or unrelated configuration. Unsupported connection proxies/jump-host behavior is skipped instead of silently becoming a direct connection. All imported tunnels start stopped.
 
-This is an unsigned prerelease. Validate imports against your own configuration before production use.
+This release is unsigned. Validate imports against your own configuration and deployment environment before production use.
