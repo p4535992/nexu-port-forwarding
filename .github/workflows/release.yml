@@ -15,8 +15,7 @@ concurrency:
 
 env:
   APP_VERSION: '1.1.0'
-  RELEASE_TAG: v1.1.0-rc.1
-  STAGING_TAG: build-1.1.0-rc.1-${{ github.run_number }}-${{ github.run_attempt }}
+  RELEASE_TAG: v1.1.0-rc.2
 
 jobs:
   prepare:
@@ -31,27 +30,26 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 0
-      - name: Create a draft for this source commit
+      - name: Create the single combined draft release
         id: stage
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
-          if gh release view "$RELEASE_TAG" --json isDraft > final.json 2>/dev/null; then
-            echo 'This version already exists; no published assets will be changed.'
-            echo 'build=false' >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo 'build=true' >> "$GITHUB_OUTPUT"
-          if gh release view "$STAGING_TAG" --json isDraft,targetCommitish > existing.json 2>/dev/null; then
-            test "$(jq -r '.isDraft' existing.json)" = true
+          if gh release view "$RELEASE_TAG" --json isDraft,targetCommitish > existing.json 2>/dev/null; then
+            if [ "$(jq -r '.isDraft' existing.json)" != "true" ]; then
+              echo 'This prerelease is already published; no assets will be changed.'
+              echo 'build=false' >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
             test "$(jq -r '.targetCommitish' existing.json)" = "$GITHUB_SHA"
           else
-            gh release create "$STAGING_TAG" --target "$GITHUB_SHA" --draft --prerelease \
+            gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --draft --prerelease \
               --title "Nexu Port Forwarding $RELEASE_TAG" \
-              --notes "Build in progress. Not validated or published. Source: $GITHUB_SHA"
+              --notes "Windows and Linux builds are being validated. Source: $GITHUB_SHA"
           fi
+          echo 'build=true' >> "$GITHUB_OUTPUT"
 
   build:
     needs: prepare
@@ -141,7 +139,7 @@ jobs:
           set -euo pipefail
           cp target/app/dependency-inventory.json "target/release-assets/dependency-inventory-${{ matrix.platform }}.json"
           cd target/release-assets
-          gh release upload "$STAGING_TAG" * --repo "$GITHUB_REPOSITORY"
+          gh release upload "$RELEASE_TAG" * --repo "$GITHUB_REPOSITORY"
       - name: Keep test reports without Actions artifact storage
         if: always()
         env:
@@ -158,7 +156,7 @@ jobs:
               for file in files:
                   if file.is_file(): archive.write(file, str(file))
           PYCODE
-          gh release upload "$STAGING_TAG" "diagnostics-$PLATFORM-attempt-$GITHUB_RUN_ATTEMPT.zip" --repo "$GITHUB_REPOSITORY"
+          gh release upload "$RELEASE_TAG" "diagnostics-$PLATFORM-attempt-$GITHUB_RUN_ATTEMPT.zip" --repo "$GITHUB_REPOSITORY"
 
   publish:
     name: Publish tested Windows and Linux packages
@@ -178,20 +176,20 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          gh release view "$STAGING_TAG" --json isDraft,targetCommitish > release.json
+          gh release view "$RELEASE_TAG" --json isDraft,targetCommitish > release.json
           test "$(jq -r '.isDraft' release.json)" = true
           test "$(jq -r '.targetCommitish' release.json)" = "$GITHUB_SHA"
           mkdir release-assets
-          gh release download "$STAGING_TAG" --dir release-assets
+          gh release download "$RELEASE_TAG" --dir release-assets
           VERSION="$APP_VERSION"
           for ext in windows-x64.zip windows-x64.exe windows-x64.msi linux-x64.tar.gz linux-x64.deb linux-x64.rpm windows-java.zip linux-java.tar.gz; do
             test -s "release-assets/nexu-port-forwarding-$VERSION-$ext"
           done
           git archive --format=zip --prefix="nexu-port-forwarding-$VERSION/" HEAD -o "release-assets/nexu-port-forwarding-$VERSION-source.zip"
           python scripts/verify-packages.py
-          gh release upload "$STAGING_TAG" "release-assets/nexu-port-forwarding-$VERSION-source.zip"
+          gh release upload "$RELEASE_TAG" "release-assets/nexu-port-forwarding-$VERSION-source.zip"
           (cd release-assets && sha256sum * > SHA256SUMS.txt)
-          gh release upload "$STAGING_TAG" release-assets/SHA256SUMS.txt
+          gh release upload "$RELEASE_TAG" release-assets/SHA256SUMS.txt
           python - <<'PYCODE'
           from pathlib import Path
           import re
@@ -202,10 +200,6 @@ jobs:
           Path('release-notes.md').write_text(body(en) + '\n---\n\n' + body(it), encoding='utf-8')
           PYCODE
           printf '\nSource commit: `%s`\nWorkflow run: `%s`\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" >> release-notes.md
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            echo 'Refusing to overwrite an existing final release.' >&2
-            exit 1
-          fi
-          gh release edit "$STAGING_TAG" --tag "$RELEASE_TAG" --target "$GITHUB_SHA" \
+          gh release edit "$RELEASE_TAG" --target "$GITHUB_SHA" \
             --draft=false --prerelease --latest=false --title "Nexu Port Forwarding $RELEASE_TAG" --notes-file release-notes.md
           printf 'Published [%s](https://github.com/%s/releases/tag/%s)\n' "$RELEASE_TAG" "$GITHUB_REPOSITORY" "$RELEASE_TAG" >> "$GITHUB_STEP_SUMMARY"
