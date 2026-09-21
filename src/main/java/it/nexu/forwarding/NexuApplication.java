@@ -89,8 +89,8 @@ public final class NexuApplication extends Application {
                 () -> { showWindow(); startAll(false); }, () -> engine.stopAll(), this::requestExit);
             Platform.setImplicitExit(false);
             footer.setText(trayReady
-                ? "La X chiede se ridurre nell’area di notifica oppure uscire. — minimizza; □ massimizza/ripristina."
-                : "Tray non disponibile: la X offre minimizzazione normale oppure uscita. — e □ restano i controlli nativi.");
+                ? I18n.t("The X asks whether to minimize to the notification area or exit. — minimizes; □ maximizes/restores.","La X chiede se ridurre nell’area di notifica oppure uscire. — minimizza; □ massimizza/ripristina.")
+                : I18n.t("Tray unavailable: the X offers normal minimization or exit. — and □ remain native controls.","Tray non disponibile: la X offre minimizzazione normale oppure uscita. — e □ restano i controlli nativi."));
             refreshCounters();
             Runtime.getRuntime().addShutdownHook(new Thread(() -> { engine.close(); secrets.close(); proxySecrets.close(); vault.close(); }, "nexu-shutdown"));
             appLog.mark("ui-ready");
@@ -137,7 +137,7 @@ public final class NexuApplication extends Application {
         Button quit = new Button(I18n.t("Exit","Esci")); quit.setOnAction(e -> requestExit());
         Button openLogs = new Button(I18n.t("Open logs","Apri log")); openLogs.setOnAction(e -> {
             try { java.awt.Desktop.getDesktop().open(appLog.directory().toFile()); }
-            catch (Exception ex) { error("Cartella dei log: " + appLog.directory()); }
+            catch (Exception ex) { error(I18n.t("Log folder: ","Cartella dei log: ") + appLog.directory()); }
         });
         MenuButton settings = new MenuButton(I18n.t("Settings","Impostazioni"));
         MenuItem dataLocation = new MenuItem(I18n.t("Data folder…","Cartella dati…"));
@@ -157,10 +157,13 @@ public final class NexuApplication extends Application {
         languageMenu.getItems().addAll(englishLanguage,italianLanguage);
         openSshDiagnostics.setSelected(false);
         openSshDiagnostics.setOnAction(e -> {
-            if (openSshDiagnostics.isSelected() && !confirm("Diagnostica OpenSSH locale",
-                "Quando è attiva, prima di avviare un tunnel Nexu esegue «ssh -G» e lo confronta con «ssh -F NUL/-F /dev/null -G».\n\n"
+            if (openSshDiagnostics.isSelected() && !confirm(I18n.t("Local OpenSSH diagnostics","Diagnostica OpenSSH locale"),
+                I18n.t("When enabled, before starting a tunnel Nexu runs «ssh -G» and compares it with «ssh -F NUL/-F /dev/null -G».\n\n"
+                    + "It does not open an SSH connection, but OpenSSH may evaluate local Match exec rules in the configuration.\n\n"
+                    + "Enable diagnostics for this session?",
+                    "Quando è attiva, prima di avviare un tunnel Nexu esegue «ssh -G» e lo confronta con «ssh -F NUL/-F /dev/null -G».\n\n"
                     + "Non apre una connessione SSH, ma OpenSSH può valutare eventuali regole locali Match exec presenti nella configurazione.\n\n"
-                    + "Abilitare la diagnostica per questa sessione?")) {
+                    + "Abilitare la diagnostica per questa sessione?"))) {
                 openSshDiagnostics.setSelected(false);
             }
         });

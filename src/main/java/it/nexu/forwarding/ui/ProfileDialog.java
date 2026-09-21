@@ -42,7 +42,7 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
         origin = existing == null ? TunnelProfile.Origin.CUSTOM : existing.origin();
         sourceKey = existing == null ? "" : existing.sourceKey();
         installation.setText(p.installation());
-        installation.setPromptText("Nome libero: cliente, sede, ambiente… (ricercabile)");
+        installation.setPromptText(I18n.t("Free label: customer, site, environment… (searchable)","Nome libero: cliente, sede, ambiente… (ricercabile)"));
         name.setText(existing == null ? "" : p.name()); host.setText(existing == null ? "" : p.sshHost());
         port.setText(""+p.sshPort()); user.setText(existing == null ? "" : p.username());
         auth.getItems().setAll(TunnelProfile.Auth.values()); auth.setValue(p.auth());
@@ -56,9 +56,9 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
         reconnect.setSelected(p.reconnect()); attempts.setText(""+p.reconnectAttempts()); delay.setText(""+p.reconnectDelaySeconds());
         notes.setText(existing == null ? "" : p.notes());
         secret.setPromptText(hasSecret ? I18n.t("Leave empty to keep the existing credential","Lascia vuoto per mantenere la credenziale esistente") : I18n.t("SSH password / key passphrase","Password SSH / passphrase della chiave"));
-        key.setPromptText("Percorso locale della chiave privata");
-        host.setPromptText("server.example.org oppure indirizzo IP"); user.setPromptText("utente");
-        target.setPromptText("Host raggiungibile dal lato di destinazione");
+        key.setPromptText(I18n.t("Local path to the private key","Percorso locale della chiave privata"));
+        host.setPromptText(I18n.t("server.example.org or IP address","server.example.org oppure indirizzo IP")); user.setPromptText(I18n.t("username","utente"));
+        target.setPromptText(I18n.t("Host reachable from the destination side","Host raggiungibile dal lato di destinazione"));
         mode.setConverter(new javafx.util.StringConverter<>() {
             public String toString(TunnelProfile.Mode m) {
                 if (m == null) return "";
@@ -92,19 +92,19 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
         row(connection, 5, "Password / passphrase", secret); row(connection, 6, I18n.t("Private key","Chiave privata"), keyBox);
         remember.setSelected(true);
         connection.add(remember,0,7,2,1);
-        Label privacy = help("Se selezionato, il salvataggio richiede la password principale. Altrimenti la nuova credenziale resta solo in memoria. Un campo vuoto non modifica la credenziale esistente. L’export profili non include password.");
+        Label privacy = help(I18n.t("When selected, saving requires the master password. Otherwise the new credential stays in memory only. An empty field keeps the existing credential. Profile export never includes passwords.","Se selezionato, il salvataggio richiede la password principale. Altrimenti la nuova credenziale resta solo in memoria. Un campo vuoto non modifica la credenziale esistente. L’export profili non include password."));
         connection.add(privacy, 0, 8, 2, 1);
         row(connection,9,I18n.t("Installation","Installazione"),installation);
         GridPane proxy = grid();
         row(proxy,0,I18n.t("Proxy type","Tipo proxy"),proxyType); row(proxy,1,I18n.t("Proxy host","Host proxy"),proxyHost);
         row(proxy,2,I18n.t("Proxy port","Porta proxy"),proxyPort); row(proxy,3,I18n.t("Proxy username (optional)","Utente proxy (opzionale)"),proxyUser);
-        proxyHost.setPromptText("proxy.example.org oppure indirizzo IP");
-        proxyPort.setPromptText("es. 8080 / 1080");
-        proxyUser.setPromptText("Se valorizzato, la password viene chiesta all'avvio del tunnel");
+        proxyHost.setPromptText(I18n.t("proxy.example.org or IP address","proxy.example.org oppure indirizzo IP"));
+        proxyPort.setPromptText(I18n.t("e.g. 8080 / 1080","es. 8080 / 1080"));
+        proxyUser.setPromptText(I18n.t("If set, the password is requested when the tunnel starts","Se valorizzato, la password viene chiesta all'avvio del tunnel"));
         proxyHost.disableProperty().bind(proxyType.valueProperty().isEqualTo(TunnelProfile.ProxyType.DIRECT));
         proxyPort.disableProperty().bind(proxyHost.disableProperty());
         proxyUser.disableProperty().bind(proxyHost.disableProperty());
-        proxy.add(help("SOCKS5 e HTTP CONNECT instradano la connessione SSH tramite il proxy indicato. La destinazione SSH viene richiesta al proxy usando hostname + porta. Se specifichi un utente proxy, la password viene richiesta all'avvio e resta solo in memoria fino alla chiusura/blocco delle password."),0,4,2,1);
+        proxy.add(help(I18n.t("SOCKS5 and HTTP CONNECT route the SSH connection through the configured proxy. The SSH destination is requested from the proxy using hostname + port. If a proxy username is specified, the password is requested at tunnel start and remains in memory only until the application closes or passwords are locked.","SOCKS5 e HTTP CONNECT instradano la connessione SSH tramite il proxy indicato. La destinazione SSH viene richiesta al proxy usando hostname + porta. Se specifichi un utente proxy, la password viene richiesta all'avvio e resta solo in memoria fino alla chiusura/blocco delle password.")),0,4,2,1);
         GridPane forwarding = grid();
         row(forwarding, 0, I18n.t("Forwarding type","Tipo di inoltro"), mode); row(forwarding, 1, I18n.t("Listen address","Indirizzo di ascolto"), bind);
         row(forwarding, 2, I18n.t("Listen port","Porta di ascolto"), bindPort); row(forwarding, 3, I18n.t("Destination host","Host destinazione"), target);
@@ -113,13 +113,13 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
         targetPort.disableProperty().bind(target.disableProperty());
         Label direction = help("");
         Runnable directionText = () -> direction.setText(mode.getValue() == TunnelProfile.Mode.DYNAMIC
-            ? "DYNAMIC (-D): proxy SOCKS locale. Il client sceglie host e porta; il server SSH raggiunge la destinazione. Nessuna destinazione fissa. SOCKS non autenticato: lascia il bind su 127.0.0.1."
+            ? I18n.t("DYNAMIC (-D): local SOCKS proxy. The client chooses host and port; the SSH server reaches the destination. No fixed destination. Unauthenticated SOCKS: keep bind on 127.0.0.1.","DYNAMIC (-D): proxy SOCKS locale. Il client sceglie host e porta; il server SSH raggiunge la destinazione. Nessuna destinazione fissa. SOCKS non autenticato: lascia il bind su 127.0.0.1.")
             : mode.getValue() == TunnelProfile.Mode.REMOTE
-            ? "REMOTE (-R): la porta di ascolto viene aperta sul server SSH. Il tuo PC risolve e raggiunge l'host destinazione."
-            : "LOCAL (-L): la porta di ascolto viene aperta sul tuo PC. Il server SSH risolve e raggiunge l'host destinazione.");
+            ? I18n.t("REMOTE (-R): the listening port is opened on the SSH server. This PC resolves and reaches the destination host.","REMOTE (-R): la porta di ascolto viene aperta sul server SSH. Il tuo PC risolve e raggiunge l'host destinazione.")
+            : I18n.t("LOCAL (-L): the listening port is opened on this PC. The SSH server resolves and reaches the destination host.","LOCAL (-L): la porta di ascolto viene aperta sul tuo PC. Il server SSH risolve e raggiunge l'host destinazione."));
         mode.valueProperty().addListener((o,a,b) -> directionText.run()); directionText.run();
         forwarding.add(direction, 0, 5, 2, 1);
-        forwarding.add(help("127.0.0.1 limita l'ascolto al loopback. Altri indirizzi possono esporre il servizio alla rete. Per -R la policy effettiva dipende anche da GatewayPorts sul server."), 0, 6, 2, 1);
+        forwarding.add(help(I18n.t("127.0.0.1 limits listening to loopback. Other addresses may expose the service to the network. For -R, the effective policy also depends on GatewayPorts on the server.","127.0.0.1 limita l'ascolto al loopback. Altri indirizzi possono esporre il servizio alla rete. Per -R la policy effettiva dipende anche da GatewayPorts sul server.")), 0, 6, 2, 1);
         GridPane advanced = grid();
         row(advanced, 0, I18n.t("Connection timeout (s)","Timeout connessione (s)"), timeout); row(advanced, 1, I18n.t("Keepalive interval (s)","Intervallo keepalive (s)"), interval);
         row(advanced, 2, I18n.t("Reply timeout (× interval)","Timeout risposta (× intervallo)"), misses); advanced.add(reconnect, 0, 3, 2, 1);

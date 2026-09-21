@@ -27,12 +27,10 @@ public final class StorageSettingsDialog {
         } catch (Exception e) { error.accept(e.getMessage()); return; }
         portable.setDisable(!configurable); appdata.setDisable(!configurable);
         Label note = new Label(configurable
-            ? "La scelta vale dal prossimo avvio. Nessun profilo, password o log viene copiato, cancellato o spostato. "
-                + "La nuova cartella può essere vuota oppure contenere profili già salvati. "
-                + "Per trasferirli usa l'esportazione/importazione del backup cifrato."
+            ? I18n.t("The choice applies on the next start. No profile, password or log is copied, deleted or moved. The new folder may be empty or already contain saved profiles. Use encrypted backup export/import to transfer them.","La scelta vale dal prossimo avvio. Nessun profilo, password o log viene copiato, cancellato o spostato. La nuova cartella può essere vuota oppure contenere profili già salvati. Per trasferirli usa l'esportazione/importazione del backup cifrato.")
             : storage.mode() == StorageLocations.Mode.CUSTOM
-                ? "Il percorso è imposto da NEXU_PF_HOME o -Dnexu.home. Rimuovi l'impostazione esterna per usare la preferenza del portabile."
-                : "Questa installazione usa la cartella utente. Per salvare accanto al programma usa il pacchetto portabile.");
+                ? I18n.t("The path is forced by NEXU_PF_HOME or -Dnexu.home. Remove the external setting to use the portable preference.","Il percorso è imposto da NEXU_PF_HOME o -Dnexu.home. Rimuovi l'impostazione esterna per usare la preferenza del portabile.")
+                : I18n.t("This installation uses the user data folder. To store data next to the application, use the portable package.","Questa installazione usa la cartella utente. Per salvare accanto al programma usa il pacchetto portabile."));
         note.setWrapText(true); note.setMaxWidth(580);
         VBox content = new VBox(14, current, portable, appdata, note); content.setPrefWidth(600);
         dialog.getDialogPane().setContent(content);
@@ -44,8 +42,7 @@ public final class StorageSettingsDialog {
             StorageLocations.savePreference(storage, portable.isSelected()
                 ? StorageLocations.Mode.PORTABLE : StorageLocations.Mode.APPDATA);
             Alert done = new Alert(Alert.AlertType.INFORMATION,
-                "Preferenza salvata. Riavvia Nexu Port Forwarding per applicarla.\n"
-                + "I tunnel e i dati della sessione attuale non sono stati modificati.", ButtonType.OK);
+                I18n.t("Preference saved. Restart Nexu Port Forwarding to apply it.\nThe tunnels and data in the current session were not changed.","Preferenza salvata. Riavvia Nexu Port Forwarding per applicarla.\nI tunnel e i dati della sessione attuale non sono stati modificati."), ButtonType.OK);
             done.initOwner(owner); done.setHeaderText(I18n.t("Restart required","Riavvio necessario")); done.showAndWait();
         } catch (Exception e) { error.accept("Impossibile salvare la preferenza.\n" + e.getMessage()); }
     }
