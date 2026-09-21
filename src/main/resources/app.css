@@ -35,7 +35,10 @@
 .state-pill { -fx-padding: 6px 9px; -fx-background-radius: 20px; -fx-font-size: 11px; -fx-font-weight: bold; }
 .state-active { -fx-background-color: #123e35; -fx-text-fill: #76e6b4; }
 .state-error { -fx-background-color: #4c2631; -fx-text-fill: #ff9da6; }
-.state-stopped { -fx-background-color: #28354b; -fx-text-fill: #afbed5; }
+.state-stopped { -fx-background-color: #4c2631; -fx-text-fill: #ff9da6; }
+.table-row-cell.row-stopped { -fx-background-color: #2f1b23; }
+.table-row-cell.row-stopped:odd { -fx-background-color: #351e27; }
+.table-row-cell.row-stopped:selected { -fx-background-color: #4c2631; }
 .state-connecting, .state-reconnecting { -fx-background-color: #483c22; -fx-text-fill: #f5d074; }
 .state-stopping { -fx-background-color: #233b55; -fx-text-fill: #9bcdf5; }
 .log-area { -fx-font-family: "Consolas", "DejaVu Sans Mono", monospace; -fx-font-size: 12px; -fx-text-fill: #b5c8e4; }
