@@ -32,7 +32,7 @@ import java.util.function.Function;
 
 public final class NexuApplication extends Application {
     private final ObservableList<TunnelRow> rows = FXCollections.observableArrayList(r -> new Observable[]{r.stateProperty(), r.resolvedIpProperty()});
-    private final SecretStore secrets = new SecretStore();
+    private final SecretStore secrets = new SecretStore(), proxySecrets = new SecretStore();
     private final TraySupport tray = new TraySupport();
     private final TableView<TunnelRow> table = new TableView<>();
     private final TextField installationFilter = new TextField(), nameFilter = new TextField(), hostFilter = new TextField();
@@ -72,10 +72,11 @@ public final class NexuApplication extends Application {
             configFile = home.resolve("profiles.properties");
             hostKeys = new HostKeyStore(home.resolve("host-keys.properties"));
             for (TunnelProfile profile : ProfileStore.load(configFile)) { TunnelRow row=new TunnelRow(profile); rows.add(row); resolveHost(row); }
-            engine = new TunnelEngine(new MinaTunnelBackend(hostKeys, this::askHostTrust),
+            engine = new TunnelEngine(new MinaTunnelBackend(hostKeys, this::askHostTrust, p -> proxySecrets.copy(p.id())),
                 event -> { appLog.event(event); Platform.runLater(() -> onTunnelEvent(event)); });
             vaultUi = new VaultUi(window,vault,secrets,engine,configFile,this::profiles,
-                list -> { rows.setAll(list.stream().map(TunnelRow::new).toList()); rows.forEach(this::resolveHost); updateFilter(); refreshCounters(); },this::error);
+                list -> { rows.setAll(list.stream().map(TunnelRow::new).toList()); rows.forEach(this::resolveHost); updateFilter(); refreshCounters(); },this::error,
+                proxySecrets::close);
             buildWindow();
             restoreWindowState();
             stage.show();
@@ -87,7 +88,7 @@ public final class NexuApplication extends Application {
                 ? "La X chiede se ridurre nell’area di notifica oppure uscire. — minimizza; □ massimizza/ripristina."
                 : "Tray non disponibile: la X offre minimizzazione normale oppure uscita. — e □ restano i controlli nativi.");
             refreshCounters();
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> { engine.close(); secrets.close(); vault.close(); }, "nexu-shutdown"));
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> { engine.close(); secrets.close(); proxySecrets.close(); vault.close(); }, "nexu-shutdown"));
             appLog.mark("ui-ready");
             if (migrated > 0) appLog.mark("legacy-data-copied=" + migrated);
             if (Boolean.getBoolean("nexu.smokeTest")) {
@@ -495,6 +496,8 @@ public final class NexuApplication extends Application {
                 if (!persist(next)) return;
                 if (old != null && (!old.hostKeyId().equals(changed.hostKeyId()) || !old.username().equals(changed.username())
                     || old.auth() != changed.auth() || !old.privateKey().equals(changed.privateKey()))) secrets.forget(old.id());
+                if (old != null && (old.proxyType()!=changed.proxyType() || !old.proxyHost().equals(changed.proxyHost())
+                    || old.proxyPort()!=changed.proxyPort() || !old.proxyUsername().equals(changed.proxyUsername()))) proxySecrets.forget(old.id());
                 if (result.newSecret().length > 0) {
                     secrets.put(changed.id(),result.newSecret());
                     if (result.remember()) vaultUi.remember(changed,result.newSecret());
@@ -511,7 +514,7 @@ public final class NexuApplication extends Application {
         if (!confirm("Elimina profilo", "Eliminare «" + row.profile().name() + "»?")) return;
         if (!vaultUi.forget(row.profile().id())) return;
         List<TunnelProfile> next = new ArrayList<>(profiles()); next.remove(row.profile());
-        if (persist(next)) { rows.remove(row); secrets.forget(row.profile().id()); refreshCounters(); }
+        if (persist(next)) { rows.remove(row); secrets.forget(row.profile().id()); proxySecrets.forget(row.profile().id()); refreshCounters(); }
     }
     private void startAll(boolean visibleOnly) {
         List<TunnelRow> chosen = List.copyOf(visibleOnly ? filtered : rows);
@@ -540,8 +543,29 @@ public final class NexuApplication extends Application {
                 if (p.auth() == TunnelProfile.Auth.PASSWORD && secret.length == 0) { error("La password non può essere vuota."); return; }
                 secrets.put(p.id(),secret);
             }
+            if (p.proxyNeedsPassword() && !proxySecrets.contains(p.id())) {
+                char[] proxySecret = askProxySecret(p);
+                if (proxySecret == null) return;
+                try {
+                    if (proxySecret.length == 0) { error("La password del proxy non può essere vuota quando è specificato un utente proxy."); return; }
+                    proxySecrets.put(p.id(),proxySecret);
+                } finally { Arrays.fill(proxySecret,'\0'); }
+            }
             engine.start(p,secret);
         } finally { Arrays.fill(secret,'\0'); }
+    }
+    private char[] askProxySecret(TunnelProfile profile) {
+        Dialog<char[]> dialog = new Dialog<>(); dialog.initOwner(window); dialog.setTitle(profile.name());
+        dialog.setHeaderText("Password proxy " + profile.proxyLabel() + " per " + profile.proxyEndpoint());
+        PasswordRevealField field = new PasswordRevealField(); field.setPromptText("Password proxy per " + profile.proxyUsername());
+        Label help = new Label("La password proxy resta soltanto in memoria fino alla chiusura dell'app o al comando «Blocca e dimentica segreti in memoria».");
+        help.setWrapText(true);
+        dialog.getDialogPane().setContent(new VBox(12,help,field));
+        ButtonType connect = new ButtonType("Continua", ButtonBar.ButtonData.OK_DONE); dialog.getDialogPane().getButtonTypes().addAll(connect,ButtonType.CANCEL);
+        dialog.setResultConverter(b -> b == connect ? field.getText().toCharArray() : null);
+        dialog.setOnShown(e -> field.requestInputFocus());
+        Optional<char[]> result = dialog.showAndWait(); field.clear();
+        return result.orElse(null);
     }
     private char[] askSecret(TunnelProfile profile) {
         Dialog<char[]> dialog = new Dialog<>(); dialog.initOwner(window); dialog.setTitle(profile.name());
@@ -771,5 +795,5 @@ public final class NexuApplication extends Application {
             Platform.runLater(() -> { tray.close(); Platform.exit(); System.exit(0); });
         });
     }
-    @Override public void stop() { if (engine != null) engine.close(); secrets.close(); if(vault!=null) vault.close(); tray.close(); if(appLog!=null) appLog.close(); }
+    @Override public void stop() { if (engine != null) engine.close(); secrets.close(); proxySecrets.close(); if(vault!=null) vault.close(); tray.close(); if(appLog!=null) appLog.close(); }
 }

@@ -10,10 +10,22 @@ public record TunnelProfile(
     String bindHost, int bindPort, String targetHost, int targetPort,
     Auth auth, String privateKey, int connectTimeoutSeconds, int keepAliveSeconds,
     int keepAliveMisses, boolean reconnect, int reconnectAttempts,
-    int reconnectDelaySeconds, String notes, String installation, Origin origin, String sourceKey) {
+    int reconnectDelaySeconds, String notes, String installation, Origin origin, String sourceKey,
+    ProxyType proxyType, String proxyHost, int proxyPort, String proxyUsername) {
 
     public enum Mode { REMOTE, LOCAL, DYNAMIC }
     public enum Origin { CUSTOM, TABBY, MOBAXTERM }
+    public enum ProxyType { DIRECT, SOCKS5, HTTP_CONNECT }
+
+    /** Compatibility constructor for existing v2 call sites and imported profiles. */
+    public TunnelProfile(UUID id, String name, Mode mode, String sshHost, int sshPort, String username,
+        String bindHost, int bindPort, String targetHost, int targetPort, Auth auth, String privateKey,
+        int connectTimeoutSeconds, int keepAliveSeconds, int keepAliveMisses, boolean reconnect,
+        int reconnectAttempts, int reconnectDelaySeconds, String notes, String installation, Origin origin, String sourceKey) {
+        this(id,name,mode,sshHost,sshPort,username,bindHost,bindPort,targetHost,targetPort,auth,privateKey,
+            connectTimeoutSeconds,keepAliveSeconds,keepAliveMisses,reconnect,reconnectAttempts,reconnectDelaySeconds,
+            notes,installation,origin,sourceKey,ProxyType.DIRECT,"",0,"");
+    }
 
     /** Reads existing v1 profiles without inventing provenance. */
     public TunnelProfile(UUID id, String name, Mode mode, String sshHost, int sshPort, String username,
@@ -37,6 +49,14 @@ public record TunnelProfile(
         if (mode == Mode.DYNAMIC) { targetHost = ""; targetPort = 0; }
         else { targetHost = host(targetHost, "Destinazione", false); port(targetPort); }
         installation = text(installation, "Installazione", 120, true);
+        proxyType = proxyType == null ? ProxyType.DIRECT : proxyType;
+        proxyUsername = text(proxyUsername, "Utente proxy", 128, true);
+        if (proxyType == ProxyType.DIRECT) {
+            proxyHost = ""; proxyPort = 0; proxyUsername = "";
+        } else {
+            proxyHost = host(proxyHost, "Host proxy", false);
+            port(proxyPort);
+        }
         if (origin == null) throw new IllegalArgumentException("Origine obbligatoria.");
         sourceKey = text(sourceKey, "Identificativo importazione", 64, true);
         if (!sourceKey.isEmpty() && !sourceKey.matches("[a-f0-9]{64}"))
@@ -85,23 +105,27 @@ public record TunnelProfile(
         return new TunnelProfile(UUID.randomUUID(), name.substring(0, Math.min(name.length(), 112)) + " (copia)", mode, sshHost, sshPort,
             username, bindHost, bindPort, targetHost, targetPort, auth, privateKey,
             connectTimeoutSeconds, keepAliveSeconds, keepAliveMisses, reconnect,
-            reconnectAttempts, reconnectDelaySeconds, notes, installation, Origin.CUSTOM, "");
+            reconnectAttempts, reconnectDelaySeconds, notes, installation, Origin.CUSTOM, "",
+            proxyType, proxyHost, proxyPort, proxyUsername);
     }
     /** Backup restore preserves the tab and provenance while allocating a new credential identity. */
     public TunnelProfile copyWithNewId() {
         return new TunnelProfile(UUID.randomUUID(),name,mode,sshHost,sshPort,username,bindHost,bindPort,
             targetHost,targetPort,auth,privateKey,connectTimeoutSeconds,keepAliveSeconds,keepAliveMisses,
-            reconnect,reconnectAttempts,reconnectDelaySeconds,notes,installation,origin,sourceKey);
+            reconnect,reconnectAttempts,reconnectDelaySeconds,notes,installation,origin,sourceKey,
+            proxyType,proxyHost,proxyPort,proxyUsername);
     }
     public TunnelProfile withInstallation(String label) {
         return new TunnelProfile(id,name,mode,sshHost,sshPort,username,bindHost,bindPort,targetHost,targetPort,
             auth,privateKey,connectTimeoutSeconds,keepAliveSeconds,keepAliveMisses,reconnect,
-            reconnectAttempts,reconnectDelaySeconds,notes,label,origin,sourceKey);
+            reconnectAttempts,reconnectDelaySeconds,notes,label,origin,sourceKey,
+            proxyType,proxyHost,proxyPort,proxyUsername);
     }
     public TunnelProfile withName(String value) {
         return new TunnelProfile(id,value,mode,sshHost,sshPort,username,bindHost,bindPort,targetHost,targetPort,
             auth,privateKey,connectTimeoutSeconds,keepAliveSeconds,keepAliveMisses,reconnect,
-            reconnectAttempts,reconnectDelaySeconds,notes,installation,origin,sourceKey);
+            reconnectAttempts,reconnectDelaySeconds,notes,installation,origin,sourceKey,
+            proxyType,proxyHost,proxyPort,proxyUsername);
     }
     public String forwardingSummary() {
         return switch (mode) {
@@ -114,10 +138,14 @@ public record TunnelProfile(
     public String listener() { return address(bindHost, bindPort); }
     public String destination() { return mode == Mode.DYNAMIC ? "SOCKS · destinazione scelta dal client" : address(targetHost, targetPort); }
     public String hostKeyId() { return address(sshHost.toLowerCase(Locale.ROOT), sshPort); }
+    public boolean usesProxy() { return proxyType != ProxyType.DIRECT; }
+    public boolean proxyNeedsPassword() { return usesProxy() && !proxyUsername.isBlank(); }
+    public String proxyEndpoint() { return usesProxy() ? address(proxyHost,proxyPort) : "diretto"; }
+    public String proxyLabel() { return switch(proxyType) { case DIRECT -> "Diretto"; case SOCKS5 -> "SOCKS5"; case HTTP_CONNECT -> "HTTP CONNECT"; }; }
     public boolean isLoopbackBind() {
         return bindHost.equals("127.0.0.1") || bindHost.equals("::1") || bindHost.equalsIgnoreCase("localhost");
     }
-    public String searchable() { return (installation + " " + origin + " " + name + " " + mode + " " + endpoint() + " " + listener() + " " + destination() + " " + notes).toLowerCase(Locale.ROOT); }
+    public String searchable() { return (installation + " " + origin + " " + name + " " + mode + " " + endpoint() + " " + listener() + " " + destination() + " " + proxyLabel() + " " + proxyEndpoint() + " " + notes).toLowerCase(Locale.ROOT); }
     public static String address(String host, int port) { return bracket(host) + ":" + port; }
     public static String bracket(String host) { return host.contains(":") ? "[" + host + "]" : host; }
 }

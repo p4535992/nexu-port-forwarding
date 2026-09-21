@@ -54,6 +54,16 @@ public final class CoreSelfTest {
             test("forwarding summary includes SSH port and local listener side", () -> check(change("mode",TunnelProfile.Mode.LOCAL).forwardingSummary().startsWith("L · SSH:22 · PC[127.0.0.1:8989] → SERVER → ")));
             test("inline rename preserves profile identity", () -> { TunnelProfile p=TunnelProfile.example(), renamed=p.withName("Nuovo nome"); eq(renamed.id(),p.id()); eq(renamed.name(),"Nuovo nome"); });
             test("config round trip", () -> { Path f=temp.resolve("roundtrip.properties"); List<TunnelProfile> p=List.of(TunnelProfile.example(),change("mode",TunnelProfile.Mode.LOCAL)); ProfileStore.save(f,p); eq(ProfileStore.load(f),p); });
+            test("proxy config round trip", () -> {
+                TunnelProfile base=TunnelProfile.example();
+                TunnelProfile p=new TunnelProfile(base.id(),base.name(),base.mode(),base.sshHost(),base.sshPort(),base.username(),
+                    base.bindHost(),base.bindPort(),base.targetHost(),base.targetPort(),base.auth(),base.privateKey(),
+                    base.connectTimeoutSeconds(),base.keepAliveSeconds(),base.keepAliveMisses(),base.reconnect(),base.reconnectAttempts(),
+                    base.reconnectDelaySeconds(),base.notes(),base.installation(),base.origin(),base.sourceKey(),
+                    TunnelProfile.ProxyType.SOCKS5,"127.0.0.1",1080,"proxy-user");
+                Path f=temp.resolve("proxy-roundtrip.properties"); ProfileStore.save(f,List.of(p)); eq(ProfileStore.load(f).getFirst(),p);
+            });
+            test("direct proxy defaults", () -> { TunnelProfile p=TunnelProfile.example(); eq(p.proxyType(),TunnelProfile.ProxyType.DIRECT); check(!p.usesProxy()); });
             test("empty config round trip", () -> { Path f=temp.resolve("empty.properties"); ProfileStore.save(f,List.of()); check(ProfileStore.load(f).isEmpty()); });
             test("missing config loads as empty", () -> check(ProfileStore.load(temp.resolve("missing.properties")).isEmpty()));
             test("unknown config version rejected", () -> { Path f=temp.resolve("badversion.properties"); Files.writeString(f,"format.version=999\nprofile.count=0\n"); expect(IOException.class,()->ProfileStore.load(f)); });

@@ -17,15 +17,18 @@ public final class VaultUi {
     private final TunnelEngine engine; private final Path profilesFile;
     private final Supplier<List<TunnelProfile>> profiles; private final Consumer<List<TunnelProfile>> replaceRows;
     private final Consumer<String> error;
+    private final Runnable clearAdditionalMemory;
     private final MenuButton menu=new MenuButton();
     public VaultUi(Window owner,VaultStore vault,SecretStore memory,TunnelEngine engine,Path profilesFile,
-                   Supplier<List<TunnelProfile>> profiles,Consumer<List<TunnelProfile>> replaceRows,Consumer<String> error) {
+                   Supplier<List<TunnelProfile>> profiles,Consumer<List<TunnelProfile>> replaceRows,Consumer<String> error,
+                   Runnable clearAdditionalMemory) {
         this.owner=owner;this.vault=vault;this.memory=memory;this.engine=engine;this.profilesFile=profilesFile;
         this.profiles=profiles;this.replaceRows=replaceRows;this.error=error;
+        this.clearAdditionalMemory=clearAdditionalMemory==null?()->{}:clearAdditionalMemory;
         item("Crea / sblocca archivio",()->ensureOpen());
         item("Blocca e dimentica segreti in memoria",()->{
             if(engine.runningCount()!=0) { error.accept("Ferma prima tutti i tunnel: anche le riconnessioni possono usare credenziali in memoria."); return; }
-            vault.close(); memory.close(); refresh();
+            vault.close(); memory.close(); clearAdditionalMemory.run(); refresh();
         });
         item("Cambia password principale…",this::changePassword);
         menu.getItems().add(new SeparatorMenuItem());

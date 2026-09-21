@@ -14,6 +14,8 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
     public record Result(TunnelProfile profile, char[] newSecret, boolean remember) { }
     private final TextField name = new TextField(), host = new TextField(), port = new TextField(), user = new TextField();
     private final ComboBox<TunnelProfile.Auth> auth = new ComboBox<>();
+    private final ComboBox<TunnelProfile.ProxyType> proxyType = new ComboBox<>();
+    private final TextField proxyHost = new TextField(), proxyPort = new TextField(), proxyUser = new TextField();
     private final PasswordRevealField secret = new PasswordRevealField();
     private final CheckBox remember = new CheckBox("Salva la credenziale nell’archivio locale cifrato");
     private final TextField key = new TextField(), bind = new TextField(), bindPort = new TextField();
@@ -43,6 +45,9 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
         name.setText(existing == null ? "" : p.name()); host.setText(existing == null ? "" : p.sshHost());
         port.setText(""+p.sshPort()); user.setText(existing == null ? "" : p.username());
         auth.getItems().setAll(TunnelProfile.Auth.values()); auth.setValue(p.auth());
+        proxyType.getItems().setAll(TunnelProfile.ProxyType.values()); proxyType.setValue(p.proxyType());
+        proxyHost.setText(p.proxyHost()); proxyPort.setText(p.usesProxy() ? Integer.toString(p.proxyPort()) : "");
+        proxyUser.setText(p.proxyUsername());
         key.setText(p.privateKey()); bind.setText(p.bindHost()); bindPort.setText(""+p.bindPort());
         target.setText(existing == null ? "" : p.targetHost()); targetPort.setText(""+p.targetPort());
         mode.getItems().setAll(TunnelProfile.Mode.values()); mode.setValue(p.mode());
@@ -68,6 +73,13 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
             public String toString(TunnelProfile.Auth a) { return a == TunnelProfile.Auth.PASSWORD ? "Password SSH" : "File chiave privata"; }
             public TunnelProfile.Auth fromString(String s) { throw new UnsupportedOperationException(); }
         });
+        proxyType.setConverter(new javafx.util.StringConverter<>() {
+            public String toString(TunnelProfile.ProxyType p) {
+                if (p == null) return "";
+                return switch(p) { case DIRECT -> "Diretto (nessun proxy)"; case SOCKS5 -> "SOCKS5"; case HTTP_CONNECT -> "HTTP CONNECT"; };
+            }
+            public TunnelProfile.ProxyType fromString(String s) { throw new UnsupportedOperationException(); }
+        });
         Button browse = new Button("Sfoglia…");
         browse.setOnAction(e -> { FileChooser fc = new FileChooser(); fc.setTitle("Seleziona una chiave privata"); File f = fc.showOpenDialog(owner); if (f != null) key.setText(f.getAbsolutePath()); });
         key.disableProperty().bind(auth.valueProperty().isNotEqualTo(TunnelProfile.Auth.PRIVATE_KEY));
@@ -82,6 +94,16 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
         Label privacy = help("Se selezionato, il salvataggio richiede la password principale. Altrimenti la nuova credenziale resta solo in memoria. Un campo vuoto non modifica la credenziale esistente. L’export profili non include password.");
         connection.add(privacy, 0, 8, 2, 1);
         row(connection,9,"Installazione",installation);
+        GridPane proxy = grid();
+        row(proxy,0,"Tipo proxy",proxyType); row(proxy,1,"Host proxy",proxyHost);
+        row(proxy,2,"Porta proxy",proxyPort); row(proxy,3,"Utente proxy (opzionale)",proxyUser);
+        proxyHost.setPromptText("proxy.example.org oppure indirizzo IP");
+        proxyPort.setPromptText("es. 8080 / 1080");
+        proxyUser.setPromptText("Se valorizzato, la password viene chiesta all'avvio del tunnel");
+        proxyHost.disableProperty().bind(proxyType.valueProperty().isEqualTo(TunnelProfile.ProxyType.DIRECT));
+        proxyPort.disableProperty().bind(proxyHost.disableProperty());
+        proxyUser.disableProperty().bind(proxyHost.disableProperty());
+        proxy.add(help("SOCKS5 e HTTP CONNECT instradano la connessione SSH tramite il proxy indicato. La destinazione SSH viene richiesta al proxy usando hostname + porta. Se specifichi un utente proxy, la password viene richiesta all'avvio e resta solo in memoria fino alla chiusura/blocco delle password."),0,4,2,1);
         GridPane forwarding = grid();
         row(forwarding, 0, "Tipo di inoltro", mode); row(forwarding, 1, "Indirizzo di ascolto", bind);
         row(forwarding, 2, "Porta di ascolto", bindPort); row(forwarding, 3, "Host destinazione", target);
@@ -102,8 +124,8 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
         row(advanced, 2, "Timeout risposta (× intervallo)", misses); advanced.add(reconnect, 0, 3, 2, 1);
         row(advanced, 4, "Massimo riconnessioni", attempts); row(advanced, 5, "Attesa iniziale (s)", delay); row(advanced, 6, "Note", notes);
         attempts.disableProperty().bind(reconnect.selectedProperty().not()); delay.disableProperty().bind(reconnect.selectedProperty().not());
-        advanced.add(help("La soglia keepalive imposta un timeout di risposta: con 15 × 3 il timeout è 45 secondi. Non è identica al contatore di messaggi OpenSSH. Le riconnessioni hanno attesa crescente, fino a 60 secondi, e non ritentano errori di credenziali, chiave host o bind. La connessione SSH è diretta: il proxy HTTP/SOCKS del sistema non viene usato automaticamente."), 0, 7, 2, 1);
-        TabPane tabs = new TabPane(tab("Connessione", connection), tab("Inoltro", forwarding), tab("Avanzate", advanced));
+        advanced.add(help("La soglia keepalive imposta un timeout di risposta: con 15 × 3 il timeout è 45 secondi. Non è identica al contatore di messaggi OpenSSH. Le riconnessioni hanno attesa crescente, fino a 60 secondi, e non ritentano errori di credenziali, chiave host o bind. Con Proxy = Diretto non viene usato automaticamente il proxy HTTP/SOCKS del sistema."), 0, 7, 2, 1);
+        TabPane tabs = new TabPane(tab("Connessione", connection), tab("Proxy", proxy), tab("Inoltro", forwarding), tab("Avanzate", advanced));
         validation.getStyleClass().add("error-text"); validation.setWrapText(true);
         VBox content = new VBox(12, tabs, validation); content.setPrefSize(730, 480); VBox.setVgrow(tabs, Priority.ALWAYS);
         getDialogPane().setContent(content);
@@ -118,10 +140,12 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
         setOnHidden(e -> secret.clear());
     }
     private TunnelProfile collect() {
+        TunnelProfile.ProxyType selectedProxy = proxyType.getValue() == null ? TunnelProfile.ProxyType.DIRECT : proxyType.getValue();
         return new TunnelProfile(id, name.getText(), mode.getValue(), host.getText(), num(port,"Porta SSH"), user.getText(),
             bind.getText(), num(bindPort,"Porta ascolto"), target.getText(), mode.getValue() == TunnelProfile.Mode.DYNAMIC ? 0 : num(targetPort,"Porta destinazione"), auth.getValue(), key.getText(),
             num(timeout,"Timeout"), num(interval,"Keepalive"), num(misses,"Soglia keepalive"), reconnect.isSelected(), num(attempts,"Riconnessioni"),
-            num(delay,"Attesa"), notes.getText(), installation.getText(), origin, sourceKey);
+            num(delay,"Attesa"), notes.getText(), installation.getText(), origin, sourceKey,
+            selectedProxy, proxyHost.getText(), selectedProxy == TunnelProfile.ProxyType.DIRECT ? 0 : num(proxyPort,"Porta proxy"), proxyUser.getText());
     }
     private static int num(TextField field, String name) {
         try { return Integer.parseInt(field.getText().trim()); }

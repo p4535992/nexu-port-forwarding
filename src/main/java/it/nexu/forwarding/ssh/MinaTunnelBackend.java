@@ -25,7 +25,9 @@ import java.nio.channels.UnresolvedAddressException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.KeyPair;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -33,7 +35,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public final class MinaTunnelBackend implements TunnelBackend {
     private final HostKeyStore hostKeys;
     private final HostTrustPrompt prompt;
-    public MinaTunnelBackend(HostKeyStore hostKeys, HostTrustPrompt prompt) { this.hostKeys = hostKeys; this.prompt = prompt; }
+    private final Function<TunnelProfile,char[]> proxySecretProvider;
+    public MinaTunnelBackend(HostKeyStore hostKeys, HostTrustPrompt prompt) { this(hostKeys,prompt,p -> new char[0]); }
+    public MinaTunnelBackend(HostKeyStore hostKeys, HostTrustPrompt prompt, Function<TunnelProfile,char[]> proxySecretProvider) {
+        this.hostKeys = hostKeys; this.prompt = prompt; this.proxySecretProvider = proxySecretProvider == null ? p -> new char[0] : proxySecretProvider;
+    }
 
     @Override public Connection open(TunnelProfile p, char[] secret, Cancellation token) throws Exception {
         token.check();
@@ -41,6 +47,8 @@ public final class MinaTunnelBackend implements TunnelBackend {
         if (p.auth() == TunnelProfile.Auth.PASSWORD && secret.length == 0)
             throw new Failure("Inserire la password SSH.", false);
         SshClient client = SshClient.setUpDefaultClient();
+        ProxyRelay relay = null;
+        char[] proxySecret = new char[0];
         AtomicReference<String> rejectedKey = new AtomicReference<>();
         boolean handedOff = false;
         AutoCloseable cancellationHook = token.onCancel(() -> client.close(true));
@@ -82,10 +90,17 @@ public final class MinaTunnelBackend implements TunnelBackend {
             client.getProperties().put("auth-timeout", (p.connectTimeoutSeconds() + 120L) * 1000L);
             client.getProperties().put("tcpip-forwarding-request-timeout", p.connectTimeoutSeconds() * 1000L);
             token.check();
+            if (p.usesProxy()) {
+                proxySecret = proxySecretProvider.apply(p);
+                if (proxySecret == null) proxySecret = new char[0];
+                if (p.proxyNeedsPassword() && proxySecret.length == 0)
+                    throw new Failure("Il proxy " + p.proxyLabel() + " " + p.proxyEndpoint() + " richiede la password per l'utente «" + p.proxyUsername() + "».", false);
+                relay = ProxyRelay.open(p,proxySecret,token);
+            }
             client.start();
             ClientSession session;
             try {
-                session = client.connect(p.username(), p.sshHost(), p.sshPort())
+                session = client.connect(p.username(), relay == null ? p.sshHost() : relay.host(), relay == null ? p.sshPort() : relay.port())
                     .verify(p.connectTimeoutSeconds() * 1000L).getSession();
             } catch (Exception e) {
                 token.check();
@@ -135,6 +150,7 @@ public final class MinaTunnelBackend implements TunnelBackend {
             }
             token.check();
             DynamicSocksForwarder socks = dynamic;
+            ProxyRelay proxyRelay = relay;
             AtomicBoolean disposed = new AtomicBoolean();
             Connection result = new Connection() {
                 @Override public boolean isOpen() { return session.isOpen() && session.isAuthenticated() && !disposed.get() && (socks == null || socks.isOpen()); }
@@ -142,6 +158,7 @@ public final class MinaTunnelBackend implements TunnelBackend {
                 @Override public void close() {
                     if (!disposed.compareAndSet(false, true)) return;
                     if (socks != null) socks.close();
+                    if (proxyRelay != null) proxyRelay.close();
                     try { cancellationHook.close(); } catch (Exception ignored) { }
                     session.close(true);
                     client.stop();
@@ -150,7 +167,9 @@ public final class MinaTunnelBackend implements TunnelBackend {
             handedOff = true;
             return result;
         } finally {
+            Arrays.fill(proxySecret,'\0');
             if (!handedOff) {
+                if (relay != null) relay.close();
                 try { cancellationHook.close(); } catch (Exception ignored) { }
                 client.stop();
             }
@@ -185,14 +204,18 @@ public final class MinaTunnelBackend implements TunnelBackend {
         if (hasCause(error, UnknownHostException.class) || hasCause(error, UnresolvedAddressException.class))
             return new Failure("DNS: impossibile risolvere il server SSH «" + p.sshHost() + "». Verificare DNS, VPN e suffissi DNS aziendali. Nessuna connessione TCP è stata aperta.", true, error);
         if (hasCause(error, SocketTimeoutException.class) || messages.contains("timed out") || messages.contains("timeout"))
-            return new Failure("Timeout durante la connessione TCP/SSH diretta a " + endpoint + " dopo " + p.connectTimeoutSeconds() + " s. Nexu Port Forwarding non usa automaticamente il proxy HTTP/SOCKS configurato nel sistema. Se la rete aziendale richiede proxy o VPN, la connessione diretta può essere bloccata.", true, error);
+            return p.usesProxy()
+                ? new Failure("Timeout durante la connessione SSH a " + endpoint + " tramite proxy " + p.proxyLabel() + " " + p.proxyEndpoint() + " dopo " + p.connectTimeoutSeconds() + " s.", true, error)
+                : new Failure("Timeout durante la connessione TCP/SSH diretta a " + endpoint + " dopo " + p.connectTimeoutSeconds() + " s. Nexu Port Forwarding non usa automaticamente il proxy HTTP/SOCKS configurato nel sistema. Se la rete aziendale richiede proxy o VPN, la connessione diretta può essere bloccata.", true, error);
         if (hasCause(error, NoRouteToHostException.class) || messages.contains("no route") || messages.contains("network is unreachable"))
             return new Failure("Nessun percorso di rete verso " + endpoint + ". Verificare VPN, routing, firewall e rete aziendale. La connessione SSH è diretta e non usa automaticamente il proxy di sistema.", true, error);
         if (hasCause(error, ConnectException.class) && (messages.contains("refused") || messages.contains("actively refused")))
             return new Failure("Connessione rifiutata da " + endpoint + ". L'host è raggiungibile, ma la porta SSH non accetta la connessione: possibile porta errata, servizio SSH spento o firewall con rifiuto esplicito.", true, error);
         if (messages.contains("reset") || messages.contains("closed") || messages.contains("eof"))
             return new Failure("Connessione verso " + endpoint + " aperta ma interrotta durante l'handshake SSH. Possibili cause: servizio non SSH sulla porta, firewall/proxy trasparente o chiusura dal server.", true, error);
-        return new Failure("Connessione TCP/SSH diretta verso " + endpoint + " fallita (" + root.getClass().getSimpleName() + "). Il proxy HTTP/SOCKS di sistema non viene usato automaticamente. Verificare DNS, VPN, firewall, porta SSH e policy della rete aziendale.", true, error);
+        return p.usesProxy()
+            ? new Failure("Connessione SSH verso " + endpoint + " tramite proxy " + p.proxyLabel() + " " + p.proxyEndpoint() + " fallita (" + root.getClass().getSimpleName() + ").", true, error)
+            : new Failure("Connessione TCP/SSH diretta verso " + endpoint + " fallita (" + root.getClass().getSimpleName() + "). Il proxy HTTP/SOCKS di sistema non viene usato automaticamente. Verificare DNS, VPN, firewall, porta SSH e policy della rete aziendale.", true, error);
     }
 
     static Failure runtimeDependencyFailure(Throwable error) {
