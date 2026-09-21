@@ -233,20 +233,9 @@ public final class NexuApplication extends Application {
         nameFilter.textProperty().addListener((o,a,b) -> updateFilter());
         hostFilter.textProperty().addListener((o,a,b) -> updateFilter());
         statusFilter.valueProperty().addListener((o,a,b) -> updateFilter()); modeFilter.valueProperty().addListener((o,a,b) -> updateFilter());
-        table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY); table.setFixedCellSize(-1); table.setEditable(true);
-        TableColumn<TunnelRow,TunnelEngine.State> state = new TableColumn<>("STATO"); state.setPrefWidth(145);
-        state.setCellValueFactory(c -> c.getValue().stateProperty());
-        state.setCellFactory(c -> new TableCell<>() {
-            @Override protected void updateItem(TunnelEngine.State s, boolean empty) {
-                super.updateItem(s,empty); setText(null); setGraphic(null);
-                if (!empty && s != null) {
-                    Label badge = new Label("●  " + s.label()); badge.getStyleClass().addAll("state-pill", "state-" + s.name().toLowerCase(Locale.ROOT));
-                    TunnelRow row = getTableRow() == null ? null : getTableRow().getItem();
-                    if (row != null) badge.setTooltip(new Tooltip(row.detail())); setGraphic(badge);
-                }
-            }
-        });
-        TableColumn<TunnelRow,String> installation = textColumn("INSTALLAZIONE", 170, r -> r.profile().installation());
+        table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN); table.setFixedCellSize(-1); table.setEditable(true);
+        TableColumn<TunnelRow,String> installation = textColumn("INSTALLAZIONE", 155, r -> r.profile().installation());
+        installation.setMinWidth(110);
         installation.setEditable(true);
         installation.setCellFactory(c -> new AutoSaveTextCell("—"));
         installation.setOnEditCommit(e -> {
@@ -262,7 +251,8 @@ public final class NexuApplication extends Application {
             } catch (RuntimeException ex) { error(ex.getMessage()); }
             table.refresh();
         });
-        TableColumn<TunnelRow,String> name = textColumn("NOME", 200, r -> r.profile().name());
+        TableColumn<TunnelRow,String> name = textColumn("NOME", 230, r -> r.profile().name());
+        name.setMinWidth(150);
         name.setEditable(true);
         name.setCellFactory(c -> new AutoSaveTextCell());
         name.setOnEditCommit(e -> {
@@ -278,21 +268,13 @@ public final class NexuApplication extends Application {
             } catch (RuntimeException ex) { error(ex.getMessage()); }
             table.refresh();
         });
-        TableColumn<TunnelRow,String> forwarding = textColumn("FORWARDING", 470, r -> r.profile().forwardingSummary());
-        TableColumn<TunnelRow,String> hostAddress = new TableColumn<>("HOSTNAME / INDIRIZZO IP"); hostAddress.setPrefWidth(235);
+        TableColumn<TunnelRow,String> forwarding = textColumn("FORWARDING", 320, r -> r.profile().forwardingSummary());
+        forwarding.setMinWidth(220);
+        forwarding.setCellFactory(c -> new WrappingTextCell());
+        TableColumn<TunnelRow,String> hostAddress = new TableColumn<>("HOSTNAME / INDIRIZZO IP"); hostAddress.setPrefWidth(250); hostAddress.setMinWidth(180);
         hostAddress.setCellValueFactory(c -> Bindings.createStringBinding(c.getValue()::hostAddressDisplay, c.getValue().resolvedIpProperty()));
-        hostAddress.setCellFactory(c -> new TableCell<>() {
-            {
-                setWrapText(true);
-                setTextOverrun(OverrunStyle.CLIP);
-            }
-            @Override protected void updateItem(String text, boolean empty) {
-                super.updateItem(text,empty); setGraphic(null);
-                setText(empty ? null : text);
-                setTooltip(empty || text == null || text.isBlank() ? null : new Tooltip(text.replace("\n"," · ")));
-            }
-        });
-        TableColumn<TunnelRow,TunnelRow> actions = new TableColumn<>("AZIONI"); actions.setPrefWidth(185); actions.setSortable(false);
+        hostAddress.setCellFactory(c -> new WrappingTextCell());
+        TableColumn<TunnelRow,TunnelRow> actions = new TableColumn<>("AZIONI"); actions.setPrefWidth(185); actions.setMinWidth(165); actions.setSortable(false);
         actions.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue()));
         actions.setCellFactory(c -> new TableCell<>() {
             private Button runStop;
@@ -341,9 +323,9 @@ public final class NexuApplication extends Application {
                 HBox box = new HBox(6, runStop, menu); box.setAlignment(Pos.CENTER_LEFT); setGraphic(box);
             }
         });
-        state.setEditable(false); forwarding.setEditable(false); hostAddress.setEditable(false);
+        forwarding.setEditable(false); hostAddress.setEditable(false);
         actions.setEditable(false);
-        table.getColumns().addAll(actions, state, installation, name, forwarding, hostAddress);
+        table.getColumns().addAll(actions, installation, name, forwarding, hostAddress);
         Label emptyTitle = new Label("Nessun tunnel da mostrare"); emptyTitle.getStyleClass().add("empty-title");
         Label emptyHelp = new Label("Attivi: solo tunnel connessi. Custom: + Nuovo tunnel. Tabby/MobaXterm: usa i pulsanti Importa."); emptyHelp.getStyleClass().add("muted");
         VBox empty = new VBox(12, emptyTitle, emptyHelp); empty.setAlignment(Pos.CENTER); table.setPlaceholder(empty);
@@ -371,6 +353,7 @@ public final class NexuApplication extends Application {
             row.setMinHeight(62);
             row.setPrefHeight(Region.USE_COMPUTED_SIZE);
             row.setMaxHeight(Double.MAX_VALUE);
+            row.setPadding(new Insets(2,0,2,0));
             row.setOnMouseClicked(e -> {
                 if (e.getClickCount() == 2 && !row.isEmpty() && table.getEditingCell() == null) {
                     javafx.scene.Node node = e.getTarget() instanceof javafx.scene.Node n ? n : null;
@@ -396,7 +379,22 @@ public final class NexuApplication extends Application {
             display.setMinHeight(Region.USE_PREF_SIZE);
             display.setMaxWidth(Double.MAX_VALUE);
             display.prefWidthProperty().bind(Bindings.max(40, widthProperty().subtract(24)));
+            widthProperty().addListener((o,a,b) -> requestRowLayout());
+            display.textProperty().addListener((o,a,b) -> requestRowLayout());
             setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        }
+        private void requestRowLayout() {
+            requestLayout();
+            TableRow<TunnelRow> row = getTableRow();
+            if (row != null) row.requestLayout();
+            TableView<TunnelRow> view = getTableView();
+            if (view != null) view.requestLayout();
+        }
+        @Override protected double computePrefHeight(double width) {
+            if (isEditing()) return super.computePrefHeight(width);
+            double available = Math.max(40, getWidth() > 0 ? getWidth() - 24 : width - 24);
+            double content = display.prefHeight(available);
+            return Math.max(super.computePrefHeight(width), content + 22);
         }
         @Override public void startEdit() {
             if (!isEditable() || !getTableView().isEditable() || !getTableColumn().isEditable()) return;
@@ -419,6 +417,7 @@ public final class NexuApplication extends Application {
             setText(null);
             setGraphic(display);
             setTooltip(value == null || value.isBlank() ? null : new Tooltip(value));
+            requestRowLayout();
         }
         @Override public void cancelEdit() {
             super.cancelEdit();
@@ -428,6 +427,45 @@ public final class NexuApplication extends Application {
             super.updateItem(value,empty);
             if (empty) { setText(null); setGraphic(null); setTooltip(null); }
             else if (!isEditing()) showDisplay(value);
+        }
+    }
+
+    private static final class WrappingTextCell extends TableCell<TunnelRow,String> {
+        private final Label display = new Label();
+        private WrappingTextCell() {
+            display.setWrapText(true);
+            display.setTextOverrun(OverrunStyle.CLIP);
+            display.setMinHeight(Region.USE_PREF_SIZE);
+            display.setMaxWidth(Double.MAX_VALUE);
+            display.prefWidthProperty().bind(Bindings.max(40, widthProperty().subtract(24)));
+            widthProperty().addListener((o,a,b) -> requestRowLayout());
+            display.textProperty().addListener((o,a,b) -> requestRowLayout());
+            setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        }
+        private void requestRowLayout() {
+            requestLayout();
+            TableRow<TunnelRow> row = getTableRow();
+            if (row != null) row.requestLayout();
+            TableView<TunnelRow> view = getTableView();
+            if (view != null) view.requestLayout();
+        }
+        @Override protected double computePrefHeight(double width) {
+            double available = Math.max(40, getWidth() > 0 ? getWidth() - 24 : width - 24);
+            double content = display.prefHeight(available);
+            return Math.max(super.computePrefHeight(width), content + 22);
+        }
+        @Override protected void updateItem(String value, boolean empty) {
+            super.updateItem(value,empty);
+            if (empty) {
+                display.setText("");
+                setText(null); setGraphic(null); setTooltip(null);
+            } else {
+                String shown = value == null ? "" : value;
+                display.setText(shown);
+                setText(null); setGraphic(display);
+                setTooltip(shown.isBlank() ? null : new Tooltip(shown.replace("\n"," · ")));
+                requestRowLayout();
+            }
         }
     }
 
