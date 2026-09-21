@@ -38,3 +38,21 @@ Portable launchers and direct executable launches respect the same preference. W
 Logs rotate across five files of about 2 MB and do not record passwords, private keys or traffic payloads. Portable storage requires a writable, owner-controlled local directory. Failure to create it is reported; the program does not silently switch to AppData. See [portable storage](PORTABLE-STORAGE.md) for details.
 
 Saved passwords remain encrypted in the vault; the master password is not saved. Encrypted backups do not include private-key files, host trust or logs.
+
+
+Persistent diagnostic events
+----------------------------
+
+The rotating log records tunnel state and, for recognized failures, a sanitized category such as:
+- LOCAL_BIND_IN_USE
+- LOCAL_BIND_UNAVAILABLE
+- DNS_FAILURE
+- SSH_TIMEOUT
+- SSH_CONNECTION_REFUSED
+- NO_ROUTE
+- SSH_HANDSHAKE_INTERRUPTED
+- SSH_AUTH_FAILED
+- HOST_KEY_REJECTED
+- FORWARDING_REJECTED
+
+Recognized diagnostics may include bounded listener/endpoint context. Arbitrary exception messages, passwords, passphrases, private-key contents and network payloads are never persisted.

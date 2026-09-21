@@ -1,4 +1,4 @@
-# Nexu Port Forwarding 1.1.0-rc.4
+# Nexu Port Forwarding 1.1.0-rc.5
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
@@ -7,6 +7,9 @@
 Prerelease adding external-profile import and operational filtering while keeping the 1.0.0 stable release unchanged.
 
 ### New in this prerelease
+
+- Preflight local listener availability for LOCAL and DYNAMIC/SOCKS before SSH authentication. Occupied ports are reported immediately with a clear hint that another tunnel application (for example Tabby/MobaXterm) may already be using them.
+- Persistent logs now record sanitized diagnostic categories and safe context for recognized failures, while still excluding credentials and arbitrary raw exception text.
 
 - Inline-editable **NOME** with automatic persistence on Enter or focus loss.
 - Removed the **INSTALLAZIONE** column from the main grid.

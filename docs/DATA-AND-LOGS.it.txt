@@ -38,3 +38,21 @@ Launcher portabili e avvio diretto rispettano la stessa preferenza. Aggiornando 
 I log ruotano su cinque file da circa 2 MB e non registrano password, chiavi private o traffico. Il salvataggio portabile richiede una cartella locale scrivibile e controllata dal proprietario. Gli errori vengono segnalati senza passare silenziosamente ad AppData. Dettagli in [salvataggio portabile](PORTABLE-STORAGE.it.md).
 
 Le password salvate restano cifrate nel vault; la password principale non viene salvata. I backup cifrati non includono chiavi private, impronte host o log.
+
+
+Eventi diagnostici persistenti
+------------------------------
+
+Il log con rotazione registra lo stato dei tunnel e, per gli errori riconosciuti, una categoria sanificata come:
+- LOCAL_BIND_IN_USE
+- LOCAL_BIND_UNAVAILABLE
+- DNS_FAILURE
+- SSH_TIMEOUT
+- SSH_CONNECTION_REFUSED
+- NO_ROUTE
+- SSH_HANDSHAKE_INTERRUPTED
+- SSH_AUTH_FAILED
+- HOST_KEY_REJECTED
+- FORWARDING_REJECTED
+
+Le diagnostiche riconosciute possono includere un contesto limitato come listener/endpoint. Non vengono mai persistiti messaggi arbitrari delle eccezioni, password, passphrase, contenuti delle chiavi private o payload di rete.
