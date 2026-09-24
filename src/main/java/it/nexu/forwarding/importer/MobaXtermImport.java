@@ -100,7 +100,8 @@ public final class MobaXtermImport {
         String sourceKey=fingerprint(key,base);
         TunnelProfile p=new TunnelProfile(base.id(),base.name(),base.mode(),base.sshHost(),base.sshPort(),base.username(),base.bindHost(),base.bindPort(),
             base.targetHost(),base.targetPort(),base.auth(),base.privateKey(),base.connectTimeoutSeconds(),base.keepAliveSeconds(),base.keepAliveMisses(),
-            base.reconnect(),base.reconnectAttempts(),base.reconnectDelaySeconds(),base.notes(),base.installation(),base.origin(),sourceKey);
+            base.reconnect(),base.reconnectAttempts(),base.reconnectDelaySeconds(),base.notes(),base.installation(),base.origin(),sourceKey,
+            base.proxyType(),base.proxyHost(),base.proxyPort(),base.proxyUsername());
         return new Candidate(p,rowWarnings);
     }
 

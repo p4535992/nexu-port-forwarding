@@ -106,7 +106,10 @@ public final class TabbyImportSelfTest {
         });
         test("agent and MFA require unsupported profile warning",()->{for(String auth:List.of("agent","keyboardInteractive")){var p=ssh("Local");opts(p).put("auth",auth);eq(convert(p).skippedProfiles(),1);}});
         test("unknown authentication is not guessed",()->{var p=ssh("Local");opts(p).put("auth","unknown");eq(convert(p).skippedProfiles(),1);});
-        test("auto authentication is marked for review",()->{var p=ssh("Local");opts(p).remove("auth");check(convert(p).candidates().getFirst().requiresReview());});
+        test("missing auth imports without blocking selection and keeps a warning",()->{
+            var p=ssh("Local");opts(p).remove("auth");var c=convert(p).candidates().getFirst();
+            check(!c.requiresReview());check(c.warnings().stream().anyMatch(w->w.contains("Metodo di autenticazione non dichiarato")));
+        });
         test("private key path is imported without reading the file",()->{
             String absolute=Path.of(System.getProperty("user.home"),"does-not-exist","example-key").toAbsolutePath().toString();
             var p=ssh("Local");opts(p).put("auth","publicKey");opts(p).put("privateKeys",List.of(absolute));
