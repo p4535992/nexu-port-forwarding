@@ -1,0 +1,89 @@
+version: 8
+profiles:
+- id: moba:ssh:1125adb2-8593-474e-83d8-2c7425663401
+  type: ssh
+  name: '[Demo] Application Server (ssh-app.example.invalid)'
+  options:
+    host: ssh-app.example.invalid
+    port: 10022
+    user: demo-user-a
+    reuseSession: false
+    x11: false
+    agentForward: false
+    algorithms:
+      compression:
+      - none
+    input:
+      backspace: ctrl-h
+    forwardedPorts:
+    - type: Local
+      host: localhost
+      port: 18080
+      targetAddress: web-service.example.invalid
+      targetPort: 18081
+      description: DemoLocalWeb
+    - type: Local
+      host: localhost
+      port: 15432
+      targetAddress: database.example.invalid
+      targetPort: 15433
+      description: DemoLocalDatabase
+  group: moba:group:916eaaf7-05b7-4801-9fb0-37aacb8a1023
+  disableDynamicTitle: true
+- id: moba:ssh:9348f0a6-4d74-4e86-8ba8-0b5b167da37d
+  type: ssh
+  name: '[Demo] Integration Server (ssh-integration.example.invalid)'
+  options:
+    host: ssh-integration.example.invalid
+    port: 10022
+    user: demo-user-b
+    reuseSession: false
+    x11: false
+    agentForward: false
+    algorithms:
+      compression:
+      - none
+    input:
+      backspace: ctrl-h
+    forwardedPorts:
+    - type: Remote
+      host: localhost
+      port: 19090
+      targetAddress: callback-client.example.invalid
+      targetPort: 19091
+      description: DemoRemoteCallback
+  group: moba:group:916eaaf7-05b7-4801-9fb0-37aacb8a1023
+  disableDynamicTitle: true
+- id: moba:ssh:d3d7a32d-e251-49ee-ba6f-483a8e8b8d57
+  type: ssh
+  name: '[Demo] Mixed Forwarding (ssh-mixed.example.invalid)'
+  options:
+    host: ssh-mixed.example.invalid
+    port: 10022
+    user: demo-user-c
+    reuseSession: false
+    x11: false
+    agentForward: false
+    algorithms:
+      compression:
+      - none
+    input:
+      backspace: ctrl-h
+    forwardedPorts:
+    - type: Local
+      host: localhost
+      port: 25000
+      targetAddress: internal-api.example.invalid
+      targetPort: 25001
+      description: DemoLocalApi
+    - type: Remote
+      host: localhost
+      port: 26000
+      targetAddress: developer-machine.example.invalid
+      targetPort: 26001
+      description: DemoRemoteDevService
+  group: moba:group:916eaaf7-05b7-4801-9fb0-37aacb8a1023
+  disableDynamicTitle: true
+groups:
+- id: moba:group:916eaaf7-05b7-4801-9fb0-37aacb8a1023
+  name: Demo Port Forwarding

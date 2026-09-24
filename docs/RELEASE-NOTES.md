@@ -14,6 +14,9 @@ Prerelease focused on clearer tunnel-state feedback and more useful diagnostics 
 - The same diagnostic still points to server-side policy checks such as `AllowTcpForwarding`, `PermitListen`, `GatewayPorts` for non-loopback listeners, and `Match`/per-user restrictions.
 - Added a regression test covering the new remote-port-conflict hint.
 - Application/package version moved to **1.2.1** for the **v1.2.1-rc.1** prerelease.
+- Tabby v8 profiles with forwarding entries under `profiles[*].options.forwardedPorts` are covered by a real-shape regression fixture: multiple Local/Remote forwards per SSH profile preserve SSH host, port and username while importing no password.
+- MobaXterm `[PortForwarding]` fixtures now preserve Local/Remote definitions, SSH usernames and repeated tunnel names; recognized `WEB proxy` / SOCKS5 transports are mapped to Nexu proxy settings without importing proxy credentials.
+- Missing Tabby `auth` no longer blocks default selection: the profile is imported without a saved credential and Nexu asks for it when the tunnel is started.
 
 ### Diagnostic note
 

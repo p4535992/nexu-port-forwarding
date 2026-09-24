@@ -15,8 +15,8 @@ public final class TabbyImport {
     public record Candidate(TunnelProfile profile, List<String> warnings) {
         public Candidate { warnings = List.copyOf(warnings); }
         public boolean requiresReview() {
-            return !profile.isLoopbackBind() || warnings.stream().anyMatch(w->w.startsWith("Autenticazione automatica")
-                || w.startsWith("Più chiavi") || w.startsWith("Bind assente"));
+            return !profile.isLoopbackBind() || warnings.stream().anyMatch(w->w.startsWith("Più chiavi")
+                || w.startsWith("Bind assente"));
         }
     }
     public record Report(List<Candidate> candidates, List<String> warnings, int sshProfiles,
@@ -93,7 +93,7 @@ public final class TabbyImport {
                     auth=TunnelProfile.Auth.PRIVATE_KEY;
                     if (keys.size()>1) notes.add("Più chiavi Tabby: viene usato solo il primo percorso. Verificare la scelta.");
                 } else auth=TunnelProfile.Auth.PASSWORD;
-                if (authName.isEmpty()) notes.add("Autenticazione automatica Tabby: verificare il metodo scelto ("+auth+").");
+                if (authName.isEmpty()) notes.add("Metodo di autenticazione non dichiarato da Tabby: profilo importato senza credenziale salvata; Nexu la richiederà all'avvio.");
                 int interval=seconds(options.get("keepaliveInterval"),5000,1,3600,notes);
                 int misses=numberClamped(options.get("keepaliveCountMax"),10,1,10,notes);
                 int timeout=seconds(options.get("readyTimeout"),15000,3,300,notes);

@@ -1,0 +1,27 @@
+[Misc]
+PasswordsInRegistry=0
+StorePasswords=Never
+BackupIni=1
+SessionP=123456789012
+
+[SSH]
+SSHCompression=1
+X11Forwarding=1
+StrictHostKeyChecking=0
+EnableSFTP=1
+DefaultLoginName=
+
+[PortForwarding]
+0000.DemoWebLocal=Local;demo@ssh-web.example.invalid:22;127.0.0.1:8080;18080;0;No SSH key selected;0.0.0.0;No proxy selected;0
+0001.DemoDatabaseLocal=Local;demo@ssh-db.example.invalid:2222;db.example.invalid:5432;15432;0;No SSH key selected;0.0.0.0;No proxy selected;0
+0002.DemoApiRemote=Remote;demo@ssh-api.example.invalid:22;192.0.2.20:8081;18687;0;No SSH key selected;0.0.0.0;No proxy selected;0
+0003.DemoDebugLocal=Local;developer@203.0.113.10:2201;127.0.0.1:5005;15005;0;No SSH key selected;0.0.0.0;WEB proxy,proxy.example.invalid,3128,,,;0
+0004.DemoSecureLocal=Local;service@ssh-secure.example.invalid:22;198.51.100.25:8443;18443;0;C:\\Example\\Keys\\demo.ppk;0.0.0.0;No proxy selected;0
+0005.DemoSecureRemote=Remote;service@ssh-secure.example.invalid:22;service.example.invalid:9000;19000;0;C:\\Example\\Keys\\demo.ppk;0.0.0.0;No proxy selected;0
+0006.DemoMultiTunnel=Local;demo@ssh-multi.example.invalid:22;127.0.0.1:3000;13000;0;No SSH key selected;0.0.0.0;No proxy selected;0
+0007.DemoMultiTunnel=Local;demo@ssh-multi.example.invalid:22;127.0.0.1:9090;19090;0;No SSH key selected;0.0.0.0;No proxy selected;0
+0008.DemoMultiTunnel=Remote;demo@ssh-multi.example.invalid:22;192.0.2.50:8080;18087;0;No SSH key selected;0.0.0.0;No proxy selected;0
+
+[Bookmarks]
+SubRep=
+ImgNum=42

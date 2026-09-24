@@ -2,7 +2,7 @@
 set -euo pipefail
 ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
-VERSION="${1:-1.2.0}"
+VERSION="${1:-1.2.1}"
 [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'Invalid numeric app version' >&2; exit 1; }
 [[ -f target/app/nexu-port-forwarding.jar ]] || { echo 'Run mvn clean verify first.' >&2; exit 1; }
 OUT=target/package

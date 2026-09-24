@@ -30,6 +30,26 @@ final class TabbyYamlReaderTest {
         assertEquals("Example installation",result.candidates().getFirst().profile().installation());
         assertEquals(2222,result.candidates().getFirst().profile().sshPort());
     }
+    @Test void tabbyV8NestedForwardedPortsFixtureImportsFiveProfilesWithoutCredentials() throws Exception {
+        try(var in=TabbyYamlReaderTest.class.getResourceAsStream("/tabby/config-v8-forwarded-ports.example.yaml")) {
+            assertNotNull(in);
+            var result=TabbyYamlReader.parse(in.readAllBytes(),"");
+            assertEquals(3,result.sshProfiles());
+            assertEquals(5,result.candidates().size());
+            assertEquals(0,result.skippedProfiles());
+            assertEquals(0,result.skippedForwards());
+            assertEquals(List.of("demo-user-a","demo-user-a","demo-user-b","demo-user-c","demo-user-c"),
+                result.candidates().stream().map(c->c.profile().username()).toList());
+            assertEquals(List.of(TunnelProfile.Mode.LOCAL,TunnelProfile.Mode.LOCAL,TunnelProfile.Mode.REMOTE,TunnelProfile.Mode.LOCAL,TunnelProfile.Mode.REMOTE),
+                result.candidates().stream().map(c->c.profile().mode()).toList());
+            assertEquals(10022,result.candidates().getFirst().profile().sshPort());
+            assertEquals("localhost",result.candidates().getFirst().profile().bindHost());
+            assertEquals(18080,result.candidates().getFirst().profile().bindPort());
+            assertEquals("web-service.example.invalid",result.candidates().getFirst().profile().targetHost());
+            assertTrue(result.candidates().stream().noneMatch(TabbyImport.Candidate::requiresReview));
+        }
+    }
+
     @Test void byteOrderMarkAndCrLfAreSupported() throws Exception {
         assertEquals(3,parse("\ufeff"+fixture().replace("\n","\r\n")).candidates().size());
     }
