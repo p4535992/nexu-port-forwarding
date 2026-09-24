@@ -63,6 +63,15 @@ public final class MobaXtermImport {
     }
 
     private static Candidate parseEntry(String key,String value,String label,int lineNo) {
+        try {
+            return parseEntryInternal(key,value,label,lineNo);
+        } catch (IllegalArgumentException ex) {
+            String message=ex.getMessage();
+            throw new Invalid(message==null||message.isBlank()?"dati del profilo non validi.":message);
+        }
+    }
+
+    private static Candidate parseEntryInternal(String key,String value,String label,int lineNo) {
         String[] f=value.split(";",-1);
         if(f.length<4) throw new Invalid("formato tunnel incompleto.");
         TunnelProfile.Mode mode=switch(f[0].trim().toLowerCase(Locale.ROOT)) {

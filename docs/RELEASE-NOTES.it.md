@@ -1,4 +1,4 @@
-# Nexu Port Forwarding 1.2.1-rc.2
+# Nexu Port Forwarding 1.2.1-rc.3
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
@@ -13,11 +13,13 @@ Prerelease focalizzata su una segnalazione più chiara dello stato dei tunnel e 
 - Quando un forwarding **REMOTE (-R)** viene rifiutato dopo che l'autenticazione SSH è riuscita, il messaggio suggerisce ora esplicitamente di controllare se il listener richiesto sul server SSH è già occupato da un altro remote forwarding/sessione SSH oppure da un altro processo.
 - Lo stesso messaggio continua a indicare le verifiche lato server: `AllowTcpForwarding`, `PermitListen`, `GatewayPorts` per listener non-loopback ed eventuali restrizioni `Match`/per utente.
 - Aggiunto un test di regressione per il nuovo suggerimento relativo alla porta remota già occupata.
-- Versione applicazione/pacchetti aggiornata a **1.2.1** per la prerelease **v1.2.1-rc.2**.
+- Versione applicazione/pacchetti aggiornata a **1.2.1** per la prerelease **v1.2.1-rc.3**.
 - Aggiunto un fixture di regressione con struttura Tabby v8 reale: gli inoltri sotto `profiles[*].options.forwardedPorts`, anche multipli nello stesso profilo SSH, mantengono host SSH, porta, username e forwarding Local/Remote senza importare password.
 - I fixture MobaXterm `[PortForwarding]` mantengono Local/Remote, username SSH e tunnel ripetuti; i trasporti `WEB proxy` / SOCKS5 riconosciuti vengono convertiti nelle impostazioni proxy Nexu senza importare credenziali proxy.
 - L'assenza di `auth` in Tabby non blocca più la preselezione: il profilo viene importato senza credenziale salvata e Nexu la chiede all'avvio del tunnel.
 - rc.2 corregge la regressione MobaXterm che perdeva il proxy riconosciuto nella costruzione finale del profilo e aggiorna il test Tabby al comportamento previsto senza credenziale importata.
+- rc.3 isola le entry MobaXterm malformate: gli errori di validazione `IllegalArgumentException` generati dal modello vengono convertiti in errori `Invalid` della singola riga, quindi un host SSH anomalo incrementa `skipped` senza interrompere le entry valide successive.
+- Aggiunto un test di regressione Local valido → host SSH URL-like non valido → Remote valido, verificando `entries=3`, `candidates=2`, `skipped=1` e che l'ultima entry Remote venga comunque importata.
 
 ### Nota diagnostica
 

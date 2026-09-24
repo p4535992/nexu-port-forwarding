@@ -1,4 +1,4 @@
-# Nexu Port Forwarding 1.2.1-rc.2
+# Nexu Port Forwarding 1.2.1-rc.3
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
@@ -13,11 +13,13 @@ Prerelease focused on clearer tunnel-state feedback and more useful diagnostics 
 - When a **REMOTE (-R)** forwarding request is rejected after successful SSH authentication, the diagnostic now explicitly suggests checking whether the requested listener on the SSH server is already occupied by another SSH remote forwarding/session or another process.
 - The same diagnostic still points to server-side policy checks such as `AllowTcpForwarding`, `PermitListen`, `GatewayPorts` for non-loopback listeners, and `Match`/per-user restrictions.
 - Added a regression test covering the new remote-port-conflict hint.
-- Application/package version moved to **1.2.1** for the **v1.2.1-rc.2** prerelease.
+- Application/package version moved to **1.2.1** for the **v1.2.1-rc.3** prerelease.
 - Tabby v8 profiles with forwarding entries under `profiles[*].options.forwardedPorts` are covered by a real-shape regression fixture: multiple Local/Remote forwards per SSH profile preserve SSH host, port and username while importing no password.
 - MobaXterm `[PortForwarding]` fixtures now preserve Local/Remote definitions, SSH usernames and repeated tunnel names; recognized `WEB proxy` / SOCKS5 transports are mapped to Nexu proxy settings without importing proxy credentials.
 - Missing Tabby `auth` no longer blocks default selection: the profile is imported without a saved credential and Nexu asks for it when the tunnel is started.
 - rc.2 fixes the MobaXterm proxy carry-over regression so recognized HTTP CONNECT/SOCKS5 settings remain attached to the imported profile, and updates the Tabby regression test to match the intended no-credential import behavior.
+- rc.3 isolates malformed MobaXterm forwarding entries: model-level `IllegalArgumentException` validation failures are converted to per-entry `Invalid` results, so one bad SSH host or other invalid row increments `skipped` and does not abort valid entries that follow.
+- Added a regression test with valid Local → invalid URL-like SSH host → valid Remote, asserting `entries=3`, `candidates=2`, `skipped=1` and preservation of the final Remote entry.
 
 ### Diagnostic note
 
