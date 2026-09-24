@@ -52,6 +52,20 @@ final class MinaDiagnosticsTest {
             assertFalse(f.retryable());
         }
     }
+    @Test void remoteForwardingRejectionMentionsPossibleRemotePortConflict() {
+        TunnelProfile p = new TunnelProfile(profile.id(),profile.name(),TunnelProfile.Mode.REMOTE,
+            profile.sshHost(),profile.sshPort(),profile.username(),"127.0.0.1",8687,
+            profile.targetHost(),profile.targetPort(),profile.auth(),profile.privateKey(),
+            profile.connectTimeoutSeconds(),profile.keepAliveSeconds(),profile.keepAliveMisses(),
+            false,profile.reconnectAttempts(),profile.reconnectDelaySeconds(),profile.notes());
+        TunnelBackend.Failure f = MinaTunnelBackend.forwardingFailure(p,new IOException("remote forwarding rejected"));
+        assertTrue(f.getMessage().contains("non sia già occupata"));
+        assertTrue(f.getMessage().contains("altro remote forwarding"));
+        assertTrue(f.getMessage().contains("AllowTcpForwarding"));
+        assertTrue(f.getMessage().contains("PermitListen"));
+        assertFalse(f.retryable());
+    }
+
     @Test void remoteListenerIsNotProbedLocally() throws Exception {
         try (ServerSocket occupied = new ServerSocket()) {
             occupied.bind(new InetSocketAddress("127.0.0.1",0));

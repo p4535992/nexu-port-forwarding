@@ -19,7 +19,7 @@ public final class AppLog implements AutoCloseable {
         handler.setEncoding("UTF-8"); handler.setFormatter(new Formatter() {
             @Override public String format(LogRecord r) { return r.getInstant()+" "+r.getLevel()+" "+r.getMessage()+System.lineSeparator(); }
         });
-        logger.addHandler(handler); mark("application-started version=1.2.0");
+        logger.addHandler(handler); mark("application-started version=1.2.1");
     }
     public Path directory() { return directory; }
     public void openSshDiagnostic(java.util.UUID id,String detail) {

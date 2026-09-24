@@ -252,7 +252,9 @@ public final class MinaTunnelBackend implements TunnelBackend {
             return new Failure("Impossibile aprire la porta di ascolto " + p.listener() + ": indirizzo/porta già occupati o non disponibili.", false, error);
         String request = p.forwardingSummary();
         String serverPolicy = p.mode() == TunnelProfile.Mode.REMOTE
-            ? "Sul server SSH verificare AllowTcpForwarding (yes/remote), PermitListen per " + p.listener()
+            ? "Sul server SSH verificare innanzitutto che la porta di ascolto " + p.listener()
+                + " non sia già occupata da un altro remote forwarding/sessione SSH o da un altro processo. "
+                + "Verificare inoltre AllowTcpForwarding (yes/remote), PermitListen per " + p.listener()
                 + " e GatewayPorts se l'ascolto richiesto non è loopback; controllare anche eventuali blocchi Match/utente."
             : "Sul server SSH verificare AllowTcpForwarding (yes/local) e le eventuali restrizioni del forwarding per l'utente.";
         return new Failure("Connessione SSH autenticata, ma il forwarding è stato rifiutato. Richiesto: " + request
