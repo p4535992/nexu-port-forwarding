@@ -382,7 +382,8 @@ public final class NexuApplication extends Application {
                     getStyleClass().removeAll("row-stopped", "row-active");
                     TunnelRow item = getItem();
                     if (item == null) return;
-                    if (item.state() == TunnelEngine.State.STOPPED) {
+                    if (item.state() == TunnelEngine.State.STOPPED
+                        || item.state() == TunnelEngine.State.STOPPING) {
                         getStyleClass().add("row-stopped");
                     } else if (item.state() == TunnelEngine.State.ACTIVE) {
                         getStyleClass().add("row-active");
