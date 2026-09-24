@@ -1,30 +1,32 @@
-# Nexu Port Forwarding 1.2.1-rc.3
+# Nexu Port Forwarding 1.2.1
 
 [English](RELEASE-NOTES.md) | [Italiano](RELEASE-NOTES.it.md)
 
 ## English
 
-Prerelease focused on clearer tunnel-state feedback and more useful diagnostics when an SSH server rejects remote port forwarding.
+Stable maintenance release 1.2.1 with clearer tunnel-state feedback, improved remote-forwarding diagnostics, and substantially more robust Tabby/MobaXterm import handling.
 
 ### Changes since 1.2.0
 
-- Tunnel rows in **STOPPING** state now switch to the red background immediately. **STOPPED** rows, including newly created tunnels, remain red; **ACTIVE** rows remain green.
-- The existing **Start/Stop** button colors are unchanged.
-- When a **REMOTE (-R)** forwarding request is rejected after successful SSH authentication, the diagnostic now explicitly suggests checking whether the requested listener on the SSH server is already occupied by another SSH remote forwarding/session or another process.
-- The same diagnostic still points to server-side policy checks such as `AllowTcpForwarding`, `PermitListen`, `GatewayPorts` for non-loopback listeners, and `Match`/per-user restrictions.
-- Added a regression test covering the new remote-port-conflict hint.
-- Application/package version moved to **1.2.1** for the **v1.2.1-rc.3** prerelease.
-- Tabby v8 profiles with forwarding entries under `profiles[*].options.forwardedPorts` are covered by a real-shape regression fixture: multiple Local/Remote forwards per SSH profile preserve SSH host, port and username while importing no password.
-- MobaXterm `[PortForwarding]` fixtures now preserve Local/Remote definitions, SSH usernames and repeated tunnel names; recognized `WEB proxy` / SOCKS5 transports are mapped to Nexu proxy settings without importing proxy credentials.
-- Missing Tabby `auth` no longer blocks default selection: the profile is imported without a saved credential and Nexu asks for it when the tunnel is started.
-- rc.2 fixes the MobaXterm proxy carry-over regression so recognized HTTP CONNECT/SOCKS5 settings remain attached to the imported profile, and updates the Tabby regression test to match the intended no-credential import behavior.
-- rc.3 isolates malformed MobaXterm forwarding entries: model-level `IllegalArgumentException` validation failures are converted to per-entry `Invalid` results, so one bad SSH host or other invalid row increments `skipped` and does not abort valid entries that follow.
-- Added a regression test with valid Local → invalid URL-like SSH host → valid Remote, asserting `entries=3`, `candidates=2`, `skipped=1` and preservation of the final Remote entry.
+- Tunnel rows in **STOPPING** state switch to the red background immediately. **STOPPED** rows, including newly created tunnels, remain red; **ACTIVE** rows remain green.
+- Existing **Start/Stop** button colors are unchanged.
+- When a **REMOTE (-R)** forwarding request is rejected after successful SSH authentication, the diagnostic explicitly suggests checking whether the requested listener on the SSH server is already occupied by another SSH remote forwarding/session or another process.
+- The same diagnostic also points to `AllowTcpForwarding`, `PermitListen`, `GatewayPorts` for non-loopback listeners, and `Match`/per-user restrictions.
+
+- Tabby v8 forwarding entries under `profiles[*].options.forwardedPorts` are supported, including multiple Local/Remote forwards in one SSH profile.
+- Tabby imports preserve SSH hostname, SSH port, username, listener and destination without importing passwords.
+- Missing Tabby `auth` no longer blocks normal selection: the profile is imported without a stored credential and Nexu asks for it when the tunnel starts.
+
+- MobaXterm `[PortForwarding]` imports preserve Local/Remote definitions, SSH usernames and repeated tunnel names.
+- Recognized MobaXterm `WEB proxy`/HTTP CONNECT and SOCKS5 transports are preserved without importing proxy credentials.
+- Malformed MobaXterm forwarding entries are isolated per row: model validation errors increment `skipped` and are reported as warnings instead of aborting the entire file.
+- A regression test verifies the sequence valid Local → invalid URL-like SSH host → valid Remote, ensuring later valid entries remain importable.
+- Imported Tabby and MobaXterm profiles are appended to existing profiles; Custom, Tabby and MobaXterm origins remain distinct.
 
 ### Diagnostic note
 
-A generic SSH remote-forwarding rejection does not always reveal whether the cause is a port conflict or an `sshd` policy restriction. Nexu therefore reports both possibilities instead of claiming one specific cause.
+A generic SSH remote-forwarding rejection does not always reveal whether the cause is a port conflict or an `sshd` policy restriction. Nexu reports both possibilities instead of claiming one specific cause.
 
 ### Safety
 
-This is an unsigned prerelease. Validate forwarding behavior and SSH-server policy settings in your own environment before production use.
+Passwords are not imported from Tabby or MobaXterm configuration files. This release is unsigned; validate forwarding behavior and SSH-server policy settings in your own environment before production use.
