@@ -16,7 +16,7 @@ Consulta [importazione Tabby](docs/TABBY-IMPORT.it.md) e [importazione MobaXterm
 
 ## Funzioni
 
-- Tabella dei tunnel ricercabile, ordinabile e scorrevole.
+- Ricerca unificata per sottostringhe su ID, nomi, descrizioni, host, IP risolti e porte (es. `prato 8687`); filtro combinato LOCAL e REMOTE.
 - Profili SSH con hostname/IP, porta SSH personalizzata, utente, password o autenticazione con chiave privata.
 - Forwarding TCP **REMOTE (-R)**, **LOCAL (-L)** e **DYNAMIC (-D / SOCKS)**.
 - Avvio e arresto indipendenti per ogni riga.
@@ -30,9 +30,9 @@ Il verde indica che connessione SSH e forwarding sono stati stabiliti; **non** c
 
 Ogni profilo possiede una connessione SSH indipendente. Nessun tunnel parte automaticamente all'apertura dell'applicazione. Gli errori di autenticazione, chiave host o bind non vengono ritentati automaticamente. Apache MINA SSHD viene usato direttamente, quindi le password non vengono passate tramite BAT, comandi PowerShell o argomenti di processi esterni.
 
-## Release 1.1.0-rc.11
+## Release 1.2.2
 
-Scarica **[v1.1.0-rc.11](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.11)**.
+Scarica **[v1.2.2](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.2.2)**.
 
 | Piattaforma | Pacchetti |
 | --- | --- |
@@ -46,7 +46,7 @@ Avvio:
 - Windows: `NexuPortForwarding.exe`
 - Linux: `bin/NexuPortForwarding`
 
-Il tag è pubblicato come prerelease, ma i binari non sono firmati digitalmente. Windows SmartScreen o gli strumenti di gestione pacchetti Linux possono quindi mostrare un avviso di autore sconosciuto.
+Questa release stabile non è firmata digitalmente. Windows SmartScreen o gli strumenti di gestione pacchetti Linux possono quindi mostrare un avviso di autore sconosciuto.
 
 ## Diagnostica della connessione SSH
 
@@ -175,11 +175,11 @@ python scripts/prepare-distribution.py
 Poi crea i pacchetti sul sistema operativo di destinazione:
 
 ```powershell
-./scripts/package-windows.ps1 -Version 1.1.0
+./scripts/package-windows.ps1 -Version 1.2.2
 ```
 
 ```bash
-bash scripts/package-linux.sh 1.1.0
+bash scripts/package-linux.sh 1.2.2
 ```
 
 Il packaging Windows richiede WiX 3.x. Quello Linux richiede gli strumenti DEB/RPM e le librerie desktop installate dalla pipeline di release.

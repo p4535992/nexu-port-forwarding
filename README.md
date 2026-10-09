@@ -16,7 +16,7 @@ See [Tabby import](docs/TABBY-IMPORT.md) and [MobaXterm import](docs/MOBAXTERM-I
 
 ## Features
 
-- Searchable, sortable and scrollable tunnel table.
+- Unified multi-term substring search across IDs, names, descriptions, hosts, resolved IPs and ports (e.g. `prato 8687`); combined LOCAL + REMOTE type filter.
 - SSH profiles with hostname/IP, custom SSH port, username, password or private-key authentication.
 - **REMOTE (-R)**, **LOCAL (-L)** and **DYNAMIC (-D / SOCKS)** TCP forwarding.
 - Independent start/stop lifecycle for each row.
@@ -30,9 +30,9 @@ Green means the SSH connection and forwarding listener were established; it does
 
 Each profile owns its own SSH connection. No tunnel starts automatically when the application opens. Authentication, host-key and bind failures are not automatically retried. Apache MINA SSHD is used directly, so passwords are not passed through BAT files, PowerShell commands or external-process arguments.
 
-## Release 1.1.0-rc.11
+## Release 1.2.2
 
-Download **[v1.1.0-rc.11](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.1.0-rc.11)**.
+Download **[v1.2.2](https://github.com/p4535992/nexu-port-forwarding/releases/tag/v1.2.2)**.
 
 | Platform | Packages |
 | --- | --- |
@@ -46,7 +46,7 @@ Start:
 - Windows: `NexuPortForwarding.exe`
 - Linux: `bin/NexuPortForwarding`
 
-This tag is published as a prerelease, but the binaries are not code-signed. Windows SmartScreen or Linux package tooling may therefore show an unknown-publisher warning.
+This stable release is not code-signed. Windows SmartScreen or Linux package tooling may therefore show an unknown-publisher warning.
 
 ## SSH connection diagnostics
 
@@ -175,11 +175,11 @@ python scripts/prepare-distribution.py
 Then package on the target operating system:
 
 ```powershell
-./scripts/package-windows.ps1 -Version 1.1.0
+./scripts/package-windows.ps1 -Version 1.2.2
 ```
 
 ```bash
-bash scripts/package-linux.sh 1.1.0
+bash scripts/package-linux.sh 1.2.2
 ```
 
 Windows packaging requires WiX 3.x. Linux packaging requires the DEB/RPM and desktop libraries installed by the release workflow.

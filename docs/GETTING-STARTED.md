@@ -2,7 +2,7 @@
 
 [English](GETTING-STARTED.md) | [Italiano](GETTING-STARTED.it.md)
 
-This guide covers the **v1.1.0-rc.1 prerelease**. The stable 1.0.0 release remains available and unchanged.
+This guide covers the **stable v1.2.2 release**. Previously published versions remain available.
 
 ## Windows
 
@@ -20,7 +20,7 @@ Open **Impostazioni → Cartella dati…** (Settings → Data folder), choose **
 
 The main tab order is **Attivi → Custom → Tabby → MobaXterm**. **Attivi** shows only currently ACTIVE tunnels. Tabby and MobaXterm are import sources only: after pressing the corresponding import button, selected forwarding rules are copied into Nexu Port Forwarding's local `profiles.properties`; no live dependency on the external program remains and nothing is started automatically.
 
-The filter bar combines free text, forwarding type (all / LOCAL / REMOTE / DYNAMIC), resolved SSH-server IP and state. `HOSTNAME` shows the configured SSH host and `INDIRIZZO IP` is resolved in the background. If the configured host is already an IP literal, the same value is shown immediately.
+A single search box checks each whitespace-separated term against the profile ID, name, notes, installation, SSH hostname, resolved IP, listener/destination/proxy hosts and ports; all terms must match, even in different fields (for example `prato 8687`). Type filtering offers all, LOCAL, REMOTE, LOCAL + REMOTE and DYNAMIC, together with the state filter. `HOSTNAME` shows the configured SSH host and `INDIRIZZO IP` is resolved in the background. If the configured host is already an IP literal, the same value is shown immediately.
 
 ## Window and monitor state
 
