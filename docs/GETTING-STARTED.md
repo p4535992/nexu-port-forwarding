@@ -18,7 +18,7 @@ Open **Impostazioni → Cartella dati…** (Settings → Data folder), choose **
 
 ## Main views and import
 
-The main tab order is **Attivi → Custom → Tabby → MobaXterm**. **Attivi** shows only currently ACTIVE tunnels. Tabby and MobaXterm are import sources only: after pressing the corresponding import button, selected forwarding rules are copied into Nexu Port Forwarding's local `profiles.properties`; no live dependency on the external program remains and nothing is started automatically.
+The main tab order is **Attivi → Preferiti → Custom → Tabby → MobaXterm**. **Attivi** shows only currently ACTIVE tunnels. In **AZIONI**, select ☆ to add any session to **Preferiti** (★ to remove it): it also remains in its source tab and the selection is saved. Tabby and MobaXterm are import sources only: after pressing the corresponding import button, selected forwarding rules are copied into Nexu Port Forwarding's local `profiles.properties`; no live dependency on the external program remains and nothing is started automatically.
 
 A single search box checks each whitespace-separated term against the profile ID, name, notes, installation, SSH hostname, resolved IP, listener/destination/proxy hosts and ports; all terms must match, even in different fields (for example `prato 8687`). Type filtering offers all, LOCAL, REMOTE, LOCAL + REMOTE and DYNAMIC, together with the state filter. `HOSTNAME` shows the configured SSH host and `INDIRIZZO IP` is resolved in the background. If the configured host is already an IP literal, the same value is shown immediately.
 

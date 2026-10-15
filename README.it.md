@@ -8,7 +8,7 @@ L'inglese è la lingua primaria della documentazione; le traduzioni italiane ven
 
 ## Sorgenti importati: Tabby e MobaXterm
 
-Le viste principali sono **Attivi → Custom → Tabby → MobaXterm**. **Attivi** contiene soltanto i tunnel nello stato ACTIVE. I profili Custom vengono creati manualmente; Tabby e MobaXterm sono sorgenti di importazione. Dopo l’import le righe sono salvate localmente da Nexu Port Forwarding e non dipendono più in tempo reale dalle applicazioni esterne.
+Le viste principali sono **Attivi → Preferiti → Custom → Tabby → MobaXterm**. **Attivi** contiene soltanto i tunnel nello stato ACTIVE. **Preferiti** mostra le sessioni contrassegnate con ☆ nella colonna **AZIONI**, indipendentemente dalla sorgente e dallo stato del tunnel. I profili Custom vengono creati manualmente; Tabby e MobaXterm sono sorgenti di importazione. Dopo l’import le righe sono salvate localmente da Nexu Port Forwarding e non dipendono più in tempo reale dalle applicazioni esterne.
 
 **Importa Tabby…** legge un `config.yaml`; **Importa MobaXterm…** legge soltanto `[PortForwarding]` dal `MobaXterm.ini` selezionato. Entrambi mostrano un’anteprima e importano i forwarding Local, Remote e Dynamic/SOCKS supportati senza avviarli. La colonna **INSTALLAZIONE** è modificabile/ricercabile e resta nei backup cifrati. Le reimportazioni aggiungono nuove definizioni e ignorano i fingerprint identici senza sovrascrivere modifiche locali o credenziali.
 
@@ -20,6 +20,7 @@ Consulta [importazione Tabby](docs/TABBY-IMPORT.it.md) e [importazione MobaXterm
 - Profili SSH con hostname/IP, porta SSH personalizzata, utente, password o autenticazione con chiave privata.
 - Forwarding TCP **REMOTE (-R)**, **LOCAL (-L)** e **DYNAMIC (-D / SOCKS)**.
 - Avvio e arresto indipendenti per ogni riga.
+- Scheda **Preferiti** con stella ★/☆ per salvare, ritrovare e avviare sessioni da qualsiasi origine; la selezione è conservata nei profili, nelle esportazioni e nei backup cifrati.
 - Duplicazione, modifica, eliminazione, attività per tunnel ed esportazione del comando OpenSSH.
 - Verifica esplicita delle chiavi host SSH.
 - Keepalive e riconnessione opzionale con tentativi limitati.

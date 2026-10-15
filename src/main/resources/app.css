@@ -21,6 +21,9 @@
 .primary { -fx-background-color: #10b7a4; -fx-text-fill: #072c2b; -fx-font-weight: bold; }
 .primary:hover { -fx-background-color: #2dd4bf; }
 .small-primary { -fx-text-fill: #7eead9; -fx-background-color: #16433f; }
+.table-cell .favorite-toggle { -fx-padding: 6px 9px; -fx-font-size: 16px; -fx-text-fill: #b7c6dd; }
+.table-cell .favorite-toggle.favorite-selected { -fx-background-color: #483c22; -fx-text-fill: #f5d074; }
+.table-cell .favorite-toggle:hover { -fx-background-color: #334763; }
 .text-field, .password-field, .combo-box { -fx-background-radius: 6px; -fx-padding: 8px 10px; }
 .text-field, .password-field { -fx-text-fill: #edf4ff; -fx-prompt-text-fill: #7589a6; }
 .table-view { -fx-background-color: #141e31; -fx-border-color: #283951; -fx-border-radius: 8px; -fx-background-radius: 8px; -fx-padding: 0; }

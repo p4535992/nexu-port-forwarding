@@ -30,6 +30,7 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
     private final TextField installation = new TextField();
     private final TunnelProfile.Origin origin;
     private final String sourceKey;
+    private final boolean favorite;
     private TunnelProfile valid;
 
     public ProfileDialog(Window owner, TunnelProfile existing, boolean hasSecret) {
@@ -41,6 +42,7 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
         id = existing == null ? UUID.randomUUID() : existing.id();
         origin = existing == null ? TunnelProfile.Origin.CUSTOM : existing.origin();
         sourceKey = existing == null ? "" : existing.sourceKey();
+        favorite = existing != null && existing.favorite();
         installation.setText(p.installation());
         installation.setPromptText(I18n.t("Free label: customer, site, environment… (searchable)","Nome libero: cliente, sede, ambiente… (ricercabile)"));
         name.setText(existing == null ? "" : p.name()); host.setText(existing == null ? "" : p.sshHost());
@@ -146,7 +148,7 @@ public final class ProfileDialog extends Dialog<ProfileDialog.Result> {
             bind.getText(), num(bindPort,"Porta ascolto"), target.getText(), mode.getValue() == TunnelProfile.Mode.DYNAMIC ? 0 : num(targetPort,I18n.t("Destination port","Porta destinazione")), auth.getValue(), key.getText(),
             num(timeout,"Timeout"), num(interval,"Keepalive"), num(misses,"Soglia keepalive"), reconnect.isSelected(), num(attempts,"Riconnessioni"),
             num(delay,"Attesa"), notes.getText(), installation.getText(), origin, sourceKey,
-            selectedProxy, proxyHost.getText(), selectedProxy == TunnelProfile.ProxyType.DIRECT ? 0 : num(proxyPort,I18n.t("Proxy port","Porta proxy")), proxyUser.getText());
+            selectedProxy, proxyHost.getText(), selectedProxy == TunnelProfile.ProxyType.DIRECT ? 0 : num(proxyPort,I18n.t("Proxy port","Porta proxy")), proxyUser.getText(), favorite);
     }
     private static int num(TextField field, String name) {
         try { return Integer.parseInt(field.getText().trim()); }

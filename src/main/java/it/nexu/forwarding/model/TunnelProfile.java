@@ -11,11 +11,22 @@ public record TunnelProfile(
     Auth auth, String privateKey, int connectTimeoutSeconds, int keepAliveSeconds,
     int keepAliveMisses, boolean reconnect, int reconnectAttempts,
     int reconnectDelaySeconds, String notes, String installation, Origin origin, String sourceKey,
-    ProxyType proxyType, String proxyHost, int proxyPort, String proxyUsername) {
+    ProxyType proxyType, String proxyHost, int proxyPort, String proxyUsername, boolean favorite) {
 
     public enum Mode { REMOTE, LOCAL, DYNAMIC }
     public enum Origin { CUSTOM, TABBY, MOBAXTERM }
     public enum ProxyType { DIRECT, SOCKS5, HTTP_CONNECT }
+
+    /** Compatibility constructor for callers without a favorite flag. */
+    public TunnelProfile(UUID id, String name, Mode mode, String sshHost, int sshPort, String username,
+        String bindHost, int bindPort, String targetHost, int targetPort, Auth auth, String privateKey,
+        int connectTimeoutSeconds, int keepAliveSeconds, int keepAliveMisses, boolean reconnect,
+        int reconnectAttempts, int reconnectDelaySeconds, String notes, String installation, Origin origin,
+        String sourceKey, ProxyType proxyType, String proxyHost, int proxyPort, String proxyUsername) {
+        this(id,name,mode,sshHost,sshPort,username,bindHost,bindPort,targetHost,targetPort,auth,privateKey,
+            connectTimeoutSeconds,keepAliveSeconds,keepAliveMisses,reconnect,reconnectAttempts,reconnectDelaySeconds,
+            notes,installation,origin,sourceKey,proxyType,proxyHost,proxyPort,proxyUsername,false);
+    }
 
     /** Compatibility constructor for existing v2 call sites and imported profiles. */
     public TunnelProfile(UUID id, String name, Mode mode, String sshHost, int sshPort, String username,
@@ -106,26 +117,32 @@ public record TunnelProfile(
             username, bindHost, bindPort, targetHost, targetPort, auth, privateKey,
             connectTimeoutSeconds, keepAliveSeconds, keepAliveMisses, reconnect,
             reconnectAttempts, reconnectDelaySeconds, notes, installation, Origin.CUSTOM, "",
-            proxyType, proxyHost, proxyPort, proxyUsername);
+            proxyType, proxyHost, proxyPort, proxyUsername, false);
     }
     /** Backup restore preserves the tab and provenance while allocating a new credential identity. */
     public TunnelProfile copyWithNewId() {
         return new TunnelProfile(UUID.randomUUID(),name,mode,sshHost,sshPort,username,bindHost,bindPort,
             targetHost,targetPort,auth,privateKey,connectTimeoutSeconds,keepAliveSeconds,keepAliveMisses,
             reconnect,reconnectAttempts,reconnectDelaySeconds,notes,installation,origin,sourceKey,
-            proxyType,proxyHost,proxyPort,proxyUsername);
+            proxyType,proxyHost,proxyPort,proxyUsername,favorite);
     }
     public TunnelProfile withInstallation(String label) {
         return new TunnelProfile(id,name,mode,sshHost,sshPort,username,bindHost,bindPort,targetHost,targetPort,
             auth,privateKey,connectTimeoutSeconds,keepAliveSeconds,keepAliveMisses,reconnect,
             reconnectAttempts,reconnectDelaySeconds,notes,label,origin,sourceKey,
-            proxyType,proxyHost,proxyPort,proxyUsername);
+            proxyType,proxyHost,proxyPort,proxyUsername,favorite);
     }
     public TunnelProfile withName(String value) {
         return new TunnelProfile(id,value,mode,sshHost,sshPort,username,bindHost,bindPort,targetHost,targetPort,
             auth,privateKey,connectTimeoutSeconds,keepAliveSeconds,keepAliveMisses,reconnect,
             reconnectAttempts,reconnectDelaySeconds,notes,installation,origin,sourceKey,
-            proxyType,proxyHost,proxyPort,proxyUsername);
+            proxyType,proxyHost,proxyPort,proxyUsername,favorite);
+    }
+    public TunnelProfile withFavorite(boolean value) {
+        return new TunnelProfile(id,name,mode,sshHost,sshPort,username,bindHost,bindPort,targetHost,targetPort,
+            auth,privateKey,connectTimeoutSeconds,keepAliveSeconds,keepAliveMisses,reconnect,
+            reconnectAttempts,reconnectDelaySeconds,notes,installation,origin,sourceKey,
+            proxyType,proxyHost,proxyPort,proxyUsername,value);
     }
     public String forwardingSummary() {
         return switch (mode) {

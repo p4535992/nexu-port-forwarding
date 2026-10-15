@@ -18,7 +18,7 @@ Apri **Impostazioni → Cartella dati…**, scegli **Portabile** o **Cartella ut
 
 ## Viste principali e importazione
 
-L'ordine dei tab è **Attivi → Custom → Tabby → MobaXterm**. **Attivi** mostra soltanto i tunnel nello stato ACTIVE. Tabby e MobaXterm sono esclusivamente sorgenti di importazione: dopo aver premuto il relativo pulsante, gli inoltri selezionati vengono copiati nel `profiles.properties` locale di Nexu Port Forwarding; non resta una dipendenza live dall'app esterna e nessun tunnel viene avviato automaticamente.
+L'ordine dei tab è **Attivi → Preferiti → Custom → Tabby → MobaXterm**. **Attivi** mostra soltanto i tunnel nello stato ACTIVE. In **AZIONI**, premi ☆ per aggiungere una sessione a **Preferiti** (★ per rimuoverla): rimane anche nella sua scheda originale e la preferenza è salvata. Tabby e MobaXterm sono esclusivamente sorgenti di importazione: dopo aver premuto il relativo pulsante, gli inoltri selezionati vengono copiati nel `profiles.properties` locale di Nexu Port Forwarding; non resta una dipendenza live dall'app esterna e nessun tunnel viene avviato automaticamente.
 
 Una casella di ricerca controlla ogni parola separata da spazi su ID, nome, note, installazione, hostname SSH, IP risolto, host e porte di ascolto/destinazione/proxy; tutte le parole devono corrispondere, anche in campi diversi (ad esempio `prato 8687`). Il filtro tipo offre tutti, LOCAL, REMOTE, LOCAL e REMOTE, DYNAMIC e il filtro stato resta disponibile. `HOSTNAME` mostra l'host SSH configurato e `INDIRIZZO IP` viene risolto in background. Se l'host configurato è già un IP, lo stesso valore appare immediatamente.
 

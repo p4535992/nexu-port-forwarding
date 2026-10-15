@@ -69,9 +69,9 @@ public final class TabbyImportSelfTest {
             check(!new String(b,StandardCharsets.UTF_8).contains("synthetic-do-not-import"));
         });
         test("reimport skips identical rows and preserves label",()->{
-            var p=one(ssh("Local"));var existing=p.withInstallation("My edited label");
+            var p=one(ssh("Local"));var existing=p.withInstallation("My edited label").withFavorite(true);
             var plan=TabbyImport.append(List.of(existing),List.of(one(ssh("Local"))));
-            eq(plan.added().size(),0);eq(plan.duplicates(),1);eq(plan.profiles().getFirst().installation(),"My edited label");
+            eq(plan.added().size(),0);eq(plan.duplicates(),1);eq(plan.profiles().getFirst().installation(),"My edited label");check(plan.profiles().getFirst().favorite());
         });
         test("reordering forwards does not duplicate",()->{
             var a=convert(ssh("Remote","Dynamic","Local")).candidates().stream().map(TabbyImport.Candidate::profile).toList();
@@ -146,9 +146,9 @@ public final class TabbyImportSelfTest {
         test("v1 cannot smuggle dynamic forwarding",()->{var props=SafeFiles.decode(ProfileStore.encode(List.of(one(ssh("Dynamic")))));props.setProperty("format.version","1");expect(()->ProfileStore.decode(SafeFiles.encode(props,"")));});
         test("v2 unknown origins rejected",()->{var props=SafeFiles.decode(ProfileStore.encode(List.of(one(ssh("Local")))));props.setProperty("profile.0.origin","Other");expect(()->ProfileStore.decode(SafeFiles.encode(props,"")));});
         test("duplicate goes to Custom and preserves installation",()->{
-            var p=one(ssh("Local")).withInstallation("Office");var copy=p.duplicate();eq(copy.origin(),TunnelProfile.Origin.CUSTOM);eq(copy.sourceKey(),"");eq(copy.installation(),"Office");check(!p.id().equals(copy.id()));
+            var p=one(ssh("Local")).withInstallation("Office").withFavorite(true);var copy=p.duplicate();eq(copy.origin(),TunnelProfile.Origin.CUSTOM);eq(copy.sourceKey(),"");eq(copy.installation(),"Office");check(!p.id().equals(copy.id()));check(!copy.favorite());
         });
-        test("reidentify for backup preserves source metadata",()->{var p=one(ssh("Local"));var copy=p.copyWithNewId();eq(copy.origin(),TunnelProfile.Origin.TABBY);eq(copy.sourceKey(),p.sourceKey());check(!p.id().equals(copy.id()));});
+        test("reidentify for backup preserves source metadata",()->{var p=one(ssh("Local")).withFavorite(true);var copy=p.copyWithNewId();eq(copy.origin(),TunnelProfile.Origin.TABBY);eq(copy.sourceKey(),p.sourceKey());check(!p.id().equals(copy.id()));check(copy.favorite());});
         test("SOCKS command uses -D and no target",()->{
             var p=one(ssh("Dynamic"));var args=OpenSshCommand.arguments(p);check(args.contains("-D"));check(!args.contains("-L")&&!args.contains("-R"));eq(args.get(args.indexOf("-D")+1),"127.0.0.1:8989");
         });
@@ -163,12 +163,12 @@ public final class TabbyImportSelfTest {
             Path dir=Files.createTempDirectory("tabby-backup-");
             try(VaultStore source=new VaultStore(dir.resolve("source"));VaultStore dest=new VaultStore(dir.resolve("dest"))) {
                 char[] master="synthetic-only-master".toCharArray();source.unlock(master);dest.unlock(master);
-                var p=one(ssh("Dynamic")).withInstallation("Office");source.put(p,"synthetic-credential".toCharArray());
+                var p=one(ssh("Dynamic")).withInstallation("Office").withFavorite(true);source.put(p,"synthetic-credential".toCharArray());
                 Path archive=dir.resolve("backup");BackupService.exportTo(archive,List.of(p),source,master);
                 try(var backup=BackupService.read(archive,master)) {
                     var restored=BackupService.append(backup,List.of(),dir.resolve("profiles"),dest).getFirst();
                     eq(restored.origin(),TunnelProfile.Origin.TABBY);eq(restored.mode(),TunnelProfile.Mode.DYNAMIC);
-                    eq(restored.installation(),"Office");eq(restored.sourceKey(),p.sourceKey());eq(new String(dest.copy(restored)),"synthetic-credential");
+                    eq(restored.installation(),"Office");eq(restored.sourceKey(),p.sourceKey());check(restored.favorite());eq(new String(dest.copy(restored)),"synthetic-credential");
                 }
             } finally { try(var paths=Files.walk(dir)){ for(Path p:paths.sorted(Comparator.reverseOrder()).toList()) Files.deleteIfExists(p); } }
         });

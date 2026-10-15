@@ -18,7 +18,11 @@ public final class TunnelRow {
     private static final DateTimeFormatter CLOCK = DateTimeFormatter.ofPattern("HH:mm:ss").withZone(ZoneId.systemDefault());
     public TunnelRow(TunnelProfile profile) { this.profile = profile; }
     public TunnelProfile profile() { return profile; }
-    public void setProfile(TunnelProfile profile) { this.profile = profile; resolvedIp.set(""); }
+    public void setProfile(TunnelProfile profile) {
+        boolean hostChanged = !this.profile.sshHost().equals(profile.sshHost());
+        this.profile = profile;
+        if (hostChanged) resolvedIp.set("");
+    }
     public ObjectProperty<TunnelEngine.State> stateProperty() { return state; }
     public TunnelEngine.State state() { return state.get(); }
     public StringProperty detailProperty() { return detail; }

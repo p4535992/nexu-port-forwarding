@@ -38,7 +38,7 @@ public final class NexuApplication extends Application {
     private final TableView<TunnelRow> table = new TableView<>();
     private final TextField searchFilter = new TextField();
     private final TabPane sourceTabs = new TabPane();
-    private final Tab activeTab = new Tab("Attivi"), customTab = new Tab("Custom"), tabbyTab = new Tab("Tabby"), mobaTab = new Tab("MobaXterm");
+    private final Tab activeTab = new Tab("Attivi"), favoriteTab = new Tab("★ Preferiti"), customTab = new Tab("Custom"), tabbyTab = new Tab("Tabby"), mobaTab = new Tab("MobaXterm");
     private final ComboBox<String> statusFilter = new ComboBox<>();
     private final ComboBox<TunnelSearch.ModeFilter> modeFilter = new ComboBox<>();
     private final CheckMenuItem openSshDiagnostics = new CheckMenuItem("Diagnostica configurazione OpenSSH locale all'avvio");
@@ -115,6 +115,7 @@ public final class NexuApplication extends Application {
 
     private void buildWindow() {
         activeTab.setText(I18n.t("Active","Attivi"));
+        favoriteTab.setText(I18n.t("★ Favorites","★ Preferiti"));
         customTab.setText("Custom"); tabbyTab.setText("Tabby"); mobaTab.setText("MobaXterm");
         openSshDiagnostics.setText(I18n.t("Diagnose local OpenSSH configuration on Start","Diagnostica configurazione OpenSSH locale all'avvio"));
         selectedInfo.setText(I18n.t("Select a row to view details.","Seleziona una riga per vedere i dettagli."));
@@ -197,9 +198,9 @@ public final class NexuApplication extends Application {
         });
         HBox filters = new HBox(10, searchFilter, modeFilter, statusFilter, clear);
         VBox top = new VBox(22, heading, commands, filters); top.setPadding(new Insets(26,26,18,26));
-        activeTab.setClosable(false); customTab.setClosable(false); tabbyTab.setClosable(false); mobaTab.setClosable(false);
-        sourceTabs.getTabs().setAll(activeTab, customTab, tabbyTab, mobaTab);
-        sourceTabs.setId("source-tabs"); activeTab.setId("active-tab"); customTab.setId("custom-tab"); tabbyTab.setId("tabby-tab"); mobaTab.setId("mobaxterm-tab");
+        activeTab.setClosable(false); favoriteTab.setClosable(false); customTab.setClosable(false); tabbyTab.setClosable(false); mobaTab.setClosable(false);
+        sourceTabs.getTabs().setAll(activeTab, favoriteTab, customTab, tabbyTab, mobaTab);
+        sourceTabs.setId("source-tabs"); activeTab.setId("active-tab"); favoriteTab.setId("favorites-tab"); customTab.setId("custom-tab"); tabbyTab.setId("tabby-tab"); mobaTab.setId("mobaxterm-tab");
         createTable();
         activeTab.setContent(table);
         sourceTabs.getSelectionModel().selectedItemProperty().addListener((o,old,selected) -> {
@@ -322,7 +323,7 @@ public final class NexuApplication extends Application {
         TableColumn<TunnelRow,String> hostAddress = new TableColumn<>(I18n.t("HOSTNAME / IP ADDRESS","HOSTNAME / INDIRIZZO IP")); hostAddress.setPrefWidth(250); hostAddress.setMinWidth(180);
         hostAddress.setCellValueFactory(c -> Bindings.createStringBinding(c.getValue()::hostAddressDisplay, c.getValue().resolvedIpProperty()));
         hostAddress.setCellFactory(c -> new WrappingTextCell());
-        TableColumn<TunnelRow,TunnelRow> actions = new TableColumn<>(I18n.t("ACTIONS","AZIONI")); actions.setPrefWidth(185); actions.setMinWidth(165); actions.setSortable(false);
+        TableColumn<TunnelRow,TunnelRow> actions = new TableColumn<>(I18n.t("ACTIONS","AZIONI")); actions.setPrefWidth(210); actions.setMinWidth(195); actions.setSortable(false);
         actions.setCellValueFactory(c -> new ReadOnlyObjectWrapper<>(c.getValue()));
         actions.setCellFactory(c -> new TableCell<>() {
             private Button runStop;
@@ -349,6 +350,13 @@ public final class NexuApplication extends Application {
                     if (row.state().busy()) engine.stop(row.profile().id());
                     else startOne(row);
                 });
+                Button favorite = new Button(row.profile().favorite() ? "★" : "☆");
+                favorite.getStyleClass().add("favorite-toggle");
+                if (row.profile().favorite()) favorite.getStyleClass().add("favorite-selected");
+                favorite.setTooltip(new Tooltip(row.profile().favorite()
+                    ? I18n.t("Remove from favorites","Rimuovi dai preferiti")
+                    : I18n.t("Add to favorites","Aggiungi ai preferiti")));
+                favorite.setOnAction(e -> toggleFavorite(row));
                 MenuButton menu = new MenuButton("⋯");
                 MenuItem edit = new MenuItem(I18n.t("Edit…","Modifica…")); edit.setOnAction(e -> edit(row));
                 MenuItem duplicate = new MenuItem(I18n.t("Duplicate (without password)","Duplica (senza password)")); duplicate.setOnAction(e -> {
@@ -368,14 +376,14 @@ public final class NexuApplication extends Application {
                 });
                 MenuItem delete = new MenuItem(I18n.t("Delete…","Elimina…")); delete.setOnAction(e -> delete(row));
                 menu.getItems().addAll(edit, duplicate, log, new SeparatorMenuItem(), copyPs, copyCmd, copySh, forget, forgetSaved, new SeparatorMenuItem(), delete);
-                HBox box = new HBox(6, runStop, menu); box.setAlignment(Pos.CENTER_LEFT); setGraphic(box);
+                HBox box = new HBox(6, favorite, runStop, menu); box.setAlignment(Pos.CENTER_LEFT); setGraphic(box);
             }
         });
         forwarding.setEditable(false); hostAddress.setEditable(false);
         actions.setEditable(false);
         table.getColumns().addAll(actions, installation, name, forwarding, hostAddress);
         Label emptyTitle = new Label(I18n.t("No tunnels to display","Nessun tunnel da mostrare")); emptyTitle.getStyleClass().add("empty-title");
-        Label emptyHelp = new Label(I18n.t("Active: connected tunnels only. Custom: + New tunnel. Tabby/MobaXterm: use Import.","Attivi: solo tunnel connessi. Custom: + Nuovo tunnel. Tabby/MobaXterm: usa i pulsanti Importa.")); emptyHelp.getStyleClass().add("muted");
+        Label emptyHelp = new Label(I18n.t("Active: connected tunnels. Favorites: mark a row with ☆. Custom: + New tunnel. Tabby/MobaXterm: Import.","Attivi: tunnel connessi. Preferiti: premi ☆ su una riga. Custom: + Nuovo tunnel. Tabby/MobaXterm: Importa.")); emptyHelp.getStyleClass().add("muted");
         VBox empty = new VBox(12, emptyTitle, emptyHelp); empty.setAlignment(Pos.CENTER); table.setPlaceholder(empty);
         table.setRowFactory(t -> {
             TableRow<TunnelRow> row = new TableRow<>() {
@@ -537,6 +545,7 @@ public final class NexuApplication extends Application {
         Tab selected = sourceTabs.getSelectionModel().getSelectedItem();
         filtered.setPredicate(row -> {
             boolean tab = selected == activeTab ? row.state() == TunnelEngine.State.ACTIVE
+                : selected == favoriteTab ? row.profile().favorite()
                 : selected == tabbyTab ? row.profile().origin() == TunnelProfile.Origin.TABBY
                 : selected == mobaTab ? row.profile().origin() == TunnelProfile.Origin.MOBAXTERM
                 : row.profile().origin() == TunnelProfile.Origin.CUSTOM;
@@ -570,6 +579,21 @@ public final class NexuApplication extends Application {
     private boolean persist(List<TunnelProfile> next) {
         try { ProfileStore.save(configFile,next); return true; }
         catch (Exception e) { error("Salvataggio non riuscito. La modifica non è stata applicata.\n" + e.getMessage()); return false; }
+    }
+    private void toggleFavorite(TunnelRow row) {
+        if (quitting || UiWork.busy()) return;
+        TunnelProfile original = row.profile();
+        TunnelProfile changed = original.withFavorite(!original.favorite());
+        List<TunnelProfile> next = new ArrayList<>(profiles());
+        int index = next.indexOf(original);
+        if (index < 0) { error(I18n.t("Profile not found.","Profilo non trovato.")); return; }
+        next.set(index, changed);
+        if (persist(next)) {
+            row.setProfile(changed);
+            updateFilter();
+            table.refresh();
+            showSelection();
+        }
     }
     private void addProfile(TunnelProfile profile) {
         List<TunnelProfile> next = new ArrayList<>(profiles()); next.add(profile);

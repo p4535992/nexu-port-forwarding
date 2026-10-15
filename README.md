@@ -8,7 +8,7 @@ English is the primary documentation language; Italian translations are maintain
 
 ## Imported sources: Tabby and MobaXterm
 
-The main views are **Active → Custom → Tabby → MobaXterm**. **Active** contains only currently ACTIVE tunnels. Custom profiles are created manually; Tabby and MobaXterm are import sources. After import, rows are stored locally by Nexu Port Forwarding and no live dependency on either external application remains.
+The main views are **Active → Favorites → Custom → Tabby → MobaXterm**. **Active** contains only currently ACTIVE tunnels. **Favorites** lists sessions marked with the ☆ button in **ACTIONS**, regardless of their source or current tunnel state. Custom profiles are created manually; Tabby and MobaXterm are import sources. After import, rows are stored locally by Nexu Port Forwarding and no live dependency on either external application remains.
 
 **Importa Tabby…** reads a selected `config.yaml`; **Importa MobaXterm…** reads only `[PortForwarding]` from a selected `MobaXterm.ini`. Both show a preview and import supported Local, Remote and Dynamic/SOCKS forwards without starting them. Repeated imports append new definitions and skip identical source fingerprints without overwriting local edits or credentials.
 
@@ -20,6 +20,7 @@ See [Tabby import](docs/TABBY-IMPORT.md) and [MobaXterm import](docs/MOBAXTERM-I
 - SSH profiles with hostname/IP, custom SSH port, username, password or private-key authentication.
 - **REMOTE (-R)**, **LOCAL (-L)** and **DYNAMIC (-D / SOCKS)** TCP forwarding.
 - Independent start/stop lifecycle for each row.
+- Persistent **Favorites** tab: mark or unmark any session with ★/☆ to find and start it again; favorites are included in profile exports and encrypted backups.
 - Duplicate, edit, delete, per-tunnel activity log and OpenSSH command export.
 - Explicit SSH host-key verification.
 - Keepalive and optional bounded reconnects.

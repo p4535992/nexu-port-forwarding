@@ -61,6 +61,23 @@ public final class CoreSelfTest {
             test("forwarding summary includes SSH port and remote listener side", () -> check(TunnelProfile.example().forwardingSummary().equals("R · SSH:22 · SERVER[127.0.0.1:8989] → PC → maven.example.com:8081")));
             test("forwarding summary includes SSH port and local listener side", () -> check(change("mode",TunnelProfile.Mode.LOCAL).forwardingSummary().startsWith("L · SSH:22 · PC[127.0.0.1:8989] → SERVER → ")));
             test("inline rename preserves profile identity", () -> { TunnelProfile p=TunnelProfile.example(), renamed=p.withName("Nuovo nome"); eq(renamed.id(),p.id()); eq(renamed.name(),"Nuovo nome"); });
+            test("favorite flag is opt-in and changes without changing the profile ID", () -> {
+                TunnelProfile p=TunnelProfile.example(); check(!p.favorite());
+                TunnelProfile saved=p.withFavorite(true); check(saved.favorite()); eq(saved.id(),p.id()); check(!p.favorite());
+                check(saved.withName("Favorito rinominato").favorite()); check(saved.withInstallation("Produzione").favorite());
+                check(saved.copyWithNewId().favorite()); check(!saved.duplicate().favorite());
+                check(!saved.withFavorite(false).favorite());
+            });
+            test("favorite flag survives profile save and load", () -> {
+                Path f=temp.resolve("favorites.properties"); TunnelProfile p=TunnelProfile.example().withFavorite(true);
+                ProfileStore.save(f,List.of(p)); eq(ProfileStore.load(f),List.of(p)); eq(SafeFiles.read(f).getProperty("format.version"),"4");
+            });
+            test("v3 profiles load as not favorited", () -> {
+                TunnelProfile p=TunnelProfile.example().withFavorite(true);
+                Properties legacy=SafeFiles.decode(ProfileStore.encode(List.of(p))); legacy.setProperty("format.version","3");
+                legacy.remove("profile.0.favorite");
+                check(!ProfileStore.decode(SafeFiles.encode(legacy,"")).getFirst().favorite());
+            });
             test("config round trip", () -> { Path f=temp.resolve("roundtrip.properties"); List<TunnelProfile> p=List.of(TunnelProfile.example(),change("mode",TunnelProfile.Mode.LOCAL)); ProfileStore.save(f,p); eq(ProfileStore.load(f),p); });
             test("proxy config round trip", () -> {
                 TunnelProfile base=TunnelProfile.example();
@@ -84,6 +101,11 @@ public final class CoreSelfTest {
             test("invalid boolean rejected on import", () -> {
                 Path f=temp.resolve("bool.properties"); ProfileStore.save(f,List.of(TunnelProfile.example()));
                 Properties v=SafeFiles.read(f); v.setProperty("profile.0.reconnect","maybe"); SafeFiles.write(f,v,""); expect(IOException.class,()->ProfileStore.load(f));
+            });
+            test("invalid favorite boolean rejected on import", () -> {
+                Path f=temp.resolve("badfavorite.properties"); ProfileStore.save(f,List.of(TunnelProfile.example()));
+                Properties v=SafeFiles.read(f); v.setProperty("profile.0.favorite","maybe");
+                SafeFiles.write(f,v,""); expect(IOException.class,()->ProfileStore.load(f));
             });
             test("saved schema has no secret fields", () -> {
                 Path f=temp.resolve("without-secrets.properties"); ProfileStore.save(f,List.of(TunnelProfile.example()));
